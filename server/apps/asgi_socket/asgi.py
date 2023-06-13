@@ -9,8 +9,4 @@ def get_asgi_application():
     """
     Wrap it in a function, lazy import you know
     """
-    return AllowedHostsOriginValidator(
-        AuthMiddlewareStack(
-            URLRouter(urls)
-        )
-    )
+    return AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter(urls)))
