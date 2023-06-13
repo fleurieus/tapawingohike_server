@@ -10,7 +10,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'handlers': {
         'daphne_file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': '/var/log/daphne/server.log',
         },
@@ -18,7 +18,7 @@ LOGGING = {
     'loggers': {
         'daphne': {
 		    'handlers': ['daphne_file'],
-		    'level': 'DEBUG',
+		    'level': 'INFO',
 		},
     },
 }
