@@ -1,3 +1,4 @@
 Django==4.2.1
 channels==3.0.4
 websockets==11.0.3
+django-admin-sortable2==2.1.8
