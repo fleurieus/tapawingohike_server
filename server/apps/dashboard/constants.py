@@ -1,0 +1,27 @@
+DESTINATION_TYPE_MANDATORY = "mandatory"
+DESTINATION_TYPE_CHOICE = "choice"
+DESTINATION_TYPE_BONUS = "bonus"
+
+DESTINATION_TYPES = [
+    (DESTINATION_TYPE_MANDATORY, "Verplicht"),
+    (DESTINATION_TYPE_CHOICE, "Keuze"),
+    (DESTINATION_TYPE_BONUS, "Bonus"),
+]
+
+ROUTE_TYPE_COORDINATE = "coordinate"
+ROUTE_TYPE_IMAGE = "image"
+ROUTE_TYPE_AUDIO = "audio"
+
+ROUTE_TYPES = [
+    (ROUTE_TYPE_COORDINATE, "Coördinaat"),
+    (ROUTE_TYPE_IMAGE, "Afbeelding"),
+    (ROUTE_TYPE_AUDIO, "Audio"),
+]
+
+FILE_TYPE_IMAGE = "image"
+FILE_TYPE_AUDIO = "audio"
+
+FILE_TYPES = [
+    (FILE_TYPE_IMAGE, "Afbeelding"),
+    (FILE_TYPE_AUDIO, "Audio"),
+]

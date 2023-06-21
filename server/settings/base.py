@@ -34,6 +34,11 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "server",
+    "server.apps.asgi_socket",
+    "server.apps.dashboard",
+
+    "channels",
+    "adminsortable2",
     # django buildin
     "django.contrib.admin",
     "django.contrib.auth",
@@ -41,9 +46,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # asgi_socket
-    "channels",
-    "server.apps.asgi_socket",
 ]
 
 MIDDLEWARE = [
@@ -52,8 +54,13 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.RemoteUserMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 ROOT_URLCONF = "server.urls"
@@ -113,7 +120,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "nl"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Europe/Amsterdam"
 
 USE_I18N = True
 

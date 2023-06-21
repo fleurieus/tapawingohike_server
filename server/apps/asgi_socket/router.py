@@ -1,7 +1,7 @@
 from django.urls import path
 
-from .consumers import MyConsumer
+from .consumers import AppConsumer
 
 urls = [
-    path(r"ws/", MyConsumer.as_asgi()),
+    path(r"ws/app/", AppConsumer.as_asgi()),
 ]
