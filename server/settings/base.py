@@ -36,7 +36,6 @@ INSTALLED_APPS = [
     "server",
     "server.apps.asgi_socket",
     "server.apps.dashboard",
-
     "channels",
     "adminsortable2",
     # django buildin

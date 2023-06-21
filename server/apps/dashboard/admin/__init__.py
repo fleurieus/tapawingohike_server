@@ -33,7 +33,9 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(RoutePart)
 class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_filter = ["route", ]
+    list_filter = [
+        "route",
+    ]
     inlines = (DestinationInline,)
     fieldsets = [
         (
