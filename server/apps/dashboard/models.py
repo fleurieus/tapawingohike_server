@@ -134,12 +134,45 @@ class RoutePart(models.Model):
         return f"{self.name} | {self.route}"
 
     class Meta:
-        unique_together = ["route", "order"]
-        ordering = ["route", "order"]
+        ordering = ("order",)
 
 
-class TeamRoutePart(RoutePart):
+class TeamRoutePart(models.Model):
+    # info
+    name = models.CharField(max_length=255)
+    route_type = models.CharField(
+        max_length=255, default=ROUTE_TYPE_COORDINATE, choices=ROUTE_TYPES
+    )
+
+    # data
+    routepart_zoom = models.BooleanField(default=True)
+    routepart_fullscreen = models.BooleanField(default=True)
+    routedata_image = models.ForeignKey(
+        "dashboard.File",
+        on_delete=models.CASCADE,
+        related_name="teamroutepart_images",
+        limit_choices_to={"category": FILE_TYPE_IMAGE},
+        blank=True,
+        null=True,
+    )
+    routedata_audio = models.ForeignKey(
+        "dashboard.File",
+        on_delete=models.CASCADE,
+        related_name="teamroutepart_audio",
+        limit_choices_to={"category": FILE_TYPE_AUDIO},
+        blank=True,
+        null=True,
+    )
+
     # extra
+    order = models.PositiveIntegerField()
+
+    route = models.ForeignKey(
+        "dashboard.Route",
+        on_delete=models.CASCADE,
+        related_name="teamrouteparts",
+    )
+
     routepart = models.ForeignKey(
         "dashboard.RoutePart",
         on_delete=models.CASCADE,
@@ -153,6 +186,9 @@ class TeamRoutePart(RoutePart):
 
     def __str__(self):
         return f"{self.team.name} | {self.routepart}"
+
+    class Meta:
+        ordering = ("order",)
 
 
 class Destination(models.Model):
@@ -169,6 +205,16 @@ class Destination(models.Model):
         "dashboard.Routepart",
         on_delete=models.CASCADE,
         related_name="destinations",
+        blank=True,
+        null=True,
+    )
+
+    teamroutepart = models.ForeignKey(
+        "dashboard.TeamRoutepart",
+        on_delete=models.CASCADE,
+        related_name="destinations",
+        blank=True,
+        null=True,
     )
 
 

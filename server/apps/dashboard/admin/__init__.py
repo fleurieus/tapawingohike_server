@@ -17,12 +17,17 @@ from server.apps.dashboard.models import (
 from adminsortable2.admin import SortableAdminMixin
 
 from .inlines import DestinationInline
+from .actions import distribute_to_teams
 
 admin.site.register(Organization)
 admin.site.register(Event)
 admin.site.register(Edition)
-admin.site.register(Route)
 admin.site.register(File)
+
+
+@admin.register(Route)
+class TeamAdmin(admin.ModelAdmin):
+    actions = [distribute_to_teams]
 
 
 @admin.register(Team)
@@ -33,9 +38,7 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(RoutePart)
 class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
-    list_filter = [
-        "route",
-    ]
+    list_filter = ("route",)
     inlines = (DestinationInline,)
     fieldsets = [
         (
@@ -44,6 +47,7 @@ class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
                 "fields": [
                     "name",
                     "route_type",
+                    "route",
                 ],
             },
         ),
@@ -56,27 +60,28 @@ class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
                     "routedata_image",
                     "routedata_audio",
                 ],
-            },
-        ),
-        (
-            "Extra",
-            {
-                "fields": ["route"],
             },
         ),
     ]
 
 
 @admin.register(TeamRoutePart)
-class TeamRoutePartAdmin(RoutePartAdmin):
+class TeamRoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_filter = (
+        "route",
+        "team",
+    )
     readonly_fields = ("route", "team", "order")
+    inlines = (DestinationInline,)
     fieldsets = [
         (
-            "Route Part Info",
+            "Team Route Part Info",
             {
                 "fields": [
                     "name",
                     "route_type",
+                    "route",
+                    "team",
                 ],
             },
         ),
@@ -89,12 +94,6 @@ class TeamRoutePartAdmin(RoutePartAdmin):
                     "routedata_image",
                     "routedata_audio",
                 ],
-            },
-        ),
-        (
-            "Extra",
-            {
-                "fields": ["route", "team"],
             },
         ),
     ]
