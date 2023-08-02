@@ -3,7 +3,10 @@ from ..base import *
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS = ["*"]
+SERVER_IP = "116.203.112.220"
+SERVER_URI = f"http://{SERVER_IP}:8000"
+
+ALLOWED_HOSTS = [SERVER_URI]
 
 LOGGING = {
     'version': 1,

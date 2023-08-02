@@ -27,6 +27,9 @@ SECRET_KEY = "django-insecure-s#$wnrc0=8)^d__18q@cj62zccg_&!yg0j$-6a$#qnp6yr9ap+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+SERVER_IP = "127.0.0.1"
+SERVER_URI = f"http://{SERVER_IP}:8000"
+
 ALLOWED_HOSTS = ["*"]
 
 
@@ -130,6 +133,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+MEDIA_URL = "media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

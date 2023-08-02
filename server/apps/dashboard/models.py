@@ -1,7 +1,12 @@
-from django.db import models
+from urllib.parse import urljoin
 
+from django.db import models
+from django.conf import settings
+
+from .validators import FinalDestinationValidationMixin
 from .constants import (
     DESTINATION_TYPE_MANDATORY,
+    DESTINATION_TYPE_CHOICE,
     DESTINATION_TYPES,
     ROUTE_TYPE_COORDINATE,
     ROUTE_TYPES,
@@ -73,12 +78,57 @@ class Team(models.Model):
         self.online = False
         self.save()
 
-    def routeparts(self):
-        """
-        current_post = Post.objects.get(slug="c")
-        next_post = Post.objects.filter(order__gt=current).order_by('order').first()
-        """
-        self.teamrouteparts.all()
+    def get_next_open_routepart(self):
+        return self.teamrouteparts.filter(completed=False).order_by("order").first()
+
+    def get_next_open_routepart_formatted(self):
+        part = self.get_next_open_routepart()
+
+        image_url = (
+            urljoin(settings.SERVER_URI, part.routedata_image.file.url)
+            if part.routedata_image
+            else None
+        )
+        audio_url = (
+            urljoin(settings.SERVER_URI, part.routedata_audio.file.url)
+            if part.routedata_audio
+            else None
+        )
+
+        formatted_data = {
+            "type": part.route_type,
+            "data": {
+                "fullscreen": part.routepart_fullscreen,
+                "zoomEnabled": part.routepart_zoom,
+                "image": image_url,
+                "audio": audio_url,
+                "coordinates": self.destinations_formatted(part.destinations.all()),
+            },
+        }
+        return formatted_data
+
+    def get_teamroutepart(self, destination_id):
+        return self.teamrouteparts.get(destinations__id=destination_id)
+
+    @staticmethod
+    def destinations_formatted(destinations):
+        # TODO: beslissen of we de `completed` destintions ook willen tonen
+        return [
+            dict(
+                id=d.id,
+                latitude=d.lat,
+                longitude=d.lng,
+                type=d.destination_type,
+                radius=d.radius,
+                confirmByUser=d.confirm_by_user,
+            )
+            for d in destinations
+        ]
+
+    def handle_destination_completion(self, destination_id):
+        part = self.get_teamroutepart(destination_id)
+        part.complete_destination(destination_id)
+        part.check_completion()
 
 
 class Route(models.Model):
@@ -94,7 +144,7 @@ class Route(models.Model):
         return self.name
 
 
-class RoutePart(models.Model):
+class RoutePart(FinalDestinationValidationMixin, models.Model):
     # info
     name = models.CharField(max_length=255)
     route_type = models.CharField(
@@ -122,6 +172,7 @@ class RoutePart(models.Model):
     )
 
     # extra
+    final = models.BooleanField(default=False)
     order = models.PositiveIntegerField()
 
     route = models.ForeignKey(
@@ -137,7 +188,7 @@ class RoutePart(models.Model):
         ordering = ("order",)
 
 
-class TeamRoutePart(models.Model):
+class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
     # info
     name = models.CharField(max_length=255)
     route_type = models.CharField(
@@ -165,6 +216,8 @@ class TeamRoutePart(models.Model):
     )
 
     # extra
+    final = models.BooleanField(default=False)
+    completed = models.BooleanField(default=False)
     order = models.PositiveIntegerField()
 
     route = models.ForeignKey(
@@ -187,6 +240,33 @@ class TeamRoutePart(models.Model):
     def __str__(self):
         return f"{self.team.name} | {self.routepart}"
 
+    def complete_destination(self, destination_id):
+        return self.destinations.filter(id=destination_id).update(completed=True)
+
+    def check_completion(self):
+        destinations = self.destinations.all()
+
+        # mandatory not completed
+        if destinations.filter(
+            destination_type=DESTINATION_TYPE_MANDATORY, completed=False
+        ).exists():
+            return
+
+        # choice is not completed
+        if (
+            not destinations.filter(destination_type=DESTINATION_TYPE_CHOICE).exists()
+            and destinations.filter(
+                destination_type=DESTINATION_TYPE_CHOICE, completed=True
+            ).exists()
+        ):
+            return
+
+        self.complete()
+
+    def complete(self):
+        self.completed = True
+        self.save()
+
     class Meta:
         ordering = ("order",)
 
@@ -200,6 +280,8 @@ class Destination(models.Model):
     )
     confirm_by_user = models.BooleanField(default=False)
     hide_for_user = models.BooleanField(default=False)
+
+    completed = models.BooleanField(default=False)
 
     routepart = models.ForeignKey(
         "dashboard.Routepart",
@@ -228,3 +310,18 @@ class File(models.Model):
 
     def __str__(self) -> str:
         return self.file.name
+
+
+class LocationLog(models.Model):
+    team = models.ForeignKey(
+        "dashboard.Team",
+        on_delete=models.CASCADE,
+        related_name="location_logs",
+    )
+
+    lat = models.FloatField(max_length=64)
+    lng = models.FloatField(max_length=64)
+    time = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f"{self.team} | {self.time.strftime('%d-%m-%Y %H:%M')}"

@@ -12,6 +12,7 @@ from server.apps.dashboard.models import (
     RoutePart,
     TeamRoutePart,
     File,
+    LocationLog,
 )
 
 from adminsortable2.admin import SortableAdminMixin
@@ -23,6 +24,7 @@ admin.site.register(Organization)
 admin.site.register(Event)
 admin.site.register(Edition)
 admin.site.register(File)
+admin.site.register(LocationLog)
 
 
 @admin.register(Route)
@@ -46,6 +48,7 @@ class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
             {
                 "fields": [
                     "name",
+                    "final",
                     "route_type",
                     "route",
                 ],
@@ -67,8 +70,10 @@ class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
 
 @admin.register(TeamRoutePart)
 class TeamRoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ("__str__", "completed")
     list_filter = (
         "route",
+        "routepart",
         "team",
     )
     readonly_fields = ("route", "team", "order")
@@ -82,6 +87,9 @@ class TeamRoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
                     "route_type",
                     "route",
                     "team",
+                    "order",
+                    "completed",
+                    "final",
                 ],
             },
         ),
