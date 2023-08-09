@@ -1,6 +1,5 @@
 from channels.routing import URLRouter
 from channels.auth import AuthMiddlewareStack
-from channels.security.websocket import AllowedHostsOriginValidator
 
 
 def get_asgi_application():
@@ -9,4 +8,4 @@ def get_asgi_application():
     """
     from .router import urls
 
-    return AllowedHostsOriginValidator(AuthMiddlewareStack(URLRouter(urls)))
+    return AuthMiddlewareStack(URLRouter(urls))
