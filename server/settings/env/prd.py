@@ -4,7 +4,7 @@ from ..base import *
 DEBUG = False
 
 SERVER_IP = "116.203.112.220"
-SERVER_URI = f"http://{SERVER_IP}:8000"
+SERVER_URI = f"http://{SERVER_IP}"
 
 ALLOWED_HOSTS = [SERVER_IP]
 
