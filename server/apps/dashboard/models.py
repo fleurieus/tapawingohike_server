@@ -102,7 +102,7 @@ class Team(models.Model):
                 "zoomEnabled": part.routepart_zoom,
                 "image": image_url,
                 "audio": audio_url,
-                "coordinates": self.destinations_formatted(part.destinations.all()),
+                "coordinates": self.destinations_formatted(part.destinations.filter(completed=False)),
             },
         }
         return formatted_data
@@ -121,6 +121,7 @@ class Team(models.Model):
                 type=d.destination_type,
                 radius=d.radius,
                 confirmByUser=d.confirm_by_user,
+                hideForUser=d.hide_for_user,
             )
             for d in destinations
         ]
