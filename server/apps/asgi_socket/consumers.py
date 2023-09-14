@@ -24,10 +24,13 @@ class AppConsumer(WebsocketConsumer):
         if not self.handler.is_authenticated:
             # close if not authenticated
             if not self.handler.authenticate(request_endpoint, request_data):
-                self.send_dict_json(self,{"result": False})
+                self.send_dict_json(self,{"loginresult": False})
                 self.close(4003)
 
             return
+        
+        # send loginresult success
+        self.send_dict_json(self,{"loginresult": True})
 
         # if authenticated handle the request
         self.handler.handle_request(request_endpoint, request_data)
