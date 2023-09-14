@@ -27,10 +27,11 @@ class AppConsumer(WebsocketConsumer):
                 self.send_dict_json(self,{"loginresult": False})
                 self.close(4003)
 
+            # send loginresult success
+            self.send_dict_json(self,{"loginresult": True})
+
             return
         
-        # send loginresult success
-        self.send_dict_json(self,{"loginresult": True})
 
         # if authenticated handle the request
         self.handler.handle_request(request_endpoint, request_data)
