@@ -16,8 +16,14 @@ def log_location(handler, data=None):
     )
 
 
+def undo_completion(handler, data=None):
+    if handler.team.check_undoable_completion():
+        handler.team.undo_last_completion()
+
+
 FUNCTION_MAPPING = {
     "updateLocation": log_location,
     "newLocation": send_new_location,
     "destinationConfirmed": receive_destination_confirmed,
+    "undoCompletion": undo_completion,
 }

@@ -31,7 +31,6 @@ class AppConsumer(WebsocketConsumer):
             self.send_dict_json({"type": "auth", "data": {"result": 1}})
 
             return
-        
 
         # if authenticated handle the request
         self.handler.handle_request(request_endpoint, request_data)
