@@ -1,3 +1,4 @@
+from datetime import datetime
 from urllib.parse import urljoin
 
 from django.db import models
@@ -79,7 +80,35 @@ class Team(models.Model):
         self.save()
 
     def get_next_open_routepart(self):
-        return self.teamrouteparts.filter(completed=False).order_by("order").first()
+        return (
+            self.teamrouteparts.filter(completed_time__isnull=True)
+            .order_by("order")
+            .first()
+        )
+
+    def _last_completed_time(self):
+        qs = self.teamrouteparts.filter(destinations__completed_time__isnull=False)
+        if qs.exists():
+            return list(
+                qs.order_by("destinations__completed_time").values_list(
+                    "destinations__completed_time", flat=True
+                )
+            )[-1]
+
+    def check_undoable_completion(self):
+        return bool(self._last_completed_time())
+
+    def undo_last_completion(self):
+        last_completed_time = self._last_completed_time()
+
+        if team_route_part := self.teamrouteparts.filter(
+            completed_time=last_completed_time
+        ).first():
+            team_route_part.completed_time = None
+            team_route_part.save()
+            team_route_part.destinations.filter(
+                completed_time=last_completed_time
+            ).update(completed_time=None)
 
     def get_next_open_routepart_formatted(self):
         part = self.get_next_open_routepart()
@@ -102,7 +131,10 @@ class Team(models.Model):
                 "zoomEnabled": part.routepart_zoom,
                 "image": image_url,
                 "audio": audio_url,
-                "coordinates": self.destinations_formatted(part.destinations.filter(completed=False)),
+                "hasUndoableCompletions": self.check_undoable_completion(),
+                "coordinates": self.destinations_formatted(
+                    part.destinations.filter(completed_time__isnull=True)
+                ),
             },
         }
         return formatted_data
@@ -112,7 +144,6 @@ class Team(models.Model):
 
     @staticmethod
     def destinations_formatted(destinations):
-        # TODO: beslissen of we de `completed` destintions ook willen tonen
         return [
             dict(
                 id=d.id,
@@ -127,9 +158,10 @@ class Team(models.Model):
         ]
 
     def handle_destination_completion(self, destination_id):
+        complete_time = datetime.now()
         part = self.get_teamroutepart(destination_id)
-        part.complete_destination(destination_id)
-        part.check_completion()
+        part.complete_destination(destination_id, complete_time)
+        part.check_completion(complete_time)
 
 
 class Route(models.Model):
@@ -218,7 +250,7 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
 
     # extra
     final = models.BooleanField(default=False)
-    completed = models.BooleanField(default=False)
+    completed_time = models.DateTimeField(null=True, blank=True)
     order = models.PositiveIntegerField()
 
     route = models.ForeignKey(
@@ -241,15 +273,17 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
     def __str__(self):
         return f"{self.team.name} | {self.routepart}"
 
-    def complete_destination(self, destination_id):
-        return self.destinations.filter(id=destination_id).update(completed=True)
+    def complete_destination(self, destination_id, complete_time):
+        return self.destinations.filter(id=destination_id).update(
+            completed_time=complete_time
+        )
 
-    def check_completion(self):
+    def check_completion(self, complete_time):
         destinations = self.destinations.all()
 
         # mandatory not completed
         if destinations.filter(
-            destination_type=DESTINATION_TYPE_MANDATORY, completed=False
+            destination_type=DESTINATION_TYPE_MANDATORY, completed_time__isnull=True
         ).exists():
             return
 
@@ -257,16 +291,21 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
         if (
             not destinations.filter(destination_type=DESTINATION_TYPE_CHOICE).exists()
             and destinations.filter(
-                destination_type=DESTINATION_TYPE_CHOICE, completed=True
+                destination_type=DESTINATION_TYPE_CHOICE, completed_time__isnull=True
             ).exists()
         ):
             return
 
-        self.complete()
+        self.complete(complete_time)
 
-    def complete(self):
-        self.completed = True
+    def complete(self, complete_time):
+        self.completed_time = complete_time
         self.save()
+
+    def completed(self):
+        return bool(self.completed_time)
+
+    completed.boolean = True
 
     class Meta:
         ordering = ("order",)
@@ -282,7 +321,7 @@ class Destination(models.Model):
     confirm_by_user = models.BooleanField(default=False)
     hide_for_user = models.BooleanField(default=False)
 
-    completed = models.BooleanField(default=False)
+    completed_time = models.DateTimeField(null=True, blank=True)
 
     routepart = models.ForeignKey(
         "dashboard.Routepart",
@@ -299,6 +338,11 @@ class Destination(models.Model):
         blank=True,
         null=True,
     )
+
+    def completed(self):
+        return bool(self.completed_time)
+
+    completed.boolean = True
 
 
 class File(models.Model):

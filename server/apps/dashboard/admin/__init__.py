@@ -88,7 +88,7 @@ class TeamRoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
                     "route",
                     "team",
                     "order",
-                    "completed",
+                    "completed_time",
                     "final",
                 ],
             },
