@@ -139,3 +139,22 @@ MEDIA_URL = "media/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'server_log_file': {
+            'level': 'INFO',  # Set the desired logging level
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/daphne/server.log',  # Set the path to your server.log file
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['server_log_file'],
+            'level': 'INFO',  # Set the desired logging level
+            'propagate': True,
+        },
+    },
+}

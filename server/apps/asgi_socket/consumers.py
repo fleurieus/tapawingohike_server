@@ -4,7 +4,6 @@ from channels.generic.websocket import WebsocketConsumer
 
 from .handlers import SocketDataHandler
 
-
 class AppConsumer(WebsocketConsumer):
     handler = None
 
@@ -25,10 +24,10 @@ class AppConsumer(WebsocketConsumer):
             # close if not authenticated
             if not self.handler.authenticate(request_endpoint, request_data):
                 self.send_dict_json({"type": "auth", "data": {"result": 0}})
-                return self.close(4003)
-
-            # send loginresult success
-            self.send_dict_json({"type": "auth", "data": {"result": 1}})
+                #return self.close(4003)
+            else:
+                # send loginresult success
+                self.send_dict_json({"type": "auth", "data": {"result": 1}})
 
             return
 

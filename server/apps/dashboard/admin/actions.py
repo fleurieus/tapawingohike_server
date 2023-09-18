@@ -19,7 +19,9 @@ def distribute_to_teams(modeladmin, request, queryset):
 
             for team in teams:
                 part_dict["team"] = team
-                team_route_part, _ = part.teamrouteparts.get_or_create(**part_dict)
+                order_dict = {"order": part_dict.pop("order")}
+
+                team_route_part, _ = part.teamrouteparts.get_or_create(**part_dict,defaults=order_dict)
 
                 for dest in part.destinations.all():
                     dest_dict = model_to_dict(dest)

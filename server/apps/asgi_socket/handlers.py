@@ -5,7 +5,6 @@ from server.apps.dashboard.models import Team
 from .constants import TYPE_AUTHENTICATION
 from .handler_functions import FUNCTION_MAPPING
 
-
 class SocketDataHandler:
     consumer = None
     team = None
