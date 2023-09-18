@@ -97,7 +97,6 @@ class Team(models.Model):
 
     def check_undoable_completion(self):
         ret = bool(self._last_completed_time())
-        logging.info(f'check_undoable_completion: {ret}')
         return ret
 
     def undo_last_completion(self):
