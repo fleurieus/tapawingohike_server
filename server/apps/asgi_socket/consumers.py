@@ -1,8 +1,10 @@
 import json
-
+import logging
 from channels.generic.websocket import WebsocketConsumer
 
 from .handlers import SocketDataHandler
+
+logger = logging.getLogger(__name__)
 
 class AppConsumer(WebsocketConsumer):
     handler = None
@@ -13,6 +15,7 @@ class AppConsumer(WebsocketConsumer):
         self.accept()
 
     def receive(self, text_data=None, bytes_data=None):
+        logger.info(f"Incoming data: {text_data}")
         # parse incomming data as dict
         _data = json.loads(text_data)
 
@@ -24,7 +27,7 @@ class AppConsumer(WebsocketConsumer):
             # close if not authenticated
             if not self.handler.authenticate(request_endpoint, request_data):
                 self.send_dict_json({"type": "auth", "data": {"result": 0}})
-                #return self.close(4003)
+                return self.close(4003)
             else:
                 # send loginresult success
                 self.send_dict_json({"type": "auth", "data": {"result": 1}})
@@ -36,10 +39,13 @@ class AppConsumer(WebsocketConsumer):
 
     def send_dict_json(self, data):
         # before we send the data, parse it to json
-        return self.send(json.dumps(data))
+        data_json = json.dumps(data)
+        logger.info(f"Sending data: {data_json}")
+        return self.send(data_json)
 
     def disconnect(self, close_code):
         if self.handler.is_authenticated:
+            logger.info("Closing, team goes offline")
             self.handler.close()
 
         return super().disconnect(close_code)
