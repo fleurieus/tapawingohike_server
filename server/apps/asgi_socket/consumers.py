@@ -44,7 +44,8 @@ class AppConsumer(WebsocketConsumer):
         return self.send(data_json)
 
     def disconnect(self, close_code):
-        if self.handler.is_authenticated:
+        logger.info(f"Closing connection with code: {close_code}")
+        if self.handler.is_authenticated and close_code != 4005:
             logger.info("Closing, team goes offline")
             self.handler.close()
 
