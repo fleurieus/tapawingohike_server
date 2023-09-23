@@ -16,10 +16,11 @@ def distribute_to_teams(modeladmin, request, queryset):
             part_dict["route_id"] = part_dict.pop("route")
             part_dict["routedata_image_id"] = part_dict.pop("routedata_image")
             part_dict["routedata_audio_id"] = part_dict.pop("routedata_audio")
+            order_dict = {"order": part_dict.pop("order")}
 
             for team in teams:
                 part_dict["team"] = team
-                order_dict = {"order": part_dict.pop("order")}
+                
 
                 team_route_part, _ = part.teamrouteparts.get_or_create(**part_dict,defaults=order_dict)
 
