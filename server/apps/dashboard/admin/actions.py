@@ -12,7 +12,8 @@ def distribute_to_teams(modeladmin, request, queryset):
 
             del part_dict["id"]
 
-
+            print(part_dict);
+            
             # foreignkeys
             part_dict["route_id"] = part_dict.pop("route")
             part_dict["routedata_image_id"] = part_dict.pop("routedata_image")

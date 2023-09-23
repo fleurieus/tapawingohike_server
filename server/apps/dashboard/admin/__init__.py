@@ -40,6 +40,12 @@ class TeamAdmin(admin.ModelAdmin):
 
 @admin.register(RoutePart)
 class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
+    list_display = ('order', '__str__', 'orderfield_display')
+    
+    def orderfield_display(self, obj):
+        return obj.order
+    orderfield_display.short_description = 'Order val'   
+
     list_filter = ("route",)
     inlines = (DestinationInline,)
     fieldsets = [
