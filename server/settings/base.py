@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "server.apps.dashboard",
     "channels",
     "adminsortable2",
+    'django_google_maps',
     # django buildin
     "django.contrib.admin",
     "django.contrib.auth",
@@ -48,6 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'bootstrap5',
 ]
 
 MIDDLEWARE = [
@@ -70,7 +72,7 @@ ROOT_URLCONF = "server.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "static/templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -78,6 +80,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "server.apps.dashboard.context_processors.routes_data"
             ],
         },
     },
@@ -140,21 +143,4 @@ MEDIA_URL = "media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'server_log_file': {
-            'level': 'INFO',  # Set the desired logging level
-            'class': 'logging.FileHandler',
-            'filename': '/var/log/daphne/server.log',  # Set the path to your server.log file
-        },
-    },
-    'loggers': {
-        'django': {
-            'handlers': ['server_log_file'],
-            'level': 'INFO',  # Set the desired logging level
-            'propagate': True,
-        },
-    },
-}
+GOOGLE_MAPS_API_KEY = 'AIzaSyBPPe-QY5uDY9hOT-HH3aH2rPFTkuprADc'
