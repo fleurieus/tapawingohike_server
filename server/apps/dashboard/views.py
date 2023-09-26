@@ -9,7 +9,7 @@ from django.db.models import OuterRef, Subquery, Case, When, Value, CharField
 
 from django.db.models import Count, Max, Min, F, Q, ExpressionWrapper, fields
 from django.db.models.functions import Now
-
+from django.conf import settings
 
 
 
@@ -100,8 +100,11 @@ def map_view(request, route_id=None):
             'lng': location['last_completed_lng'],
             'time': location['last_completed_time'],
         }
+    
+    google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
 
     context = {
+        'google_maps_api_key': google_maps_api_key,
         'destinations': destinations,
         'teams': teams,
         'team_locations': team_locations,
