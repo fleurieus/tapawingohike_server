@@ -25,7 +25,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 SECRET_KEY = "django-insecure-s#$wnrc0=8)^d__18q@cj62zccg_&!yg0j$-6a$#qnp6yr9ap+"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False 
 
 SERVER_IP = "127.0.0.1"
 SERVER_URI = f"http://{SERVER_IP}:8000"
@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'bootstrap5',
+    'django_bootstrap5',
 ]
 
 MIDDLEWARE = [
