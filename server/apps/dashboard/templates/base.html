@@ -1,0 +1,70 @@
+<!-- base.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TapawingoHike</title>
+    {% load bootstrap5 %}
+    {% bootstrap_css %}
+    {% bootstrap_javascript %}
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+              <a class="navbar-brand" href="#">TapwingoHike</a>
+              <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/stats/">Stats</a>
+                  </li>                
+                <li class="nav-item">
+                  <a class="nav-link" href="/map/">Map</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="/admin/">Admin</a>
+                </li>
+              </ul>
+              <form class="form-inline my-2 my-lg-0">
+                <select id="routeSelect" class="form-control" onchange="selectRoute()">
+                    <option value="">All Routes</option>
+                    {% for route in routes %}
+                        <option value="{{ route.id }}"{% if route.id == selected_route_id %}selected{% endif %}>{{ route.name }}</option>
+                    {% endfor %}
+                </select>
+              </form>
+            </div>
+          </nav>
+        
+
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <!-- Add your site's footer content here -->
+    </footer>
+    <script>
+        // JavaScript function to handle route selection and redirection
+        function selectRoute() {        
+            const routeId = document.getElementById("routeSelect").value;
+            
+            // Extract the current view name from the URL
+            const currentUrl = window.location.pathname; // Get the path part of the URL
+            const parts = currentUrl.split('/'); // Split the path into segments
+            const currentView = parts[1]; // The view name is the second segment
+            
+            // Construct the new URL with the current view name and routeId
+            const newUrl = `/${currentView}/${routeId}/`;
+            
+            window.location.href = newUrl;
+        }
+    </script>
+    
+    
+</body>
+</html>

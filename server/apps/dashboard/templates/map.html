@@ -1,0 +1,196 @@
+<!-- map.html -->
+
+{% extends "base.html" %}
+
+{% load custom_filters %}
+
+{% block content %}
+<script>
+    const teamMarkerIcons = {{ team_marker_icons|safe }};
+</script>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Map Column -->
+        <div class="col col-lg-10 p-0">
+            <!-- Add your map here (e.g., using an iframe, div, or any map library) -->
+            <div id="map" style="height: 100vh;"></div>
+        </div>
+
+        <!-- Sidebar Column -->
+        <div class="col-lg-2 p-0">
+            <div class="bg-light h-100">
+                <!-- Filter Section -->
+                <div class="p-3">
+                    <h4>Filter</h4>
+
+                    <!-- Team Filter -->
+                    <div class="form-group mb-3">
+                        <h5>Team</h4>
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input team-filter" id="all-teams" data-team="all" checked>
+                            <label class="form-check-label" for="all-teams">All Teams</label>
+                        </div>                           
+                        {% for team in teams %}
+                        <div class="form-check">
+                            <input type="checkbox" class="form-check-input team-filter" id="team-{{ team.id }}" data-team="{{ team.id }}" checked>
+                            <img src="{{ team_marker_icons|get_item:team.id }}" class="team-marker-icon" alt="{{ team.name }} Marker" height="20">
+                            <label class="form-check-label" for="team-{{ team.id }}">{{ team.name }}</label>
+                        </div>
+                        {% endfor %}
+                        <!-- Add similar form-check elements for other teams -->
+                    </div>
+
+                    <!-- Show on Map Filter -->
+                    <div class="form-group">
+                        <h5>Show on Map</h5>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="teamLocationLogs-filter" checked>
+                            <label class="custom-control-label" for="teamLocationLogs">Team Location Logs</label>
+                        </div>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="destinations-filter" checked>
+                            <label class="custom-control-label" for="destinations">Destinations</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function initMap() {
+        const map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: {{ 52.47837701966765|stringformat:"f"}}, lng: {{ 6.4119174456591645|stringformat:"f"}} },
+            zoom: 9,
+        });
+
+        const team_markers = {};
+        // Add markers for teams
+        {% for team_location in team_locations %}
+            var teamId = {{ team_location.team__id }};            
+            var marker = new google.maps.Marker({
+                position: { lat: {{ team_location.lat|stringformat:"f"}}, lng: {{ team_location.lng|stringformat:"f"}} },
+                map: map,
+                title: '{{ team_location.team__name }}',
+                icon: { url: teamMarkerIcons[teamId], size: new google.maps.Size(21, 34) }, // Set the custom marker icon
+            });
+
+            if (!team_markers[teamId]) {
+                team_markers[teamId] = [];
+            }
+
+            team_markers[teamId].push(marker);
+        {% endfor %}
+        
+
+        const destination_markers = {};
+        // Add markers for destinations
+        {% for destination in destinations %}
+            var id = {{ destination.id }};            
+            var marker = new google.maps.Marker({
+                position: { lat: {{ destination.lat|stringformat:"f"}}, lng: {{ destination.lng|stringformat:"f"}} },
+                map: map,
+                title: '{{ destination.routepart__order }}',
+                icon: { url: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF', size: new google.maps.Size(21, 34) }, // Set the custom marker icon
+            });
+
+            if (!destination_markers[id]) {
+                destination_markers[id] = [];
+            }
+
+            destination_markers[id].push(marker);
+        {% endfor %}
+
+        
+
+        // Handle "All Teams" checkbox behavior
+        const allTeamsCheckbox = document.querySelector('#all-teams');
+        allTeamsCheckbox.addEventListener('change', () => {
+            const isChecked = allTeamsCheckbox.checked;
+            teamFilterCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+
+            // Update markers based on the "All Teams" checkbox
+            updateMarkers();
+        });
+
+        // Filter Teams
+        const teamFilterCheckboxes = document.querySelectorAll('.team-filter');
+        teamFilterCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                // Update markers based on the team checkboxes
+                updateMarkers();
+            });
+        });
+        
+        // Handle "Team Location Logs" checkbox behavior
+        const teamLocationLogsCheckbox = document.querySelector('#teamLocationLogs-filter');
+        teamLocationLogsCheckbox.addEventListener('change', () => {
+            allTeamsCheckbox.checked = teamLocationLogsCheckbox.checked;
+            triggerEvent(allTeamsCheckbox, 'change');
+            updateMarkers();
+        });
+
+        
+        // Filter Destinations
+        const destinationFilterCheckbox = document.querySelector('#destinations-filter');
+        destinationFilterCheckbox.addEventListener('change', () => {
+            // Update markers based on the team checkboxes
+            updateMarkers();
+        });
+        
+        // Function to update markers based on checkboxes
+        function updateMarkers() {
+            const selectedTeams = [...teamFilterCheckboxes]
+                .filter(checkbox => checkbox.checked && checkbox.dataset.team !== 'all')
+                .map(checkbox => parseInt(checkbox.dataset.team));
+
+            // Show/hide team markers
+            Object.keys(team_markers).forEach(teamId => {
+                team_markers[teamId].forEach(marker => {
+                    if (selectedTeams.includes(parseInt(teamId)) || selectedTeams.length === 0) {
+                        marker.setMap(map);
+                    } else {
+                        marker.setMap(null);
+                    }
+                });
+            });
+
+            // Show/hide destination markers based on destinationFilterCheckbox
+            const isDestinationFilterChecked = destinationFilterCheckbox.checked;
+            Object.keys(destination_markers).forEach(destinationId => {
+                destination_markers[destinationId].forEach(marker=> {
+                    if( isDestinationFilterChecked)
+                        marker.setMap(map);
+                    else
+                        marker.setMap(null);
+                })    
+            })
+            // If no team checkbox is checked, hide all markers
+            const noTeamChecked = !selectedTeams.length;
+            if (noTeamChecked) {
+                Object.keys(team_markers).forEach(teamId => {
+                    team_markers[teamId].forEach(marker => {
+                        marker.setMap(null);
+                    });
+                });
+            }
+        }
+
+    
+    }
+
+    function triggerEvent(element, eventName) {
+        var event = document.createEvent("HTMLEvents");
+        event.initEvent(eventName, false, true);
+        element.dispatchEvent(event);
+    }    
+</script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+{% endblock %}
