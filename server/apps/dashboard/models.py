@@ -290,8 +290,8 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
 
         # choice is not completed
         if (
-            not destinations.filter(destination_type=DESTINATION_TYPE_CHOICE).exists()
-            and destinations.filter(
+            destinations.filter(destination_type=DESTINATION_TYPE_CHOICE).exists()
+            and not destinations.filter(
                 destination_type=DESTINATION_TYPE_CHOICE, completed_time__isnull=True
             ).exists()
         ):
