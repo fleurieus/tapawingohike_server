@@ -292,7 +292,7 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
         if (
             destinations.filter(destination_type=DESTINATION_TYPE_CHOICE).exists()
             and not destinations.filter(
-                destination_type=DESTINATION_TYPE_CHOICE, completed_time__isnull=True
+                destination_type=DESTINATION_TYPE_CHOICE, completed_time__isnull=False
             ).exists()
         ):
             return
