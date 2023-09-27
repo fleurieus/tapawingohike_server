@@ -103,6 +103,9 @@ def map_view(request, route_id=None):
     
     google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
 
+    
+    
+    
     context = {
         'google_maps_api_key': google_maps_api_key,
         'destinations': destinations,
@@ -111,8 +114,9 @@ def map_view(request, route_id=None):
         'last_completed_destinations': last_completed_destinations,
         'team_marker_icons': team_marker_icons,
         'selected_route_id': route_id,
+        'funnel_toggle': True
     }
-    print(context)
+    
     
     return render(request, 'map.html', context)
 
