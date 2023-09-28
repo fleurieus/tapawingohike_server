@@ -12,6 +12,7 @@ from django.db.models.functions import Now, TruncTime
 from django.conf import settings
 from .constants import (
     DESTINATION_TYPE_MANDATORY,
+    DESTINATION_TYPE_CHOICE,
 )
 
 def calculate_walking_distance(destinations):
@@ -85,11 +86,34 @@ def stats_view(request, route_id):
     edition = route.edition
 
     # Calculate the number of destinations of type mandatory for the chosen route
+    '''
     mandatory_destinations = Destination.objects.filter(
         routepart__route=route,
         destination_type=DESTINATION_TYPE_MANDATORY
     ).order_by('routepart__order')
     mandatory_destinations_count = mandatory_destinations.count()
+    '''
+
+    # Filter the mandatory destinations for the specific route
+    mandatory_destinations = Destination.objects.filter(
+        routepart__route=route,
+        destination_type=DESTINATION_TYPE_MANDATORY
+    )
+
+    # Create a subquery to find the first choice destination for each RoutePart in the specific route
+    first_choice_destination_subquery = Destination.objects.filter(
+        routepart__route=route,
+        destination_type=DESTINATION_TYPE_CHOICE,
+        routepart=OuterRef('routepart'),
+    ).order_by('id').values('id')[:1]
+
+    # Annotate the mandatory destinations queryset with the first choice destination subquery
+    mandatory_destinations = mandatory_destinations.annotate(
+        first_choice_destination=Subquery(first_choice_destination_subquery)
+    )
+
+    # Collect all destinations into a list
+    destinations_count = mandatory_destinations.count()
 
     # Calculate distance between mandatory destinations
     my_dests = [(dest.lat, dest.lng) for dest in mandatory_destinations]    
@@ -124,7 +148,7 @@ def stats_view(request, route_id):
     context = {
         'route': route,
         'edition': edition,
-        'mandatory_destinations_count': mandatory_destinations_count,
+        'destinations_count': destinations_count,
         'distance': distance,
         'team_stats': team_stats,
         'selected_route_id': route_id,
