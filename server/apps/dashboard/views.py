@@ -88,7 +88,7 @@ def stats_view(request, route_id):
     mandatory_destinations = Destination.objects.filter(
         routepart__route=route,
         destination_type=DESTINATION_TYPE_MANDATORY
-    )
+    ).order_by('routepart__order')
     mandatory_destinations_count = mandatory_destinations.count()
 
     # Calculate distance between mandatory destinations
