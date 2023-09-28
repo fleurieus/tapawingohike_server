@@ -1,5 +1,5 @@
 # views.py
-import json
+import googlemaps
 from django.core.serializers.json import DjangoJSONEncoder
 
 from django.contrib.admin.views.decorators import staff_member_required
@@ -8,24 +8,75 @@ from .models import Destination, Team, TeamRoutePart, LocationLog, Route
 from django.db.models import OuterRef, Subquery, Case, When, Value, CharField
 
 from django.db.models import Count, Max, Min, F, Q, ExpressionWrapper, fields
-from django.db.models.functions import Now
+from django.db.models.functions import Now, TruncTime
 from django.conf import settings
+from .constants import (
+    DESTINATION_TYPE_MANDATORY,
+)
 
+def calculate_distance_between_destinations(destination1, destination2):
+    # Initialize Google Maps client
+    gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
 
+    # Define destination coordinates
+    origin = (destination1.lat, destination1.lng)
+    destination = (destination2.lat, destination2.lng)
 
+    # Calculate distance between two coordinates using Directions API
+    directions_result = gmaps.directions(
+        origin,
+        destination,
+        mode="walking",  # You can specify other travel modes like "walking" or "bicycling"
+    )
+
+    # Extract distance from the result
+    distance = directions_result[0]["legs"][0]["distance"]["text"]
+
+    return distance
+
+def calculate_total_distance(distances):
+    total_distance = 0.0
+    for distance in distances.values():
+        # Parse the distance text (e.g., "5.2 mi" or "2.3 km") to extract the numeric value
+        numeric_distance = float(distance.split()[0])
+        total_distance += numeric_distance
+    return total_distance
 
 @staff_member_required
 def stats_view(request, route_id):
     # Fetch the route
     route = Route.objects.get(pk=route_id)
 
+    # All destinations
+    destinations = Destination.objects.filter(routepart__route=route).order_by('routepart__order')
+
+    # Calculate distances between destinations
+    distances = {}
+    for i in range(len(destinations) - 1):
+        for j in range(i + 1, len(destinations)):
+            distance = calculate_distance_between_destinations(destinations[i], destinations[j])
+            distances[(destinations[i], destinations[j])] = distance
+
+    # Calculate the total distance
+    total_distance = calculate_total_distance(distances)
+
+
+    # Fetch the edition related to the route
+    edition = route.edition
+
+    # Calculate the number of destinations of type mandatory for the chosen route
+    mandatory_destinations_count = Destination.objects.filter(
+        routepart__route=route,
+        destination_type=DESTINATION_TYPE_MANDATORY
+    ).count()
+
     # Fetch all teams associated with the route
     teams = Team.objects.filter(teamrouteparts__route=route).distinct()
 
     # Calculate the first completed teamroutepart and last completed teamroutepart for each team
     team_stats = teams.annotate(
-        first_completed=Min('teamrouteparts__completed_time'),
-        last_completed=Max('teamrouteparts__completed_time'),
+        first_completed=TruncTime(Min('teamrouteparts__completed_time')),
+        last_completed=TruncTime(Max('teamrouteparts__completed_time')),
     )
 
     # Calculate the time difference in hours
@@ -46,6 +97,9 @@ def stats_view(request, route_id):
 
     context = {
         'route': route,
+        'edition': edition,
+        'total_distance': total_distance,
+        'mandatory_destinations_count': mandatory_destinations_count,
         'team_stats': team_stats,
         'selected_route_id': route_id,
     }

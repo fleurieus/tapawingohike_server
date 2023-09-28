@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "server.apps.dashboard",
     "channels",
     "adminsortable2",
-    'django_google_maps',
+    'googlemaps',
     # django buildin
     "django.contrib.admin",
     "django.contrib.auth",

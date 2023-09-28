@@ -3,4 +3,4 @@ channels==3.0.4
 websockets==11.0.3
 django-admin-sortable2==2.1.8
 django-bootstrap-icons==0.8.5
-django-google-maps==0.13.0
+googlemaps==4.10.0
