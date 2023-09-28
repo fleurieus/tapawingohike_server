@@ -8,7 +8,7 @@
     <h2>Route Statistics for {{ route.name }}</h2>
 
     <!-- Display Edition Information -->
-    <p><strong>Edition:</strong> {{ edition.name }},  {{ edition.date_start|date:"F d, Y H:i A" }} - {{ edition.date_end|date:"F d, Y H:i A" }}</p>
+    <p><strong>Edition:</strong> {{ edition.name }},  {{ edition.date_start|date:"D d F" }} - {{ edition.date_end|date:"D d F Y" }}</p>
 
     <!-- Display Number of Mandatory Destinations -->
     <p><strong>Mandatory Destinations:</strong> {{ mandatory_destinations_count }}</p>

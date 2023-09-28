@@ -47,20 +47,6 @@ def stats_view(request, route_id):
     # Fetch the route
     route = Route.objects.get(pk=route_id)
 
-    # All destinations
-    destinations = Destination.objects.filter(routepart__route=route).order_by('routepart__order')
-
-    # Calculate distances between destinations
-    distances = {}
-    for i in range(len(destinations) - 1):
-        for j in range(i + 1, len(destinations)):
-            distance = calculate_distance_between_destinations(destinations[i], destinations[j])
-            distances[(destinations[i], destinations[j])] = distance
-
-    # Calculate the total distance
-    total_distance = calculate_total_distance(distances)
-
-
     # Fetch the edition related to the route
     edition = route.edition
 
@@ -98,7 +84,6 @@ def stats_view(request, route_id):
     context = {
         'route': route,
         'edition': edition,
-        'total_distance': total_distance,
         'mandatory_destinations_count': mandatory_destinations_count,
         'team_stats': team_stats,
         'selected_route_id': route_id,
