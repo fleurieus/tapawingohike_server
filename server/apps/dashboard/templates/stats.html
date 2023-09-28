@@ -5,36 +5,58 @@
 {% block content %}
 
 <div class="container mt-4">
-    <h2>Route Statistics for {{ route.name }}</h2>
+    <div class="row mb-5">
+        <div class="col">
+            <h3>Statistics for {{ route.name }}</h3>
 
-    <!-- Display Edition Information -->
-    <p><strong>Edition:</strong> {{ edition.name }},  {{ edition.date_start|date:"D d F" }} - {{ edition.date_end|date:"D d F Y" }}</p>
-
-    <!-- Display Number of Mandatory Destinations -->
-    <p><strong>Mandatory Destinations:</strong> {{ mandatory_destinations_count }}</p>
-    <p><strong>Total distance:</strong> {{ total_distance }} km</p>
-
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Team</th>
-                <th>First</th>
-                <th>Last</th>
-                <th>Time</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for team_stat in team_stats %}
+            <table class="table">
                 <tr>
-                    <td>{{ team_stat.name }}</td>
-                    <td>{{ team_stat.first_completed|date:"H:i:s" }}</td>
-                    <td>{{ team_stat.last_completed|date:"H:i:s" }}</td>
-                    <td>{{ team_stat.time_difference|format_duration }}</td>
-                    <td>{{ team_stat.completed_destinations_count }}</td>
+                    <th>Edition</th>
+                    <td>{{ edition.name }}</td>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                <tr>
+                    <th>Dates</th>
+                    <td>{{ edition.date_start|date:"D j b" }} - {{ edition.date_end|date:"D j b Y" }}</td>
+                </tr>
+                <tr>
+                    <th>Destinations*</th>
+                    <td>{{ mandatory_destinations_count }}</td>
+                </tr>        
+                <tr>
+                    <th>Distance*</th>
+                    <td>{{ distance }} km</td>
+                </tr>
+            </table>
+            <p class="small">* only mandatory destinations</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <h3>Team stats</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Team</th>
+                        <th>First</th>
+                        <th>Last</th>
+                        <th>Time</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team_stat in team_stats %}
+                        <tr>
+                            <td>{{ team_stat.name }}</td>
+                            <td>{{ team_stat.first_completed|date:"H:i:s" }}</td>
+                            <td>{{ team_stat.last_completed|date:"H:i:s" }}</td>
+                            <td>{{ team_stat.time_difference|format_duration }}</td>
+                            <td>{{ team_stat.completed_destinations_count }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
 </div>
 {% endblock %}

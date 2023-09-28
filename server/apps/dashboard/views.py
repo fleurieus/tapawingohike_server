@@ -14,33 +14,67 @@ from .constants import (
     DESTINATION_TYPE_MANDATORY,
 )
 
-def calculate_distance_between_destinations(destination1, destination2):
+def calculate_walking_distance(destinations):
+    
     # Initialize Google Maps client
     gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
 
-    # Define destination coordinates
-    origin = (destination1.lat, destination1.lng)
-    destination = (destination2.lat, destination2.lng)
-
-    # Calculate distance between two coordinates using Directions API
-    directions_result = gmaps.directions(
-        origin,
-        destination,
-        mode="walking",  # You can specify other travel modes like "walking" or "bicycling"
-    )
-
-    # Extract distance from the result
-    distance = directions_result[0]["legs"][0]["distance"]["text"]
-
-    return distance
-
-def calculate_total_distance(distances):
     total_distance = 0.0
-    for distance in distances.values():
-        # Parse the distance text (e.g., "5.2 mi" or "2.3 km") to extract the numeric value
-        numeric_distance = float(distance.split()[0])
-        total_distance += numeric_distance
-    return total_distance
+
+    # Split destinations into chunks of 10
+    chunk_size = 10
+    for i in range(0, len(destinations), chunk_size):
+        chunk = destinations[i:i + chunk_size]
+
+        # Create a list of waypoints, excluding the first and last points
+        waypoints = chunk[1:-1]
+
+
+        # Calculate the walking distance for the chunk
+        if waypoints:
+            directions_result = gmaps.directions(
+                chunk[0],  # Starting point
+                chunk[-1],  # Ending point
+                mode="walking",  # Walking mode
+                waypoints=waypoints,
+            )
+            #print(directions_result)
+
+            # Extract distance from the result
+            distance = directions_result[0]["legs"][0]["distance"]["value"]  # in meters
+            total_distance += distance
+
+    # Convert total distance to kilometers or miles, depending on your preference
+    total_distance_km = total_distance / 1000.0
+    return round(total_distance_km,2)
+
+# def calculate_distance_between_destinations(destination1, destination2):
+#     # Initialize Google Maps client
+#     gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+
+#     # Define destination coordinates
+#     origin = (destination1.lat, destination1.lng)
+#     destination = (destination2.lat, destination2.lng)
+
+#     # Calculate distance between two coordinates using Directions API
+#     directions_result = gmaps.directions(
+#         origin,
+#         destination,
+#         mode="walking",  # You can specify other travel modes like "walking" or "bicycling"
+#     )
+
+#     # Extract distance from the result
+#     distance = directions_result[0]["legs"][0]["distance"]["text"]
+
+#     return distance
+
+# def calculate_total_distance(distances):
+#     total_distance = 0.0
+#     for distance in distances.values():
+#         # Parse the distance text (e.g., "5.2 mi" or "2.3 km") to extract the numeric value
+#         numeric_distance = float(distance.split()[0])
+#         total_distance += numeric_distance
+#     return total_distance
 
 @staff_member_required
 def stats_view(request, route_id):
@@ -51,10 +85,16 @@ def stats_view(request, route_id):
     edition = route.edition
 
     # Calculate the number of destinations of type mandatory for the chosen route
-    mandatory_destinations_count = Destination.objects.filter(
+    mandatory_destinations = Destination.objects.filter(
         routepart__route=route,
         destination_type=DESTINATION_TYPE_MANDATORY
-    ).count()
+    )
+    mandatory_destinations_count = mandatory_destinations.count()
+
+    # Calculate distance between mandatory destinations
+    my_dests = [(dest.lat, dest.lng) for dest in mandatory_destinations]    
+    distance = calculate_walking_distance(my_dests)
+
 
     # Fetch all teams associated with the route
     teams = Team.objects.filter(teamrouteparts__route=route).distinct()
@@ -85,6 +125,7 @@ def stats_view(request, route_id):
         'route': route,
         'edition': edition,
         'mandatory_destinations_count': mandatory_destinations_count,
+        'distance': distance,
         'team_stats': team_stats,
         'selected_route_id': route_id,
     }
