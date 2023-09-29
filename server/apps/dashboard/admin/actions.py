@@ -28,6 +28,7 @@ def distribute_to_teams(modeladmin, request, queryset):
 
                     del dest_dict["id"]
                     del dest_dict["routepart"]
+                    del dest_dict["completed_time"]
 
                     dest_dict["teamroutepart"] = team_route_part.pk
 
