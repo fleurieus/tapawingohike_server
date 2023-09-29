@@ -77,7 +77,7 @@ def calculate_walking_distance(destinations):
 #         total_distance += numeric_distance
 #     return total_distance
 
-@staff_member_required
+@staff_member_required(login_url="/admin/login/")
 def stats_view(request, route_id):
     # Fetch the route
     route = Route.objects.get(pk=route_id)
@@ -160,7 +160,7 @@ def stats_view(request, route_id):
 
 
 
-@staff_member_required
+@staff_member_required(login_url="/admin/login/")
 def map_view(request, route_id=None):
     destinations = Destination.objects.none()
     teams = Team.objects.none()

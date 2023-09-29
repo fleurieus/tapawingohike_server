@@ -6,8 +6,8 @@ DEBUG = False
 SERVER_IP = "116.203.112.220"
 SERVER_URI = f"http://{SERVER_IP}"
 
-ALLOWED_HOSTS = [SERVER_IP]
-
+ALLOWED_HOSTS = ['app.tapawingo.nl', SERVER_IP]
+CSRF_TRUSTED_ORIGINS = ['https://app.tapawingo.nl']
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
