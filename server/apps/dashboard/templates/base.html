@@ -21,8 +21,8 @@
           </button>
           <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto mt-1 me-2 mb-2 mb-lg-0">
-              <li class="nav-item"><a class="nav-link" href="/map">Map</a></li>
-              <li class="nav-item"><a class="nav-link" href="/stats">Stats</a></li>
+              <li class="nav-item"><a class="nav-link" href="/map/{{ selected_route_id }}">Map</a></li>
+              <li class="nav-item"><a class="nav-link" href="/stats/{{ selected_route_id }}">Stats</a></li>
               <li class="nav-item"><a class="nav-link" href="/admin">Admin</a></li>
 
               {% if funnel_toggle == True %}
