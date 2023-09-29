@@ -61,6 +61,12 @@
         const map = new google.maps.Map(document.getElementById('map'), {
             center: { lat: {{ 52.47837701966765|stringformat:"f"}}, lng: {{ 6.4119174456591645|stringformat:"f"}} },
             zoom: 9,
+            controlSize: 24,
+            mapTypeControl: true,
+            mapTypeControlOptions: {
+                style: google.maps.MapTypeControlStyle.DEFAULT,
+                mapTypeIds: ["roadmap", "satellite", "hybrid", "terrain"],
+            },
         });
 
         const latlngbounds = new google.maps.LatLngBounds();
