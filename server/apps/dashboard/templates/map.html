@@ -63,42 +63,61 @@
             zoom: 9,
         });
 
-        const team_markers = {};
-        // Add markers for teams
-        {% for team_location in team_locations %}
-            var teamId = {{ team_location.team__id }};            
+        const latlngbounds = new google.maps.LatLngBounds();
+
+        var markersData = [];
+        {% if destinations %}//Add destinations{% for destination in destinations %}
+        markersData.push({
+            id: {{ destination.id }},
+            latlng: new google.maps.LatLng({{ destination.lat|stringformat:"f"}}, {{ destination.lng|stringformat:"f"}}),
+            title: '{{ destination.routepart__order }}',
+            icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF',
+            type: 'destination'
+        });{% endfor %}{% endif %}
+        {% if team_locations %}//Add Teams{% for team_location in team_locations %}
+        markersData.push({
+            id: {{ team_location.team__id }},
+            latlng: new google.maps.LatLng({{ team_location.lat|stringformat:"f"}}, {{ team_location.lng|stringformat:"f"}}),
+            title: '{{ team_location.team__name }}',
+            icon: teamMarkerIcons[{{ team_location.team__id }}],
+            type: 'team'
+        });{% endfor %}{% endif %}
+
+
+        var destination_markers = {};
+        var team_markers = {};
+
+        for (var i = 0; i < markersData.length; i++) {
+            var data = markersData[i];
             var marker = new google.maps.Marker({
-                position: { lat: {{ team_location.lat|stringformat:"f"}}, lng: {{ team_location.lng|stringformat:"f"}} },
+                position: data.latlng,
                 map: map,
-                title: '{{ team_location.team__name }}',
-                icon: { url: teamMarkerIcons[teamId], size: new google.maps.Size(21, 34) }, // Set the custom marker icon
+                title: data.title,
+                icon: {
+                    url: data.icon,
+                    size: new google.maps.Size(21, 34)
+                }
             });
+            latlngbounds.extend(marker.position);
 
-            if (!team_markers[teamId]) {
-                team_markers[teamId] = [];
+            var id = data.id;
+            if (data.type === 'destination') {
+                if (!destination_markers[id]) {
+                    destination_markers[id] = [];
+                }
+                destination_markers[id].push(marker);
+            } else if (data.type === 'team') {
+                if (!team_markers[id]) {
+                    team_markers[id] = [];
+                }
+                team_markers[id].push(marker);
             }
+        }
 
-            team_markers[teamId].push(marker);
-        {% endfor %}
-        
 
-        const destination_markers = {};
-        // Add markers for destinations
-        {% for destination in destinations %}
-            var id = {{ destination.id }};            
-            var marker = new google.maps.Marker({
-                position: { lat: {{ destination.lat|stringformat:"f"}}, lng: {{ destination.lng|stringformat:"f"}} },
-                map: map,
-                title: '{{ destination.routepart__order }}',
-                icon: { url: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF', size: new google.maps.Size(21, 34) }, // Set the custom marker icon
-            });
-
-            if (!destination_markers[id]) {
-                destination_markers[id] = [];
-            }
-
-            destination_markers[id].push(marker);
-        {% endfor %}
+        //Center map and adjust Zoom based on the position of all markers.
+        map.setCenter(latlngbounds.getCenter());
+        map.fitBounds(latlngbounds);
 
         
 
