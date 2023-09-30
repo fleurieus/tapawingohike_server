@@ -77,7 +77,7 @@ def calculate_walking_distance(destinations):
 #         total_distance += numeric_distance
 #     return total_distance
 
-@staff_member_required(login_url="/admin/login/")
+@staff_member_required
 def stats_view(request, route_id):
     # Fetch the route
     route = Route.objects.get(pk=route_id)
@@ -160,7 +160,7 @@ def stats_view(request, route_id):
 
 
 
-@staff_member_required(login_url="/admin/login/")
+@staff_member_required
 def map_view(request, route_id=None):
     destinations = Destination.objects.none()
     teams = Team.objects.none()
@@ -186,7 +186,7 @@ def map_view(request, route_id=None):
     last_completed_destinations = Destination.objects.filter(
         teamroutepart__team=OuterRef('team_id'),
         completed_time__isnull=False
-    ).order_by('-completed_time').values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')[:1]
+    ).order_by('-completed_time').values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')
 
     # Annotate team_locations with latitude, longitude, and completed time of the last completed destination
     team_locations = team_locations.annotate(
