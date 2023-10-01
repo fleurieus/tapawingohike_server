@@ -74,7 +74,7 @@
         var markersData = [];
         {% if destinations %}//Add destinations{% for destination in destinations %}
         markersData.push({
-            id: {{ destination.id }},
+            id: {{ destination.id }}.{{ forloop.counter }},
             latlng: new google.maps.LatLng({{ destination.lat|stringformat:"f"}}, {{ destination.lng|stringformat:"f"}}),
             title: '{{ destination.routepart__order }}',
             icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF',
@@ -82,13 +82,21 @@
         });{% endfor %}{% endif %}
         {% if team_locations %}//Add Teams{% for team_location in team_locations %}
         markersData.push({
-            id: {{ team_location.team__id }},
+            id: {{ team_location.team__id }}.{{ forloop.counter }},
             latlng: new google.maps.LatLng({{ team_location.lat|stringformat:"f"}}, {{ team_location.lng|stringformat:"f"}}),
             title: '{{ team_location.team__name }}',
             icon: teamMarkerIcons[{{ team_location.team__id }}],
             type: 'team'
         });{% endfor %}{% endif %}
-
+        {% if completed_destinations %}//Add Teams{% for completed_destination in completed_destinations %}
+        console.log({{ completed_destination.lat }});
+        markersData.push({
+            id: {{ completed_destination.teamroutepart__team_id }}.{{ forloop.counter }},
+            latlng: new google.maps.LatLng({{ completed_destination.lat|stringformat:"f"}}, {{ completed_destination.lng|stringformat:"f"}}),
+            title: '{{ completed_destination.team__name }}',
+            icon: teamMarkerIcons[{{ completed_destination.teamroutepart__team_id }}],
+            type: 'team'
+        });{% endfor %}{% endif %}
 
         var destination_markers = {};
         var team_markers = {};

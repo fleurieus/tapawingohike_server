@@ -6,6 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 from .models import Destination, Team, TeamRoutePart, LocationLog, Route
 from django.db.models import OuterRef, Subquery, Case, When, Value, CharField
+from django.utils import timezone
 
 from django.db.models import Count, Max, Min, F, Q, ExpressionWrapper, fields
 from django.db.models.functions import Now, TruncTime
@@ -170,10 +171,25 @@ def map_view(request, route_id=None):
         teams = Team.objects.filter(teamrouteparts__routepart__route__id=route_id).distinct()
     
     # Retrieve team locations
-    team_locations = LocationLog.objects.filter(
-        team__in=teams
-    ).values('team__name', 'team__id', 'lat', 'lng', 'time')
+    # team_locations = LocationLog.objects.filter(
+    #     team__in=teams
+    # ).values('team__name', 'team__id', 'lat', 'lng', 'time')
 
+    # Get the current date in the server's timezone
+    current_date = timezone.now().date()
+
+    # Filter LocationLog objects for today
+    team_locations = LocationLog.objects.filter(
+        team__in=teams,
+        time__date=current_date
+    ).values('team__name', 'team__id', 'lat', 'lng', 'time')    
+
+    completed_destinations = Destination.objects.filter(
+        teamroutepart__team__in=teams,
+        teamroutepart__routepart__route_id=route_id,
+        completed_time__isnull=False,
+    ).values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')
+    
     # Fetch the list of routes
     routes = Route.objects.all()
 
@@ -183,28 +199,37 @@ def map_view(request, route_id=None):
         team_marker_icons[team.id] = get_marker_icon(index)
 
     # Subquery to retrieve the last completed destination for each team
-    last_completed_destinations = Destination.objects.filter(
-        teamroutepart__team=OuterRef('team_id'),
-        completed_time__isnull=False
-    ).order_by('-completed_time').values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')
+    # last_completed_destinations = Destination.objects.filter(
+    #     teamroutepart__team=OuterRef('team_id'),
+    #     completed_time__isnull=False
+    # ).order_by('-completed_time').values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')[:1]
 
-    # Annotate team_locations with latitude, longitude, and completed time of the last completed destination
-    team_locations = team_locations.annotate(
-        last_completed_lat=Subquery(last_completed_destinations.values('lat')),
-        last_completed_lng=Subquery(last_completed_destinations.values('lng')),
-        last_completed_time=Subquery(last_completed_destinations.values('completed_time'))
-    )
-
-    last_completed_destinations = {}
-    for location in team_locations:
-        team_id = location['team__id']
-        last_completed_destinations[team_id] = {
-            'team_id': team_id,
-            'lat': location['last_completed_lat'],
-            'lng': location['last_completed_lng'],
-            'time': location['last_completed_time'],
-        }
+    # destinations_completed_for_route = Destination.objects.filter(
+    #     completed_time__isnull=False,
+    #     teamroutepart__completed_time__isnull=False,
+    #     teamroutepart__route_id=route_id
+    # ).exclude(
+    #     Q(lat__isnull=True) | Q(lng__isnull=True)
+    # ).values('lat', 'lng', 'teamroutepart__team_id', 'completed_time')
     
+    # # Annotate team_locations with latitude, longitude, and completed time of the last completed destination
+    # team_locations = team_locations.annotate(
+    #     completed_lat=Subquery(destinations_completed_for_route.values('lat')),
+    #     completed_lng=Subquery(destinations_completed_for_route.values('lng')),
+    #     completed_time=Subquery(destinations_completed_for_route.values('completed_time'))
+    # )
+    
+
+    # completed_destinations = {}
+    # for location in team_locations:
+    #     team_id = location['team__id']
+    #     completed_destinations[team_id] = {
+    #         'team_id': team_id,
+    #         'lat': location['completed_lat'],
+    #         'lng': location['completed_lng'],
+    #         'time': location['completed_time'],
+    #     }
+    # print(completed_destinations)
     google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
 
     
@@ -215,7 +240,7 @@ def map_view(request, route_id=None):
         'destinations': destinations,
         'teams': teams,
         'team_locations': team_locations,
-        'last_completed_destinations': last_completed_destinations,
+        'completed_destinations': completed_destinations,
         'team_marker_icons': team_marker_icons,
         'selected_route_id': route_id,
         'funnel_toggle': True
