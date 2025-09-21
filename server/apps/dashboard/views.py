@@ -278,4 +278,4 @@ def get_marker_icon(team_property):
 
     # Use the team property value to look up the marker icon URL
     # If a match is found, return the corresponding marker icon URL; otherwise, use a default.
-    return marker_icon_mappings.get(team_property, 'http://maps.google.com/mapfiles/ms/icons/grey-dot.png')
+    return marker_icon_mappings.get(team_property, '/pin?letter=%20&bgcolor=9E9E9E&color=FFFFFF&chs=21x34&format=svg')

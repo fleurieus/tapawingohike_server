@@ -116,11 +116,11 @@ def chart_pin(request):
     if not letter:
         return HttpResponseBadRequest("Missing letter")
 
-    chs = (request.GET.get("chs") or "48x64").lower()
+    chs = (request.GET.get("chs") or "21x34").lower()
     try:
         w, h = [int(x) for x in chs.split("x")]
     except Exception:
-        w, h = 48, 64
+        w, h = 21, 34
 
     if fmt != "svg":
         return HttpResponseBadRequest("Only format=svg is supported for the exact provided path")
