@@ -92,7 +92,7 @@
             type: 'team'
         });{% endfor %}{% endif %}
         {% if completed_destinations %}//Add Teams{% for completed_destination in completed_destinations %}
-        console.log({{ completed_destination.lat }});
+        //console.log({{ completed_destination.lat }});
         markersData.push({
             id: {{ completed_destination.teamroutepart__team_id }}.{{ forloop.counter }},
             latlng: new google.maps.LatLng({{ completed_destination.lat|stringformat:"f"}}, {{ completed_destination.lng|stringformat:"f"}}),
