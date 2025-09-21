@@ -111,11 +111,8 @@
             img.height = 64;
             img.alt = data.title || "";
 
-            // Tip: als je SVG’s gebruikt met punt op de onderrand, forceer onderste anker:
-            // (AdvancedMarker plaatst je content standaard al op de geo-positie,
-            // maar dit maakt het expliciet onder-midden uitgelijnd)
-            img.style.transform = "translate(-50%, -100%)";
-            img.style.willChange = "transform";
+            //img.style.transform = "translate(-50%, -100%)";
+            //img.style.willChange = "transform";
 
             const marker = new AdvancedMarkerElement({
                 map,
