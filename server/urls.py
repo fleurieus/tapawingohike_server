@@ -5,6 +5,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from server.apps.dashboard import views
+from server.apps.dashboard import pins
 from django.views.generic.base import TemplateView
 from django.contrib.auth.decorators import login_required
 
@@ -14,6 +15,7 @@ urlpatterns = [
     path('map/<int:route_id>/', views.map_view, name='map_view_with_route_id'),
     path('map/', login_required(TemplateView.as_view(template_name='base.html')), name='map'),
     path('stats/', login_required(TemplateView.as_view(template_name='base.html')), name='stats'),
+    path('pin', pins.chart_pin, name="chart_pin")
 ]
 
 if settings.DEBUG:

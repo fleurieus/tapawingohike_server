@@ -4,3 +4,5 @@ websockets==11.0.3
 django-admin-sortable2==2.1.8
 django-bootstrap-icons==0.8.5
 googlemaps==4.10.0
+Pillow>=10.0
+

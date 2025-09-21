@@ -77,7 +77,7 @@
             id: {{ destination.id }}.{{ forloop.counter }},
             latlng: new google.maps.LatLng({{ destination.lat|stringformat:"f"}}, {{ destination.lng|stringformat:"f"}}),
             title: '{{ destination.routepart__order }}',
-            icon: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF',
+            icon: '/pin?chst=d_map_pin_letter&chld={{ destination.routepart__order }}|ADDE63|0000FF',
             type: 'destination'
         });{% endfor %}{% endif %}
         {% if team_locations %}//Add Teams{% for team_location in team_locations %}

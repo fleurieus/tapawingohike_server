@@ -253,18 +253,28 @@ def map_view(request, route_id=None):
 
 def get_marker_icon(team_property):
     # Define a mapping of team property values to marker icon URLs
+    # marker_icon_mappings = {
+    #     1: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=A|00008B|FFFFFF',
+    #     2: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=B|FF00FF|000000',
+    #     3: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=C|FFFF00|000000',
+    #     4: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=D|0000FF|FFFFFF',
+    #     5: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=E|008000|FFFFFF',
+    #     6: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=F|FF0000|FFFFFF',
+    #     7: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=G|FFA500|FFFFFF',
+    #     8: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=H|800080|FFFFFF',
+    #     9: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=I|FFFF00|000000'
+    # }
     marker_icon_mappings = {
-        1: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=A|00008B|FFFFFF',
-        2: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=B|FF00FF|000000',
-        3: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=C|FFFF00|000000',
-        4: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=D|0000FF|FFFFFF',
-        5: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=E|008000|FFFFFF',
-        6: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=F|FF0000|FFFFFF',
-        7: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=G|FFA500|FFFFFF',
-        8: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=H|800080|FFFFFF',
-        9: 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=I|FFFF00|000000'
+        1: '/pin?chst=d_map_pin_letter&chld=A|00008B|FFFFFF',
+        2: '/pin?chst=d_map_pin_letter&chld=B|FF00FF|000000',
+        3: '/pin?chst=d_map_pin_letter&chld=C|FFFF00|000000',
+        4: '/pin?chst=d_map_pin_letter&chld=D|0000FF|FFFFFF',
+        5: '/pin?chst=d_map_pin_letter&chld=E|008000|FFFFFF',
+        6: '/pin?chst=d_map_pin_letter&chld=F|FF0000|FFFFFF',
+        7: '/pin?chst=d_map_pin_letter&chld=G|FFA500|FFFFFF',
+        8: '/pin?chst=d_map_pin_letter&chld=H|800080|FFFFFF',
+        9: '/pin?chst=d_map_pin_letter&chld=I|FFFF00|000000'
     }
-
 
     # Use the team property value to look up the marker icon URL
     # If a match is found, return the corresponding marker icon URL; otherwise, use a default.
