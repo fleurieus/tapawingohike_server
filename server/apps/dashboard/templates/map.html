@@ -117,14 +117,14 @@
             img.style.transform = "translate(-50%, -100%)";
             img.style.willChange = "transform";
 
-            new AdvancedMarkerElement({
+            const marker = new AdvancedMarkerElement({
                 map,
                 position: data.latlng,      // {lat:.., lng:..}
                 title: data.title || "",
                 content: img
             });
 
-            latlngbounds.extend(marker.position);
+            latlngbounds.extend(data.latlng);
 
             var id = data.id;
             if (data.type === 'destination') {
@@ -259,5 +259,5 @@
     }    
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&loading=async&callback=initMap" async defer></script>
 {% endblock %}
