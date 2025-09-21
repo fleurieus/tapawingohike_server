@@ -56,9 +56,11 @@
 </div>
 
 <script>
-
-    function initMap() {
-        const map = new google.maps.Map(document.getElementById('map'), {
+    window.initMap = async function () {
+        const { Map } = await google.maps.importLibrary("maps");
+        const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
+    
+        const map = new Map(document.getElementById('map'), {
             center: { lat: {{ 52.47837701966765|stringformat:"f"}}, lng: {{ 6.4119174456591645|stringformat:"f"}} },
             zoom: 9,
             controlSize: 24,
@@ -67,6 +69,7 @@
                 style: google.maps.MapTypeControlStyle.DEFAULT,
                 mapTypeIds: ["roadmap", "satellite", "hybrid", "terrain"],
             },
+            mapId: "TapaHikeMap"
         });
 
         const latlngbounds = new google.maps.LatLngBounds();
@@ -101,17 +104,26 @@
         var destination_markers = {};
         var team_markers = {};
 
-        for (var i = 0; i < markersData.length; i++) {
-            var data = markersData[i];
-            var marker = new google.maps.Marker({
-                position: data.latlng,
-                map: map,
-                title: data.title,
-                icon: {
-                    url: data.icon,
-                    size: new google.maps.Size(48, 64)
-                }
+        markersData.forEach((data) => {
+            const img = document.createElement("img");
+            img.src = data.icon;          // bv. /chart?letter=A&bgcolor=...&format=svg
+            img.width = 48;               // vervangt new Size(21,34)
+            img.height = 64;
+            img.alt = data.title || "";
+
+            // Tip: als je SVG’s gebruikt met punt op de onderrand, forceer onderste anker:
+            // (AdvancedMarker plaatst je content standaard al op de geo-positie,
+            // maar dit maakt het expliciet onder-midden uitgelijnd)
+            img.style.transform = "translate(-50%, -100%)";
+            img.style.willChange = "transform";
+
+            new AdvancedMarkerElement({
+                map,
+                position: data.latlng,      // {lat:.., lng:..}
+                title: data.title || "",
+                content: img
             });
+
             latlngbounds.extend(marker.position);
 
             var id = data.id;
@@ -126,7 +138,34 @@
                 }
                 team_markers[id].push(marker);
             }
-        }
+        })
+
+        // for (var i = 0; i < markersData.length; i++) {
+        //     var data = markersData[i];
+        //     var marker = new google.maps.Marker({
+        //         position: data.latlng,
+        //         map: map,
+        //         title: data.title,
+        //         icon: {
+        //             url: data.icon,
+        //             size: new google.maps.Size(48, 64)
+        //         }
+        //     });
+        //     latlngbounds.extend(marker.position);
+
+        //     var id = data.id;
+        //     if (data.type === 'destination') {
+        //         if (!destination_markers[id]) {
+        //             destination_markers[id] = [];
+        //         }
+        //         destination_markers[id].push(marker);
+        //     } else if (data.type === 'team') {
+        //         if (!team_markers[id]) {
+        //             team_markers[id] = [];
+        //         }
+        //         team_markers[id].push(marker);
+        //     }
+        // }
 
 
         //Center map and adjust Zoom based on the position of all markers.
