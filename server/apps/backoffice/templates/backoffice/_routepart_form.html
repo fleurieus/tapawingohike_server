@@ -1,0 +1,69 @@
+<div class="bg-white rounded shadow-sm p-4 panel-enter">
+  <h2 class="text-lg font-semibold mb-3">
+    {% if form.instance.pk %}
+      Bewerk RoutePart: <span class="text-slate-600">{{ form.instance.name|default:"(zonder naam)" }}</span>
+    {% else %}
+      Nieuwe RoutePart
+    {% endif %}
+  </h2>
+
+
+  <form
+    hx-post="{% if pk %}{% url 'backoffice:routepart_edit' route.id pk %}{% else %}{% url 'backoffice:routepart_new' route.id %}{% endif %}"
+    hx-target="{% if pk %}#rp-{{ pk }}{% else %}#parts-list{% endif %}"
+    hx-swap="{% if pk %}outerHTML{% else %}beforeend{% endif %}"
+    class="space-y-3"
+   >
+
+    {% csrf_token %}
+
+    <div class="grid grid-cols-2 gap-3">
+      <!-- Naam: full width -->
+      <div class="col-span-2">
+        {{ form.name.label_tag }} 
+        {{ form.name }}
+      </div>
+
+      <!-- Route type: full width -->
+      <div class="col-span-2">
+        {{ form.route_type.label_tag }} 
+        {{ form.route_type }}
+      </div>
+
+      <!-- Checkboxes onder route_type, full width en onder elkaar -->
+      <div class="col-span-2">
+        <div class="flex flex-col gap-2 mt-1">
+          <label class="inline-flex items-center gap-2">
+            {{ form.routepart_zoom }} <span>Zoom enabled</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            {{ form.routepart_fullscreen }} <span>Fullscreen</span>
+          </label>
+          <label class="inline-flex items-center gap-2">
+            {{ form.final }} <span>Final</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Media velden naast elkaar -->
+      <div>
+        {{ form.routedata_image.label_tag }} 
+        {{ form.routedata_image }}
+      </div>
+      <div>
+        {{ form.routedata_audio.label_tag }} 
+        {{ form.routedata_audio }}
+      </div>
+    </div>
+
+    <div class="text-xs text-slate-500">
+      Let op: “Final” mag geen Destinations hebben (model-validatie via <code>FinalDestinationValidationMixin</code>).
+    </div>
+
+    <div class="pt-3 flex justify-end gap-2">
+      <button type="button" class="px-3 py-1 rounded bg-slate-200"
+              onclick="document.getElementById('sidepanel').innerHTML=''">Sluiten</button>
+      <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
+    </div>
+  </form>
+</div>

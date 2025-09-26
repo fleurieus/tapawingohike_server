@@ -1,0 +1,37 @@
+{% extends "_base.html" %}
+{% block title %}Events{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">Events</h1>
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  {% for ev in events %}
+    <a href="{% url 'backoffice:edition_list_for_event' ev.id %}"
+       class="block bg-white border rounded-2xl p-4 hover:shadow">
+      <div class="text-lg font-semibold">{{ ev.name }}</div>
+      {% if ev.start_date or ev.end_date %}
+        <div class="text-sm text-slate-600">{{ ev.start_date }} — {{ ev.end_date }}</div>
+      {% endif %}
+      <dl class="mt-3 grid grid-cols-4 gap-2 text-center">
+        <div class="rounded-lg bg-slate-50 p-2">
+          <dt class="text-xs text-slate-500">Editions</dt>
+          <dd class="text-base font-semibold tabular-nums">{{ ev.editions_count }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-2">
+          <dt class="text-xs text-slate-500">Teams</dt>
+          <dd class="text-base font-semibold tabular-nums">{{ ev.teams_count }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-2">
+          <dt class="text-xs text-slate-500">Routes</dt>
+          <dd class="text-base font-semibold tabular-nums">{{ ev.routes_count }}</dd>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-2">
+          <dt class="text-xs text-slate-500">Routeparts</dt>
+          <dd class="text-base font-semibold tabular-nums">{{ ev.routeparts_count }}</dd>
+        </div>
+      </dl>
+    </a>
+  {% empty %}
+    <div class="text-slate-500">Nog geen events.</div>
+  {% endfor %}
+</div>
+{% endblock %}

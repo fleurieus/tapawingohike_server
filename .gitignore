@@ -27,6 +27,10 @@ share/python-wheels/
 MANIFEST
 Scripts/
 
+# Node / build
+node_modules/
+npm-debug.log*
+yarn-error.log*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -143,6 +147,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
+
 
 # mypy
 .mypy_cache/

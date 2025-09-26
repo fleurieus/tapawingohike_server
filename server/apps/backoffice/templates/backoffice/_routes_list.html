@@ -1,0 +1,69 @@
+{# templates/backoffice/_routes_list.html #}
+<div class="bg-white border rounded-2xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 border-b">
+      <tr>
+        <th class="text-left p-3">Naam</th>
+        <th class="text-left p-3">Edition</th>
+        <th class="text-left p-3"># Routeparts</th>
+        <th class="text-left p-3">TeamRouteParts</th>
+        <th class="text-left p-3">Follow</th>
+        <th class="text-left p-3">Acties</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in routes %}
+        <tr class="border-b last:border-0 hover:bg-slate-50">
+          <td class="p-3 font-medium">{{ r.name }}</td>
+          <td class="p-3 text-slate-600">{{ r.edition.name }}</td>
+          <td class="p-3 tabular-nums"><a title="Naar RouteParts" href="{% url 'backoffice:routeparts_builder' r.id %}">{{ r.parts_count }} <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon></a></td>
+          <td class="p-3">
+            <a
+              class="icon-btn mr-4"
+              title="Naar TeamRouteParts"
+              href="{% url 'backoffice:teamrouteparts_builder' r.id %}">
+              <iconify-icon icon="heroicons-outline:users" width="18" height="18"></iconify-icon> <span class="text-xs">(incl distributie)</span>
+            </a>             
+          </td>
+          <td class="p-3">   
+            <a
+              class="icon-btn mr-4"
+              title="Naar Live Map"
+              href="{% url 'backoffice:route_map' r.id %}">
+              <iconify-icon icon="heroicons-outline:map" width="18" height="18"></iconify-icon> Map
+            </a>
+            <a
+              class="icon-btn mr-4"
+              title="Naar statistieken"
+              href="{% url 'backoffice:route_stats' r.id %}">
+              <iconify-icon icon="heroicons-outline:chart-bar" width="18" height="18"></iconify-icon> Stats
+            </a>            
+          </td>
+          <td class="p-3">             
+            <button
+              class="icon-btn"
+              title="Bewerk Route"
+              hx-get="{% url 'backoffice:route_edit' r.id %}"
+              hx-target="#sidepanel" hx-swap="innerHTML">
+              <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon>
+            </button>
+
+            <button
+              class="icon-btn text-red-700 "
+              title="Verwijder Route"
+              hx-delete="{% url 'backoffice:route_delete' r.id %}"
+              hx-target="closest tr"
+              hx-swap="outerHTML"
+              hx-confirm="Route ‘{{ r.name }}’ verwijderen?">
+              <iconify-icon icon="heroicons-outline:trash" width="18" height="18"></iconify-icon>
+            </button>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="p-3 text-slate-500" colspan="4">Geen routes.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

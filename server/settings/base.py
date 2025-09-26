@@ -25,7 +25,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 SECRET_KEY = "django-insecure-s#$wnrc0=8)^d__18q@cj62zccg_&!yg0j$-6a$#qnp6yr9ap+"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False 
+DEBUG = True 
 
 SERVER_IP = "127.0.0.1"
 SERVER_URI = f"http://{SERVER_IP}:8000"
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "server",
     "server.apps.asgi_socket",
     "server.apps.dashboard",
+    "server.apps.backoffice",
     "channels",
     "adminsortable2",
     'googlemaps',
@@ -51,6 +52,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django_bootstrap5',
     'django_bootstrap_icons',
+    'compressor'
 ]
 
 MIDDLEWARE = [
@@ -89,6 +91,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "server.wsgi.application"
 ASGI_APPLICATION = "server.asgi.application"
+
+#LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGIN_URL = "/login/"
 
 
 # Database
@@ -136,8 +142,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = "static/"
-MEDIA_URL = "media/"
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
@@ -145,3 +151,10 @@ MEDIA_URL = "media/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 GOOGLE_MAPS_API_KEY = 'AIzaSyBPPe-QY5uDY9hOT-HH3aH2rPFTkuprADc'
+GOOGLE_MAPS_MAP_ID = 'TapaHikeMap'
+
+COMPRESS_ROOT = BASE_DIR / 'static'
+
+COMPRESS_ENABLED = True
+
+STATICFILES_FINDERS = ('compressor.finders.CompressorFinder',)

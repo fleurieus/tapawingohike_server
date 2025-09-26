@@ -1,0 +1,27 @@
+<div class="bg-white border rounded-xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 border-b">
+      <tr>
+        <th class="text-left p-2">Route</th>
+        <th class="text-left p-2"># Routeparts</th>
+        <th class="text-left p-2">Acties</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in routes %}
+        <tr class="border-b last:border-0">
+          <td class="p-2">{{ r.name }}</td>
+          <td class="p-2 tabular-nums"><a title="Naar RouteParts" href="{% url 'backoffice:routeparts_builder' r.id %}">{{ r.parts_count }}</a></td>
+          <td class="p-2">
+            <a class="text-slate-900 hover:underline"
+               href="{% url 'backoffice:routeparts_builder' r.id %}">
+              <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon>
+            </a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td class="p-2 text-slate-500" colspan="3">Geen routes.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

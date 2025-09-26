@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+{% block title %}Team · {{ edition.name }}{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">
+  {% if mode == "add" %}Nieuw team{% else %}Team bewerken{% endif %} · {{ edition.name }}
+</h1>
+
+<div class="bg-white border rounded-2xl p-5 max-w-2xl">
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div>
+        <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>{% endif %}
+      </div>
+    {% endfor %}
+    <div class="flex gap-3">
+      <a href="{% url 'backoffice:team_list' edition.id %}" class="px-4 py-2 rounded-lg border">Annuleren</a>
+      <button class="px-4 py-2 rounded-lg bg-slate-900 text-white">Opslaan</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

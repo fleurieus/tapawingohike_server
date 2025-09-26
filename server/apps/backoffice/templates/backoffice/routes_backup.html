@@ -1,0 +1,96 @@
+{# templates/backoffice/routes.html #}
+{% extends "backoffice/base_backoffice.html" %}
+{% load static %}
+
+{% block content %}
+<div class="h-full flex flex-col">
+  <!-- Headerbar -->
+  <div class="flex items-center justify-between gap-3 border-b px-4 py-3">
+    <div class="flex items-center gap-3">
+      <h1 class="text-xl font-semibold">Routes</h1>
+
+      <!-- Edition filter -->
+        <form id="routes-filters"
+            hx-get="{% url 'backoffice:routes_list' %}"
+            hx-target="#routes-list"
+            hx-swap="innerHTML"
+            hx-trigger="change from:#filter_edition, keyup changed delay:300ms from:#q"
+            hx-push-url="true"
+            class="flex items-center gap-2">
+
+        <label for="filter_edition" class="sr-only">Edition</label>
+        <select id="filter_edition" name="edition"
+                class="min-w-[12rem] rounded-md border px-2 py-1">
+            <option value="">Alle edities</option>
+            {% for ed in editions %}
+            <option value="{{ ed.id }}" {% if request.GET.edition == ed.id|stringformat:"s" %}selected{% endif %}>
+                {{ ed.name }}
+            </option>
+            {% endfor %}
+        </select>
+
+        <input id="q" type="search" name="q" placeholder="Zoeken..."
+                value="{{ request.GET.q }}"
+                class="rounded-md border px-2 py-1">
+        </form>
+
+    </div>
+
+    <!-- Nieuw route knop -->
+    <button class="icon-btn"
+            title="Nieuwe route"
+            hx-get="{% url 'backoffice:route_new' %}"
+            hx-target="#sidepanel" hx-swap="innerHTML">
+      <iconify-icon icon="heroicons-outline:plus"></iconify-icon>
+    </button>
+  </div>
+
+  <!-- Lijst -->
+  <div class="flex-1 overflow-auto">
+    <div id="routes-list"
+         hx-get="{% url 'backoffice:routes_list' %}"
+         hx-trigger="route:saved from:body"
+         hx-swap="innerHTML">
+      {% include "backoffice/_routes_list.html" with routes=routes %}
+    </div>
+  </div>
+</div>
+
+<!-- Sidepanel -->
+<aside id="sidepanel"
+       class="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] translate-x-full transition-transform bg-white shadow-xl border-l"
+       aria-hidden="true">
+  <!-- Content wordt via HTMX geladen -->
+</aside>
+
+<script>
+  // Sidepanel helpers
+  function openSidepanel() {
+    const el = document.getElementById('sidepanel');
+    el.setAttribute('aria-hidden', 'false');
+    el.classList.remove('translate-x-full');
+  }
+  function closeSidepanel() {
+    const el = document.getElementById('sidepanel');
+    el.innerHTML = '';
+    el.classList.add('translate-x-full');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  document.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail.target && e.detail.target.id === 'sidepanel') {
+      openSidepanel();
+    }
+  });
+
+  // Sluit panel bij global event
+  document.body.addEventListener('route:saved', () => {
+    closeSidepanel();
+  });
+
+  // ESC sluit panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSidepanel();
+  });
+</script>
+{% endblock %}

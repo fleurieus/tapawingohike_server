@@ -1,0 +1,84 @@
+{% extends "_base.html" %}
+{% load static %}
+{% load custom_filters %} {# voor format_duration / datum-filters #}
+
+{% block title %}Tapawingo · Statistieken · {{ route.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4">
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 class="text-xl font-semibold">Statistieken · {{ route.name }}</h1>
+      <div class="text-sm text-slate-600">Edition: {{ edition.name }}</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <a class="text-sm hover:underline" href="/backoffice/routes/?edition={{ edition.id }}">← Terug</a>
+    </div>
+  </div>
+
+  <!-- Stat cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+    <div class="bg-white rounded shadow-sm p-4">
+      <div class="text-xs text-slate-500 mb-1">Edition</div>
+      <div class="text-base font-medium">{{ edition.name }}</div>
+    </div>
+    <div class="bg-white rounded shadow-sm p-4">
+      <div class="text-xs text-slate-500 mb-1">Dates</div>
+      <div class="text-base font-medium">
+        {{ edition.date_start|date:"D j b" }} – {{ edition.date_end|date:"D j b Y" }}
+      </div>
+    </div>
+    <div class="bg-white rounded shadow-sm p-4">
+      <div class="text-xs text-slate-500 mb-1">Destinations*</div>
+      <div class="text-2xl font-semibold">{{ destinations_count }}</div>
+    </div>
+    <div class="bg-white rounded shadow-sm p-4">
+      <div class="text-xs text-slate-500 mb-1">Distance*</div>
+      <div class="text-2xl font-semibold">
+        {{ distance|floatformat:1 }} <span class="text-base font-normal text-slate-500">km</span>
+      </div>
+    </div>
+  </div>
+  <p class="text-xs text-slate-500 mb-4">* only mandatory destinations</p>
+
+  <!-- Team stats table -->
+  <div class="bg-white rounded shadow-sm">
+    <div class="p-3 border-b">
+      <div class="font-medium">Team stats</div>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="text-left font-medium px-3 py-2">Team</th>
+            <th class="text-left font-medium px-3 py-2">First</th>
+            <th class="text-left font-medium px-3 py-2">Last</th>
+            <th class="text-left font-medium px-3 py-2">Time</th>
+            <th class="text-left font-medium px-3 py-2">Total</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for team_stat in team_stats %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 max-w-[160px] truncate" title="{{ team_stat.name }}">{{ team_stat.name }}</td>
+            <td class="px-3 py-2">{{ team_stat.first_completed|date:"H:i:s" }}</td>
+            <td class="px-3 py-2">{{ team_stat.last_completed|date:"H:i:s" }}</td>
+            <td class="px-3 py-2">
+              {% if team_stat.time_difference %}
+                {{ team_stat.time_difference|format_duration }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td class="px-3 py-2">{{ team_stat.completed_destinations_count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="px-3 py-6 text-center text-slate-500">Geen teamdata beschikbaar.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

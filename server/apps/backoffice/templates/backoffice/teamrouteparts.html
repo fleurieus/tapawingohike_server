@@ -1,0 +1,185 @@
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}TapawingoHikeEditor · TeamRouteParts · {{ route.name }}{% endblock %}
+
+{% block head %}
+<style>
+  .panel-enter { opacity: 0; transform: translateX(16px); transition: all .18s ease; }
+  .panel-enter.show { opacity: 1; transform: translateX(0); }
+  .row-hover:hover{background:#f8fafc}
+  .handle{cursor:grab}
+  #hx-indicator { display: none; }
+  #hx-indicator.htmx-request { display: block; }
+  .icon-btn{
+    background: transparent; border: 0; padding: 2px; line-height: 1;
+    color: #64748b; border-radius: 8px; cursor: pointer;
+  }
+  .icon-btn:hover{ color: #0f172a; }
+  .icon-btn:focus{ outline: 2px solid rgba(148,163,184,.6); outline-offset: 2px; }
+  .icon-btn.danger:hover{ color:#dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-4 h-[calc(100vh-107px)] flex flex-col">
+    <div class="flex items-center justify-between mb-4">
+    <!-- Titel -->
+    <div>
+        <h1 class="text-xl font-semibold leading-tight">TeamRouteParts · {{ route.name }}</h1>
+        <div class="text-sm text-slate-600">Edition: {{ route.edition.name }}</div>
+    </div>
+
+    <!-- Acties rechts: alléén terug (subtiele link) -->
+    <div class="flex items-center gap-3">
+        <a href="{% url 'backoffice:routes_page' %}?edition={{ route.edition.id }}"
+        class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 hover:underline"
+        title="Terug naar routes">
+        <iconify-icon icon="heroicons:arrow-long-left" width="18" height="18"></iconify-icon>
+        Terug
+        </a>
+    </div>
+    </div>
+
+  <div class="grid grid-cols-3 gap-4 flex-1 min-h-0">
+    <!-- Kaart -->
+    <div class="col-span-2">
+      <div id="map"
+           class="w-full h-full bg-white rounded shadow-sm"
+           data-map-id="{{ GOOGLE_MAPS_MAP_ID }}"
+           data-route-id="{{ route.id }}"></div>
+    </div>
+
+    {# ... rechterkolom ... #}
+    <div class="col-span-1 h-full min-h-0 grid grid-rows-[11fr_9fr] gap-3">
+    <!-- Teamselectie -->
+    <div class="bg-white rounded shadow-sm p-3 overflow-auto min-h-0">
+        <div class="mb-2 flex items-center justify-between">
+        <div class="font-medium">Teams</div>
+        <label class="inline-flex items-center gap-2 text-sm">
+            <input id="t-all" type="checkbox" class="h-4 w-4">
+            <span>Select all</span>
+        </label>
+        </div>
+
+        <ul id="teams-list" class="space-y-1">
+        {% for t in teams %}
+            <li class="flex items-center gap-2">
+            <input type="checkbox" class="t-chk h-4 w-4"
+                    value="{{ t.id }}" id="t-{{ t.id }}"
+                    {% if t.id in selected_ids %}checked{% endif %}>
+            <label for="t-{{ t.id }}" class="select-none">{{ t.name }}</label>
+            </li>
+        {% empty %}
+            <li class="text-slate-500">Geen teams</li>
+        {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Zijpaneel: acties -->
+    <div id="sidepanel" class="bg-white rounded shadow-sm p-0 overflow-auto min-h-0">
+        <div class="p-4">
+        <h2 class="text-base font-semibold mb-2">Acties</h2>
+        <p class="text-sm text-slate-600 mb-3">
+            Distributeer de huidige RouteParts naar alle teams of verwijder alle TeamRouteParts voor deze route.
+        </p>
+
+        <div class="flex flex-col gap-2">
+            <!-- Distribute -->
+            <button
+            class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+            hx-post="{% url 'backoffice:route_distribute' route.id %}"
+            hx-swap="none"
+            hx-confirm="RouteParts naar alle teams distribueren?">
+            <iconify-icon icon="heroicons:users" width="18" height="18"></iconify-icon>
+            Distribueer naar teams
+            </button>
+
+            <!-- Alles verwijderen -->
+            <button
+            class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"
+            hx-post="{% url 'backoffice:teamrouteparts_clear' route.id %}"
+            hx-swap="none"
+            hx-confirm="ALLE TeamRouteParts (incl. destinations) voor deze route verwijderen?">
+            <iconify-icon icon="heroicons:trash" width="18" height="18"></iconify-icon>
+            Verwijder alle TeamRouteParts
+            </button>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-500">
+            Na een actie wordt deze pagina automatisch herladen.
+        </div>
+        </div>
+    </div>
+    </div>
+  </div>
+
+  <!-- HTMX indicator -->
+  <div id="hx-indicator" class="mt-2 text-xs text-slate-500">Laden…</div>
+</div>
+
+<!-- JSON payload met alle team-destinations voor de kaart -->
+{{ dest_items|json_script:"teamrouteparts-dests" }}
+
+{# csrf_token beschikbaar maken voor JS fallback #}
+{% csrf_token %}
+
+<script>
+(() => {
+  // ---------- CSRF ----------
+  function getCsrfToken() {
+    const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "{{ csrf_token }}";
+  }
+  document.body.addEventListener("htmx:configRequest", (e) => {
+    e.detail.headers["X-CSRFToken"] = getCsrfToken();
+  });
+
+  // ---------- HTMX lifecycle (alleen sidepanel-animatie) ----------
+  document.body.addEventListener("htmx:afterSwap", (e) => {
+    const tgt = e.target;
+    if (tgt && tgt.id === "sidepanel") {
+      const root = tgt.firstElementChild;
+      if (root && root.classList.contains("panel-enter")) {
+        requestAnimationFrame(() => root.classList.add("show"));
+      }
+    }
+  });
+
+  // Paneel leeg? verlaat add-mode (hergebruikt helper indien aanwezig)
+  (function observeSidepanel() {
+    const sp = document.getElementById("sidepanel");
+    if (!sp) return;
+    const obs = new MutationObserver(() => {
+      const empty = sp.childElementCount === 0 || sp.innerHTML.trim() === "";
+      if (empty) window.clearActivePart && window.clearActivePart();
+    });
+    obs.observe(sp, { childList: true });
+  })();
+
+  // ESC sluit paneel + verlaat add-mode
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const sp = document.getElementById("sidepanel");
+      if (sp) sp.innerHTML = "";
+      window.clearActivePart && window.clearActivePart();
+    }
+  });
+
+  // ---------- Global loading indicator ----------
+  (function attachIndicator() {
+    const ind = document.getElementById("hx-indicator");
+    if (!ind) return;
+    const show = () => ind.classList.add("show");
+    const hide = () => ind.classList.remove("show");
+    document.body.addEventListener("htmx:beforeRequest", show);
+    ["htmx:afterSwap","htmx:afterRequest","htmx:responseError","htmx:sendError","htmx:timeout","htmx:abort"]
+      .forEach((ev) => document.body.addEventListener(ev, hide));
+  })();
+})();
+</script>
+
+<!-- Google Maps -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&v=weekly&loading=async{% if GOOGLE_MAPS_MAP_ID %}&map_ids={{ GOOGLE_MAPS_MAP_ID }}{% endif %}"></script>
+<script defer src="{% static 'backoffice/teamrouteparts_map.js' %}"></script>
+{% endblock %}

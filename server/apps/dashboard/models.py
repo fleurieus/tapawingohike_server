@@ -315,7 +315,7 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
 class Destination(models.Model):
     lat = models.FloatField(max_length=64)
     lng = models.FloatField(max_length=64)
-    radius = models.IntegerField()
+    radius = models.IntegerField(default=25)
     destination_type = models.CharField(
         max_length=255, default=DESTINATION_TYPE_MANDATORY, choices=DESTINATION_TYPES
     )

@@ -1,0 +1,23 @@
+<tr id="row-{{ d.id }}" class="border-t row-hover"
+    data-id="{{ d.id }}"
+    data-lat="{{ d.lat|floatformat:'6' }}"
+    data-lng="{{ d.lng|floatformat:'6' }}"
+    data-type="{{ d.destination_type }}"
+    data-radius="{{ d.radius }}"
+    data-confirm="{{ d.confirm_by_user|yesno:'1,0' }}"
+    data-hide="{{ d.hide_for_user|yesno:'1,0' }}">
+  <td class="p-2 text-sm">#{{ d.id }}</td>
+  <td class="p-2 text-sm">{{ d.lat }}, {{ d.lng }}</td>
+  <td class="p-2 text-sm">{{ d.destination_type }}</td>
+  <td class="p-2 text-sm">{{ d.radius }}</td>
+  <td class="p-2 text-sm">{{ d.confirm_by_user|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-sm">{{ d.hide_for_user|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-right">
+    <button class="px-2 py-1 text-sm bg-slate-200 rounded"
+            hx-get="{% url 'backoffice:destination_edit' d.routepart_id d.id %}"
+            hx-target="#sidepanel" hx-swap="innerHTML">Bewerk</button>
+    <button class="ml-1 px-2 py-1 text-sm bg-red-600 text-white rounded"
+            hx-post="{% url 'backoffice:destination_delete' d.routepart_id d.id %}"
+            hx-confirm="Verwijderen?" hx-target="#row-{{ d.id }}" hx-swap="outerHTML">Verwijder</button>
+  </td>
+</tr>

@@ -1,0 +1,26 @@
+{# templates/backoffice/_route_row.html #}
+<div id="route-{{ route.id }}"
+     class="grid grid-cols-[1fr,14rem,8rem,8rem] items-center px-4 py-3">
+  <div class="truncate">
+    <a href="{% url 'backoffice:routeparts_builder' route.id %}"
+       class="font-medium hover:underline">{{ route.name }}</a></div>
+  <div class="truncate">{{ route.edition.name }}</div>
+  <div>{{ route.parts_count }}</div>
+  <div class="flex justify-end gap-1">
+    <a class="icon-btn" title="Open RouteParts"
+       href="{% url 'backoffice:routeparts_builder' route.id %}">
+      <iconify-icon icon="heroicons-outline:map"></iconify-icon>
+    </a>    
+    <a class="icon-btn" title="Bewerken"
+       hx-get="{% url 'backoffice:route_edit' route.id %}"
+       hx-target="#sidepanel" hx-swap="innerHTML">
+      <iconify-icon icon="heroicons-outline:cog-6-tooth"></iconify-icon>
+    </a>
+    <button class="icon-btn text-red-600" title="Verwijderen"
+            hx-delete="{% url 'backoffice:route_delete' route.id %}"
+            hx-confirm="Weet je zeker dat je deze route wilt verwijderen?"
+            hx-swap="outerHTML">
+      <iconify-icon icon="heroicons-outline:trash"></iconify-icon>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+{% extends "backoffice/base_backoffice.html" %}
+{% block title %}Backoffice · Dashboard{% endblock %}
+{% block content %}
+  <h1 class="text-xl font-semibold mb-4">Dashboard</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for s in sections %}
+      <div class="bg-white rounded shadow-sm p-4">
+        <div class="font-medium mb-1">{{ s.title }}</div>
+        <p class="text-sm text-slate-600 mb-3">Snelkoppeling naar {{ s.title|lower }} beheer.</p>
+        <a href="{% url s.url_name %}" class="inline-block px-3 py-1 rounded bg-slate-900 text-white text-sm">Open</a>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

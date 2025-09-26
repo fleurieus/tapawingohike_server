@@ -1,0 +1,119 @@
+{# templates/backoffice/routes.html #}
+{% extends "_base.html" %}
+{% load static %}
+
+{% block title %}Routes · Backoffice{% endblock %}
+
+{% block head %}
+<style>
+  .icon-btn{
+    background: transparent; border: 0; padding: 2px; line-height: 1;
+    color: #64748b; border-radius: 8px; cursor: pointer;
+  }
+  .icon-btn:hover{ color:#0f172a; }
+  .icon-btn:focus{ outline: 2px solid rgba(148,163,184,.6); outline-offset: 2px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col">
+  <!-- Headerbar -->
+    <div class="flex items-center justify-between mb-4">
+    <!-- Titel -->
+    <div>
+        <h1 class="text-2xl font-semibold leading-tight">
+        {% if selected_edition %}Routes · {{ selected_edition.name }}{% else %}Routes{% endif %}
+        </h1>
+        {% if selected_edition %}
+        <p class="text-sm text-slate-600">Event: {{ selected_edition.event.name }}</p>
+        {% endif %}
+    </div>
+
+    <!-- Acties rechts: terug (subtiele link) + primaire actie -->
+    <div class="flex items-center gap-3">
+        {% if selected_edition and selected_edition.event_id %}
+        <a href="{% url 'backoffice:edition_list_for_event' selected_edition.event_id %}"
+            class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 hover:underline"
+            title="Terug naar editions">
+            <iconify-icon icon="heroicons:arrow-long-left" width="18" height="18"></iconify-icon>
+            Terug
+        </a>
+        {% else %}
+        <a href="{% url 'backoffice:events_list' %}"
+            class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 hover:underline"
+            title="Terug naar events">
+            <iconify-icon icon="heroicons:arrow-long-left" width="18" height="18"></iconify-icon>
+            Terug
+        </a>
+        {% endif %}
+
+        <button class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 text-white hover:bg-slate-800"
+                hx-get="{% url 'backoffice:route_new' %}"
+                hx-target="#sidepanel" hx-swap="innerHTML">
+        <iconify-icon icon="heroicons:plus" width="18" height="18"></iconify-icon>
+        Nieuwe route
+        </button>
+    </div>
+    </div>
+
+  <!-- Lijst -->
+  <div class="flex-1 overflow-auto">
+    <div id="routes-list"
+         hx-get="{% url 'backoffice:routes_list' %}"
+         hx-trigger="route:saved from:body"
+         hx-swap="innerHTML">
+      {% include "backoffice/_routes_list.html" with routes=routes %}
+    </div>
+  </div>
+</div>
+
+<!-- Sidepanel -->
+<aside id="sidepanel"
+       class="fixed top-0 right-0 h-full w-[420px] max-w-[90vw] translate-x-full transition-transform bg-white shadow-xl border-l"
+       aria-hidden="true">
+  <!-- Content wordt via HTMX geladen -->
+</aside>
+
+{# csrf_token beschikbaar voor JS fallback #}
+{% csrf_token %}
+
+<script>
+  // ---- CSRF voor HTMX ----
+  function getCsrfToken() {
+    const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "{{ csrf_token }}";
+  }
+  document.body.addEventListener("htmx:configRequest", (e) => {
+    e.detail.headers["X-CSRFToken"] = getCsrfToken();
+  });
+
+  // ---- Sidepanel helpers ----
+  function openSidepanel() {
+    const el = document.getElementById('sidepanel');
+    el.setAttribute('aria-hidden', 'false');
+    el.classList.remove('translate-x-full');
+  }
+  function closeSidepanel() {
+    const el = document.getElementById('sidepanel');
+    el.innerHTML = '';
+    el.classList.add('translate-x-full');
+    el.setAttribute('aria-hidden', 'true');
+  }
+
+  document.addEventListener('htmx:afterSwap', (e) => {
+    if (e.detail.target && e.detail.target.id === 'sidepanel') {
+      openSidepanel();
+    }
+  });
+
+  // Sluit panel bij global event
+  document.body.addEventListener('route:saved', () => {
+    closeSidepanel();
+  });
+
+  // ESC sluit panel
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSidepanel();
+  });
+</script>
+{% endblock %}

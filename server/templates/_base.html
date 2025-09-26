@@ -1,0 +1,85 @@
+{% load compress static %}
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TapawingoHikeEditor{% endblock %}</title>
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
+  {% compress css %}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  {% endcompress %}
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+{% if user.is_authenticated %}
+  <!-- Navigatiebalk -->
+  <header class="bg-white border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <nav class="flex items-center gap-6 text-sm">
+        <!-- <a href="{% url 'map' %}" class="hover:text-slate-700 font-medium">Live map</a> //-->
+        <!-- <a href="{% url 'stats' %}" class="hover:text-slate-700 font-medium">Stats</a> //-->
+        <a href="{% url 'backoffice:events_list' %}" class="hover:text-slate-700 font-medium">Events</a>
+        <a href="{% url 'admin:index' %}" class="hover:text-slate-700 font-medium">Oude admin</a>
+      </nav>
+      <div class="flex items-center gap-4 text-sm">
+        <span id="clock" class="tabular-nums font-mono"></span>
+        <span class="text-slate-500">|</span>
+        <span class="font-medium">Ingelogd als {{ user.username }}</span>
+        <form action="{% url 'logout' %}" method="post" class="inline">
+          {% csrf_token %}
+          <button class="px-3 py-1.5 rounded-lg border hover:bg-slate-100">Uitloggen</button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hoofdcontent -->
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    function updateClock() {
+      const el = document.getElementById('clock');
+      if (!el) return;
+      const now = new Date();
+      const pad = n => String(n).padStart(2,'0');
+      el.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+
+{% else %}
+  <!-- Login scherm -->
+  <main class="min-h-screen grid place-items-center px-4">
+    <div class="w-full max-w-sm bg-white border rounded-2xl shadow-sm p-6">
+      <h1 class="text-xl font-semibold mb-1">Inloggen</h1>
+      <p class="text-sm text-slate-600 mb-6">Log in om de editor te gebruiken.</p>
+      <form method="post" action="{% url 'login' %}" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label class="block text-sm font-medium mb-1" for="id_username">Gebruikersnaam</label>
+          <input id="id_username" name="username" type="text" required
+                 class="w-full rounded-lg border px-3 py-2">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1" for="id_password">Wachtwoord</label>
+          <input id="id_password" name="password" type="password" required
+                 class="w-full rounded-lg border px-3 py-2">
+        </div>
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+        <button class="w-full rounded-lg bg-slate-900 text-white py-2 hover:bg-slate-800">
+          Inloggen
+        </button>
+      </form>
+    </div>
+  </main>
+{% endif %}
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+{# templates/backoffice/_route_form.html #}
+<section class="h-full flex flex-col">
+  <header class="flex items-center justify-between border-b px-4 py-3">
+    <h2 class="text-lg font-semibold">
+      {% if form.instance.pk %}Route bewerken{% else %}Nieuwe route{% endif %}
+    </h2>
+    <button class="icon-btn" title="Sluiten" onclick="(window.closeSidepanel && closeSidepanel())">
+      <iconify-icon icon="heroicons-outline:x-mark"></iconify-icon>
+    </button>
+  </header>
+
+  <form
+    hx-post="{% if form.instance.pk %}{% url 'backoffice:route_edit' form.instance.pk %}{% else %}{% url 'backoffice:route_new' %}{% endif %}"
+    hx-target="#sidepanel"
+    hx-swap="innerHTML"
+    hx-headers='{"X-Requested-With":"XMLHttpRequest"}'
+    class="flex-1 overflow-auto p-4 space-y-4"
+  >
+    {% csrf_token %}
+
+    <div class="space-y-1">
+      <label class="block text-sm font-medium">Naam</label>
+      {{ form.name }}
+      {% if form.name.errors %}
+        <p class="text-sm text-red-600">{{ form.name.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="space-y-1">
+      <label class="block text-sm font-medium">Edition</label>
+      {{ form.edition }}
+      {% if form.edition.errors %}
+        <p class="text-sm text-red-600">{{ form.edition.errors.0 }}</p>
+      {% endif %}
+    </div>
+
+    <div class="flex items-center justify-end gap-2 pt-4 border-t">
+      <button type="button" class="btn-secondary" onclick="closeSidepanel()">Annuleren</button>
+      <button type="submit" class="btn-primary">Opslaan</button>
+    </div>
+  </form>
+</section>
+
+{% if saved_ok %}
+  <script>
+    // Server-side branch voor succespad: trigger en sluit panel
+    document.body.dispatchEvent(new CustomEvent('route:saved', {detail: {id: {{ form.instance.id|default:'null' }} }}));
+  </script>
+{% endif %}

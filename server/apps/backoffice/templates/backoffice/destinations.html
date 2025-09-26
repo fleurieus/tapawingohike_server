@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <title>Backoffice · Destinations (RoutePart #{{ rp.id }})</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="{% static 'backoffice/destinations.js' %}"></script>
+  <style>
+    .panel-enter { opacity: 0; transform: translateX(16px); }
+    .panel-enter.htmx-added { opacity: 1; transform: translateX(0); transition: all .18s; }
+    .row-hover:hover { background-color: #f8fafc; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <div class="max-w-7xl mx-auto p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h1 class="text-xl font-semibold">Destinations · RoutePart #{{ rp.id }} · {{ rp.name }}</h1>
+      <div class="text-sm text-slate-600">Klik op de kaart om een destination toe te voegen</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <!-- Kaart -->
+      <div class="col-span-2">
+        <div id="map" class="w-full h-[540px] bg-white rounded shadow-sm" 
+        data-map-id="{{ GOOGLE_MAPS_MAP_ID }}"  
+        data-rp-id="{{ rp.id }}"></div>
+      </div>
+
+      <!-- Side panel (form) -->
+      <div id="sidepanel" class="col-span-1 panel-enter"></div>
+
+      <!-- Lijst -->
+      <div class="col-span-3">
+        <div class="bg-white rounded shadow-sm">
+          <table class="w-full">
+            <thead class="text-left text-sm text-slate-600">
+              <tr>
+                <th class="p-2">ID</th>
+                <th class="p-2">Lat, Lng</th>
+                <th class="p-2">Type</th>
+                <th class="p-2">Radius</th>
+                <th class="p-2">Confirm?</th>
+                <th class="p-2">Hide?</th>
+                <th class="p-2 w-44"></th>
+              </tr>
+            </thead>
+            <tbody id="dest-rows">
+              {% for d in destinations %}
+                {% include "backoffice/_destination_row.html" with d=d %}
+              {% empty %}
+                <tr><td colspan="7" class="p-4 text-slate-500">Nog geen destinations</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% csrf_token %}
+  <script>
+    document.body.addEventListener("htmx:configRequest", (e) => {
+      e.detail.headers["X-CSRFToken"] = "{{ csrf_token }}";
+    });
+  </script>
+
+  <!-- Google Maps -->
+  <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&v=weekly&loading=async{% if GOOGLE_MAPS_MAP_ID %}&map_ids={{ GOOGLE_MAPS_MAP_ID }}{% endif %}"></script>
+  {{ dest_items|json_script:"destinations-boot" }}
+</body>
+</html>

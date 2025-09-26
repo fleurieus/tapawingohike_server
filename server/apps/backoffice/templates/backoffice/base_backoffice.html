@@ -1,0 +1,33 @@
+{# template base_backoffice.html #}
+{% load static %}
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}TapawingoHikeEditor{% endblock %}</title>
+  <script src="https://unpkg.com/htmx.org@2.0.2"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+  <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>  
+  {% block head %}{% endblock %}
+</head>
+<body class="bg-slate-50 text-slate-900">
+  <header class="bg-white border-b">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="font-semibold">TapawingoHike</div>
+      <nav class="flex gap-4 text-sm">
+        <a class="hover:underline" href="{% url 'backoffice:dashboard' %}">Dashboard</a>
+        <!-- Straks: echte routes naar markers, routes, destinations, teams -->
+      </nav>
+      <div class="text-sm text-slate-600">
+        {{ request.user.username }}
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

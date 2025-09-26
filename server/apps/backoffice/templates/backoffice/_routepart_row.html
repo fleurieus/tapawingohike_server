@@ -1,0 +1,23 @@
+<tr id="row-{{ p.id }}" data-id="{{ p.id }}" class="border-t align-top">
+  <td class="p-2"><span class="grab cursor-grab">≡</span><span class="ml-2 ord">{{ forloop.counter }}</span></td>
+  <td class="p-2">
+    <div class="font-medium">{{ p.name }}</div>
+    <div class="text-xs text-slate-500">#{{ p.id }}</div>
+  </td>
+  <td class="p-2 text-sm">{{ p.get_route_type_display }}</td>
+  <td class="p-2 text-sm">{{ p.routepart_zoom|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-sm">{{ p.routepart_fullscreen|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-sm">{{ p.final|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-right">
+    <a class="px-2 py-1 text-sm bg-sky-600 text-white rounded"
+       href="{% url 'backoffice:destinations_editor' p.id %}">Destinations</a>
+    <button class="ml-1 px-2 py-1 text-sm bg-slate-200 rounded"
+        hx-get="{% url 'backoffice:routepart_edit' p.route_id p.id %}"
+        hx-target="#sidepanel" hx-swap="innerHTML">
+    ⚙︎ Instellingen
+    </button>
+    <button class="ml-1 px-2 py-1 text-sm bg-red-600 text-white rounded"
+            hx-post="{% url 'backoffice:routepart_delete' p.route_id p.id %}"
+            hx-confirm="Verwijderen?" hx-target="#row-{{ p.id }}" hx-swap="outerHTML">Verwijder</button>
+  </td>
+</tr>

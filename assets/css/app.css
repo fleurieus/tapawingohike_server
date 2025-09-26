@@ -1,0 +1,16 @@
+/* Tailwind v4 import */
+@import "tailwindcss";
+
+/* Optionele plugins in v4 (direct in CSS): */
+@plugin "@tailwindcss/forms";
+@plugin "@tailwindcss/typography";
+
+/* (Optioneel) extra bronnen als de auto-detect iets mist: */
+/* pas paden aan t.o.v. dit CSS-bestand */
+@source "../../templates";
+@source "../../server/apps/**/templates";
+@source "../../static/**/*.js";
+
+/* Je eigen kleine utilities kan je gewoon als CSS schrijven */
+.icon-btn { background: transparent; border: 0; padding: .25rem; border-radius: .5rem; line-height: 1; }
+.icon-btn:hover { color: rgb(15 23 42); } /* slate-900 */

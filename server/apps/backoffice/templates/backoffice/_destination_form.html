@@ -1,0 +1,28 @@
+<div class="bg-white rounded shadow-sm p-4">
+  <h2 class="text-lg font-semibold mb-3">{{ pk|yesno:"Bewerk Destination,Nieuwe Destination" }}</h2>
+  <form
+    hx-post="{{ request.path }}"
+    hx-swap="none"
+    method="post"
+    class="space-y-3"
+  >
+    {% csrf_token %}
+    <div class="grid grid-cols-2 gap-2">
+      <div>{{ form.lat.label_tag }} {{ form.lat }}</div>
+      <div>{{ form.lng.label_tag }} {{ form.lng }}</div>
+      <div>{{ form.destination_type.label_tag }} {{ form.destination_type }}</div>
+      <div>{{ form.radius.label_tag }} {{ form.radius }}</div>
+      <div class="flex items-center gap-4 col-span-2">
+        <label class="inline-flex items-center gap-2">{{ form.confirm_by_user }} <span>Confirm by User</span></label>
+        <label class="inline-flex items-center gap-2">{{ form.hide_for_user }} <span>Hide from User</span></label>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2">
+        <button type="button" class="px-3 py-1 rounded bg-slate-200"
+            onclick="document.getElementById('sidepanel').innerHTML=''">Sluiten</button>
+        <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
+    </div>
+  </form>
+</div>
+<script>window.destFormInit && window.destFormInit();</script>
