@@ -22,7 +22,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-s#$wnrc0=8)^d__18q@cj62zccg_&!yg0j$-6a$#qnp6yr9ap+"
+SECRET_KEY = ""
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True 
@@ -150,7 +150,7 @@ MEDIA_URL = "/media/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-GOOGLE_MAPS_API_KEY = 'AIzaSyBPPe-QY5uDY9hOT-HH3aH2rPFTkuprADc'
+GOOGLE_MAPS_API_KEY = ''
 GOOGLE_MAPS_MAP_ID = 'TapaHikeMap'
 
 COMPRESS_ROOT = BASE_DIR / 'static'
