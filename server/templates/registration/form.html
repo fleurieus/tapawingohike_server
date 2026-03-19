@@ -1,0 +1,45 @@
+{% load compress static %}
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aanmelden · {{ edition.name }}</title>
+  <link rel="icon" href="/static/favicon.ico">
+  {% compress css %}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  {% endcompress %}
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<main class="min-h-screen grid place-items-center px-4 py-8">
+  <div class="w-full max-w-lg bg-white border rounded-2xl shadow-sm p-6">
+    <h1 class="text-xl font-semibold mb-1">
+      {% if is_quick %}Aanmelden{% else %}Inschrijven{% endif %}
+    </h1>
+    <p class="text-sm text-slate-600 mb-6">{{ edition.name }} · {{ edition.event.name }}</p>
+
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+      {% for field in form %}
+        <div>
+          <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">
+            {{ field.label }}{% if field.field.required %} *{% endif %}
+          </label>
+          {{ field }}
+          {% if field.errors %}
+            <p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+      <button type="submit"
+              class="w-full rounded-lg bg-slate-900 text-white py-2 hover:bg-slate-800">
+        {% if is_quick %}Aanmelden{% else %}Inschrijven{% endif %}
+      </button>
+    </form>
+  </div>
+</main>
+
+</body>
+</html>

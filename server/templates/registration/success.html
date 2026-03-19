@@ -1,0 +1,40 @@
+{% load compress static %}
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aanmelding bevestigd · {{ edition.name }}</title>
+  <link rel="icon" href="/static/favicon.ico">
+  {% compress css %}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  {% endcompress %}
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+
+<main class="min-h-screen grid place-items-center px-4 py-8">
+  <div class="w-full max-w-lg bg-white border rounded-2xl shadow-sm p-6 text-center">
+    <h1 class="text-xl font-semibold mb-4">
+      {% if is_quick %}Je bent aangemeld!{% else %}Bedankt voor je inschrijving!{% endif %}
+    </h1>
+
+    {% if is_quick %}
+      <p class="text-slate-600 mb-2">
+        Je teamcode is verstuurd naar <strong>{{ team.contact_email }}</strong>.
+      </p>
+      <p class="text-slate-600">
+        Gebruik deze code om in te loggen in de app.
+      </p>
+    {% else %}
+      <p class="text-slate-600 mb-2">
+        We hebben een bevestiging gestuurd naar <strong>{{ team.contact_email }}</strong>.
+      </p>
+      <p class="text-slate-600">
+        Je ontvangt je teamcode zodra je aanmelding is verwerkt.
+      </p>
+    {% endif %}
+  </div>
+</main>
+
+</body>
+</html>

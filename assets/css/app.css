@@ -7,6 +7,7 @@
 
 /* Extra bronnen voor Tailwind class scanning */
 @source "../../server/apps/**/templates";
+@source "../../server/templates";
 @source "../../staticfiles";
 
 /* Je eigen kleine utilities kan je gewoon als CSS schrijven */

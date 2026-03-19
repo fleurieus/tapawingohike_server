@@ -40,9 +40,29 @@ class Event(models.Model):
 
 
 class Edition(models.Model):
+    REGISTRATION_NONE = "none"
+    REGISTRATION_QUICK = "quick"
+    REGISTRATION_EXTENDED = "extended"
+    REGISTRATION_CHOICES = [
+        (REGISTRATION_NONE, "Uit"),
+        (REGISTRATION_QUICK, "Snel (naam + e-mail, directe code)"),
+        (REGISTRATION_EXTENDED, "Uitgebreid (aanmelding, handmatige activatie)"),
+    ]
+
     name = models.CharField(max_length=255)
     date_start = models.DateTimeField()
     date_end = models.DateTimeField()
+
+    registration_mode = models.CharField(
+        max_length=16,
+        choices=REGISTRATION_CHOICES,
+        default=REGISTRATION_NONE,
+    )
+    registration_confirmation_text = models.TextField(
+        blank=True,
+        default="",
+        help_text="Confirmation email body for extended registration",
+    )
 
     event = models.ForeignKey(
         "dashboard.Event",
@@ -56,11 +76,15 @@ class Edition(models.Model):
 
 class Team(models.Model):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=255)
+    code = models.CharField(max_length=255, blank=True, default="")
     contact_name = models.CharField(max_length=100)
     contact_email = models.CharField(max_length=100)
-    contact_phone = models.CharField(max_length=100)
+    contact_phone = models.CharField(max_length=100, blank=True, default="")
+    contact_address = models.TextField(blank=True, default="")
+    member_names = models.TextField(blank=True, default="")
+    remarks = models.TextField(blank=True, default="")
     online = models.BooleanField(default=False)
+    is_activated = models.BooleanField(default=True)
 
     edition = models.ForeignKey(
         "dashboard.Edition",

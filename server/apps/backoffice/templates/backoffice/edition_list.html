@@ -51,6 +51,34 @@
         </div>
 
 
+      <!-- Registration status -->
+      <div class="mt-3 flex items-center justify-between text-sm">
+        <div class="flex items-center gap-2">
+          {% if e.registration_mode == "none" %}
+            <span class="inline-block w-2 h-2 rounded-full bg-slate-300"></span>
+            <span class="text-slate-500">Registratie uit</span>
+          {% elif e.registration_mode == "quick" %}
+            <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+            <span class="text-green-700">Snelle registratie aan</span>
+            <a href="{% url 'register' e.id %}" target="_blank" title="Registratieformulier openen"
+               class="text-green-600 hover:text-green-800">
+              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+            </a>
+          {% else %}
+            <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+            <span class="text-blue-700">Uitgebreide registratie aan</span>
+            <a href="{% url 'register' e.id %}" target="_blank" title="Registratieformulier openen"
+               class="text-blue-600 hover:text-blue-800">
+              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+            </a>
+          {% endif %}
+        </div>
+        <a href="{% url 'backoffice:edition_registration' e.id %}"
+           class="text-slate-500 hover:text-slate-900 hover:underline">
+          Instellingen
+        </a>
+      </div>
+
       <button
         class="mt-3 w-full text-sm rounded-lg border px-3 py-2 hover:bg-slate-50"
         hx-get="{% url 'backoffice:edition_routes_stats' e.id %}"

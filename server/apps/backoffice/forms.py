@@ -1,7 +1,21 @@
 from django import forms
-from server.apps.dashboard.models import Destination
+from server.apps.dashboard.models import Destination, Edition
 from server.apps.dashboard.models import Route, RoutePart, File, Destination
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
+
+
+class EditionRegistrationForm(forms.ModelForm):
+    class Meta:
+        model = Edition
+        fields = ["registration_mode", "registration_confirmation_text"]
+        widgets = {
+            "registration_mode": forms.Select(
+                attrs={"class": "w-full rounded-lg border px-3 py-2"}
+            ),
+            "registration_confirmation_text": forms.Textarea(
+                attrs={"class": "w-full rounded-lg border px-3 py-2", "rows": 5}
+            ),
+        }
 
 class DestinationForm(forms.ModelForm):
     class Meta:

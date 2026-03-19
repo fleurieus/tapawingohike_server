@@ -15,12 +15,14 @@ urlpatterns = [
     #Editions
     path("editions/", views.edition_list, name="edition_list"),
     path("editions/<int:edition_id>/routes-stats/", views.edition_routes_stats, name="edition_routes_stats"),
+    path("editions/<int:edition_id>/registration/", views.edition_registration, name="edition_registration"),
 
     # Teams per edition
     path("editions/<int:edition_id>/teams/", views.team_list, name="team_list"),
     path("editions/<int:edition_id>/teams/add/", views.team_add, name="team_add"),
     path("editions/<int:edition_id>/teams/<int:pk>/edit/", views.team_edit, name="team_edit"),
     path("editions/<int:edition_id>/teams/<int:pk>/delete/", views.team_delete, name="team_delete"),
+    path("editions/<int:edition_id>/teams/<int:pk>/activate/", views.team_activate, name="team_activate"),
 
     # Routes
     path("routes/", views.routes_page, name="routes_page"),

@@ -34,16 +34,43 @@
       <tr>
         <th class="text-left p-3">Naam</th>
         <th class="text-left p-3">Code</th>
-        <th class="text-left p-3 w-24">Acties</th>
+        <th class="text-left p-3">Status</th>
+        <th class="text-left p-3 w-32">Acties</th>
       </tr>
     </thead>
     <tbody>
       {% for t in teams %}
         <tr class="border-b last:border-0">
           <td class="p-3 font-medium">{{ t.name }}</td>
-          <td class="p-3 text-slate-600">{{ t.code|default:"" }}</td>
+          <td class="p-3 text-slate-600">{{ t.code|default:"—" }}</td>
+          <td class="p-3">
+            {% if t.is_activated %}
+              <span class="inline-flex items-center gap-1 text-sm text-green-700">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                Actief
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-sm text-amber-700">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+                Aangemeld
+              </span>
+            {% endif %}
+          </td>
           <td class="p-3">
             <div class="flex items-center gap-1">
+              {% if not t.is_activated %}
+                <form action="{% url 'backoffice:team_activate' edition.id t.id %}" method="post" class="inline"
+                      onsubmit="return confirm('Team activeren? Code wordt gegenereerd, routes gedistribueerd en code gemaild.');">
+                  {% csrf_token %}
+                  <button type="submit"
+                          title="Activeren"
+                          class="inline-flex items-center justify-center p-1 rounded-lg text-green-600 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                    <iconify-icon icon="heroicons:check-circle" width="18" height="18"></iconify-icon>
+                    <span class="sr-only">Activeren</span>
+                  </button>
+                </form>
+              {% endif %}
+
               <a href="{% url 'backoffice:team_edit' edition.id t.id %}"
                  title="Bewerken"
                  class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300">
@@ -66,7 +93,7 @@
         </tr>
       {% empty %}
         <tr>
-          <td class="p-3 text-slate-500" colspan="3">Nog geen teams.</td>
+          <td class="p-3 text-slate-500" colspan="4">Nog geen teams.</td>
         </tr>
       {% endfor %}
     </tbody>

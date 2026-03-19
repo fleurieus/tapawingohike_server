@@ -1,0 +1,62 @@
+{% extends "_base.html" %}
+{% block title %}Registratie-instellingen · {{ edition.name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <h1 class="text-2xl font-semibold">Registratie-instellingen</h1>
+    <p class="text-sm text-slate-600">{{ edition.name }} · {{ edition.event.name }}</p>
+  </div>
+  <a href="{% url 'backoffice:edition_list_for_event' edition.event.id %}"
+     class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 hover:underline">
+    <iconify-icon icon="heroicons:arrow-long-left" width="18" height="18"></iconify-icon>
+    Terug
+  </a>
+</div>
+
+<div class="bg-white border rounded-2xl p-5 max-w-2xl">
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="{{ form.registration_mode.id_for_label }}">
+        Registratiemodus
+      </label>
+      {{ form.registration_mode }}
+      {% if form.registration_mode.errors %}
+        <p class="text-sm text-red-600 mt-1">{{ form.registration_mode.errors|striptags }}</p>
+      {% endif %}
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium mb-1" for="{{ form.registration_confirmation_text.id_for_label }}">
+        Bevestigingstekst e-mail (uitgebreide registratie)
+      </label>
+      {{ form.registration_confirmation_text }}
+      <p class="text-xs text-slate-500 mt-1">
+        Laat leeg voor de standaard bevestigingstekst. Alleen gebruikt bij uitgebreide registratie.
+      </p>
+      {% if form.registration_confirmation_text.errors %}
+        <p class="text-sm text-red-600 mt-1">{{ form.registration_confirmation_text.errors|striptags }}</p>
+      {% endif %}
+    </div>
+
+    {% if edition.registration_mode != "none" %}
+      <div class="bg-slate-50 rounded-lg p-3 text-sm">
+        <span class="font-medium">Registratielink:</span>
+        <a href="{% url 'register' edition.id %}"
+           class="text-blue-600 hover:underline ml-1"
+           target="_blank">
+          {{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.id %}
+        </a>
+      </div>
+    {% endif %}
+
+    <div class="flex gap-3">
+      <a href="{% url 'backoffice:edition_list_for_event' edition.event.id %}"
+         class="px-4 py-2 rounded-lg border">Annuleren</a>
+      <button type="submit" class="px-4 py-2 rounded-lg bg-slate-900 text-white">Opslaan</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -15,7 +15,7 @@ from django.forms.models import model_to_dict
 import json
 import googlemaps
 from collections import defaultdict
-from .forms import RouteForm, RoutePartForm, DestinationForm
+from .forms import RouteForm, RoutePartForm, DestinationForm, EditionRegistrationForm
 from server.apps.dashboard.models import (
     Event, Edition, Route, RoutePart, TeamRoutePart, Destination, Team, File, LocationLog, DESTINATION_TYPE_MANDATORY, DESTINATION_TYPE_CHOICE
 )
@@ -912,3 +912,37 @@ def route_stats_page(request, route_id: int):
         'team_stats': team_stats,
     }
     return render(request, 'backoffice/route_stats.html', ctx)
+
+
+@staff_member_required
+def edition_registration(request, edition_id: int):
+    """Edit registration settings for an edition."""
+    edition = get_object_or_404(Edition, pk=edition_id)
+    if request.method == "POST":
+        form = EditionRegistrationForm(request.POST, instance=edition)
+        if form.is_valid():
+            form.save()
+            return redirect("backoffice:edition_list_for_event", event_id=edition.event_id)
+    else:
+        form = EditionRegistrationForm(instance=edition)
+    return render(request, "backoffice/edition_registration.html", {"edition": edition, "form": form})
+
+
+@staff_member_required
+@require_POST
+def team_activate(request, edition_id: int, pk: int):
+    """Activate a team: generate code, distribute routes, send email."""
+    from server.views import _unique_team_code, _distribute_routes_for_team, _send_team_code_email
+
+    edition = get_object_or_404(Edition, pk=edition_id)
+    team = get_object_or_404(Team, pk=pk, edition=edition)
+
+    if not team.is_activated:
+        with transaction.atomic():
+            team.code = _unique_team_code(edition)
+            team.is_activated = True
+            team.save()
+            _distribute_routes_for_team(team)
+        _send_team_code_email(team)
+
+    return redirect("backoffice:team_list", edition_id=edition_id)
