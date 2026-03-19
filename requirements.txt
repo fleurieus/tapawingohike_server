@@ -1,9 +1,11 @@
 Django==4.2.1
 channels==3.0.4
+daphne>=3.0,<4
 websockets==11.0.3
 django-admin-sortable2==2.1.8
 django-bootstrap-icons==0.8.5
 django_bootstrap5==25.2
+django-compressor==4.5.1
 googlemaps==4.10.0
 Pillow>=10.0
 
