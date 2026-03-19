@@ -1,0 +1,40 @@
+<div class="bg-white rounded shadow-sm p-4 panel-enter">
+  <h2 class="text-lg font-semibold mb-3">
+    {% if form.instance.pk %}
+      Bewerk Bundel: <span class="text-slate-600">{{ form.instance.name|default:"(zonder naam)" }}</span>
+    {% else %}
+      Nieuwe Bundel
+    {% endif %}
+  </h2>
+
+  <form
+    hx-post="{% if pk %}{% url 'backoffice:bundle_edit' route.id pk %}{% else %}{% url 'backoffice:bundle_new' route.id %}{% endif %}"
+    hx-target="{% if pk %}#bundle-{{ pk }}{% else %}#bundles-list{% endif %}"
+    hx-swap="{% if pk %}outerHTML{% else %}beforeend{% endif %}"
+    class="space-y-3"
+  >
+    {% csrf_token %}
+
+    <div class="space-y-3">
+      <div>
+        {{ form.name.label_tag }}
+        {{ form.name }}
+      </div>
+      <div>
+        {{ form.browse_mode.label_tag }}
+        {{ form.browse_mode }}
+      </div>
+      <div>
+        {{ form.linear_upcoming_mode.label_tag }}
+        {{ form.linear_upcoming_mode }}
+        <p class="text-xs text-slate-500 mt-1">Alleen van toepassing bij "Lineair" modus</p>
+      </div>
+    </div>
+
+    <div class="pt-3 flex justify-end gap-2">
+      <button type="button" class="px-3 py-1 rounded bg-slate-200"
+              onclick="document.getElementById('sidepanel').innerHTML=''">Sluiten</button>
+      <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
+    </div>
+  </form>
+</div>

@@ -9,6 +9,7 @@ from server.apps.dashboard.models import (
     Edition,
     Team,
     Route,
+    Bundle,
     RoutePart,
     TeamRoutePart,
     File,
@@ -23,6 +24,7 @@ from .actions import distribute_to_teams
 admin.site.register(Organization)
 admin.site.register(Event)
 admin.site.register(Edition)
+admin.site.register(Bundle)
 admin.site.register(File)
 admin.site.register(LocationLog)
 
@@ -57,6 +59,7 @@ class RoutePartAdmin(SortableAdminMixin, admin.ModelAdmin):
                     "final",
                     "route_type",
                     "route",
+                    "bundle",
                 ],
             },
         ),

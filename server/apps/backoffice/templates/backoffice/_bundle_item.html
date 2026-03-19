@@ -1,0 +1,20 @@
+{# Verwacht context: bundle, route #}
+<li id="bundle-{{ bundle.id }}" class="rounded border border-indigo-200 bg-indigo-50 px-2 py-2 flex items-center gap-2">
+  <iconify-icon icon="heroicons-outline:collection" width="16" height="16" class="text-indigo-500"></iconify-icon>
+  <span class="text-slate-700 flex-1">
+    {{ bundle.name }}
+    <span class="ml-1 text-xs text-slate-500">({{ bundle.get_browse_mode_display }})</span>
+  </span>
+
+  <button class="icon-btn"
+          hx-get="{% url 'backoffice:bundle_edit' route.id bundle.id %}"
+          hx-target="#sidepanel" hx-swap="innerHTML" title="Bundel bewerken">
+    <iconify-icon icon="heroicons-outline:pencil" width="16" height="16"></iconify-icon>
+  </button>
+  <button class="icon-btn danger"
+          hx-post="{% url 'backoffice:bundle_delete' route.id bundle.id %}"
+          hx-confirm="Bundel verwijderen? RouteParts worden losgekoppeld (niet verwijderd)."
+          hx-target="#bundle-{{ bundle.id }}" hx-swap="outerHTML">
+    <iconify-icon icon="heroicons-outline:trash" width="16" height="16"></iconify-icon>
+  </button>
+</li>

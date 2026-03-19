@@ -43,6 +43,11 @@ urlpatterns = [
     path("routes/<int:route_id>/parts/<int:pk>/delete", views.routepart_delete, name="routepart_delete"),
     path("routes/<int:route_id>/parts/reorder", views.routeparts_reorder, name="routeparts_reorder"),
 
+    # Bundles
+    path("routes/<int:route_id>/bundles/new", views.bundle_form, name="bundle_new"),
+    path("routes/<int:route_id>/bundles/<int:pk>", views.bundle_form, name="bundle_edit"),
+    path("routes/<int:route_id>/bundles/<int:pk>/delete", views.bundle_delete, name="bundle_delete"),
+
     path("routeparts/<int:rp_id>/destinations/", views.destinations_editor, name="destinations_editor"),
     path("routeparts/<int:rp_id>/destinations/new", views.destination_form, name="destination_new"),
     path("routeparts/<int:rp_id>/destinations/<int:pk>", views.destination_form, name="destination_edit"),

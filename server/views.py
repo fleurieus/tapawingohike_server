@@ -61,6 +61,7 @@ def _distribute_routes_for_team(team):
                     "routedata_audio": part.routedata_audio,
                     "final": part.final,
                     "order": part.order,
+                    "bundle": part.bundle,
                 },
             )
 

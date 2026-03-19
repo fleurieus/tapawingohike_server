@@ -15,10 +15,12 @@ from django.forms.models import model_to_dict
 import json
 import googlemaps
 from collections import defaultdict
-from .forms import RouteForm, RoutePartForm, DestinationForm, EditionRegistrationForm
+from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm
 from server.apps.dashboard.models import (
-    Event, Edition, Route, RoutePart, TeamRoutePart, Destination, Team, File, LocationLog, DESTINATION_TYPE_MANDATORY, DESTINATION_TYPE_CHOICE
+    Event, Edition, Route, Bundle, RoutePart, TeamRoutePart, Destination, Team, File, LocationLog,
+    DESTINATION_TYPE_MANDATORY, DESTINATION_TYPE_CHOICE,
 )
+from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
 
 @staff_member_required
 def events_list(request):
@@ -343,7 +345,7 @@ def routeparts_builder(request, route_id:int):
     route = get_object_or_404(Route.objects.select_related("edition"), pk=route_id)
     parts = list(
     route.routeparts
-         .select_related("routedata_image","routedata_audio")
+         .select_related("routedata_image","routedata_audio","bundle")
          .annotate(dest_count=Count("destinations"))
          .order_by("order")
     )
@@ -375,9 +377,12 @@ def routeparts_builder(request, route_id:int):
             "idx": counters[rp.id],
         })
 
+    bundles = list(route.bundles.all())
+
     ctx = {
         "route": route,
         "parts": parts,
+        "bundles": bundles,
         "dest_items": dest_items,
         "GOOGLE_MAPS_API_KEY": getattr(settings, "GOOGLE_MAPS_API_KEY", ""),
         "GOOGLE_MAPS_MAP_ID": getattr(settings, "GOOGLE_MAPS_MAP_ID", ""),
@@ -392,7 +397,7 @@ def routepart_form(request, route_id:int, pk:int=None):
     inst = get_object_or_404(RoutePart, pk=pk, route=route) if pk else None
 
     if request.method == "POST":
-        form = RoutePartForm(request.POST, instance=inst)
+        form = RoutePartForm(request.POST, request.FILES, instance=inst, route=route)
 
         if form.is_valid():
             # Altijd commit=False zodat we verplichte velden kunnen zetten
@@ -406,6 +411,19 @@ def routepart_form(request, route_id:int, pk:int=None):
                 # Alleen zetten als het formulier geen 'order' bevat
                 if not getattr(obj, "order", None):
                     obj.order = max_order + 1
+
+            # Geüpload bestand heeft voorrang boven dropdown-keuze
+            if form.cleaned_data.get("new_image_upload"):
+                new_file = File(category=FILE_TYPE_IMAGE)
+                new_file.file = form.cleaned_data["new_image_upload"]
+                new_file.save()
+                obj.routedata_image = new_file
+
+            if form.cleaned_data.get("new_audio_upload"):
+                new_file = File(category=FILE_TYPE_AUDIO)
+                new_file.file = form.cleaned_data["new_audio_upload"]
+                new_file.save()
+                obj.routedata_audio = new_file
 
             obj.save()  # nu veilig saven
 
@@ -435,7 +453,7 @@ def routepart_form(request, route_id:int, pk:int=None):
         return resp
 
     # GET: formulier tonen
-    form = RoutePartForm(instance=inst)
+    form = RoutePartForm(instance=inst, route=route)
     html = render_to_string(
         "backoffice/_routepart_form.html",
         {"form": form, "route": route, "pk": pk, "request": request},
@@ -482,6 +500,56 @@ def routeparts_reorder(request, route_id:int):
     return JsonResponse({"ok": True})
 
 
+# ---------- Bundles ----------
+@staff_member_required
+def bundle_form(request, route_id: int, pk: int = None):
+    route = get_object_or_404(Route, pk=route_id)
+    inst = get_object_or_404(Bundle, pk=pk, route=route) if pk else None
+
+    if request.method == "POST":
+        form = BundleForm(request.POST, instance=inst)
+        if form.is_valid():
+            obj = form.save(commit=False)
+            if inst is None:
+                obj.route = route
+            obj.save()
+
+            html = render_to_string(
+                "backoffice/_bundle_item.html",
+                {"bundle": obj, "route": route, "request": request},
+            )
+            resp = HttpResponse(html)
+            resp["HX-Trigger"] = "bundle:saved"
+            return resp
+
+        html = render_to_string(
+            "backoffice/_bundle_form.html",
+            {"form": form, "route": route, "pk": pk, "request": request},
+        )
+        resp = HttpResponse(html)
+        resp["HX-Retarget"] = "#sidepanel"
+        resp["HX-Reswap"] = "innerHTML"
+        return resp
+
+    form = BundleForm(instance=inst)
+    html = render_to_string(
+        "backoffice/_bundle_form.html",
+        {"form": form, "route": route, "pk": pk, "request": request},
+    )
+    return HttpResponse(html)
+
+
+@staff_member_required
+@require_POST
+def bundle_delete(request, route_id: int, pk: int):
+    route = get_object_or_404(Route, pk=route_id)
+    inst = get_object_or_404(Bundle, pk=pk, route=route)
+    inst.delete()  # RouteParts get bundle=NULL via SET_NULL
+    resp = HttpResponse("")
+    resp["HX-Trigger"] = "bundle:deleted"
+    return resp
+
+
 # ---------- Distribute (oude admin action, nu per route) ----------
 @staff_member_required
 @require_POST
@@ -513,6 +581,7 @@ def distribute_route_to_teams(request, route_id: int):
                         "routedata_audio": part.routedata_audio,
                         "final": part.final,
                         "order": part.order,
+                        "bundle": part.bundle,
                     },
                 )
                 if created:
@@ -530,6 +599,7 @@ def distribute_route_to_teams(request, route_id: int):
                         "routedata_audio": part.routedata_audio,
                         "final": part.final,
                         "order": part.order,
+                        "bundle": part.bundle,
                     }.items():
                         if getattr(trp, field) != value:
                             setattr(trp, field, value)

@@ -44,8 +44,32 @@
 
     <!-- Rechterkolom: 60/40 split + scroll -->
     <div class="col-span-1 h-full min-h-0 grid grid-rows-[11fr_9fr] gap-3">
-      <!-- Lijst (Sortable) met scrollbar -->
+      <!-- Bundels + RouteParts lijst met scrollbar -->
       <div class="bg-white rounded shadow-sm p-3 overflow-auto min-h-0">
+        <!-- Bundels sectie -->
+        <div class="mb-3">
+          <div class="mb-2 flex items-center justify-between">
+            <div class="font-medium text-sm text-indigo-600">Bundels</div>
+            <button class="icon-btn"
+                    title="Nieuwe bundel"
+                    aria-label="Nieuwe bundel"
+                    hx-get="{% url 'backoffice:bundle_new' route.id %}"
+                    hx-target="#sidepanel" hx-swap="innerHTML">
+              <iconify-icon icon="heroicons-outline:plus" width="16" height="16"></iconify-icon>
+            </button>
+          </div>
+          <ul id="bundles-list" class="space-y-1">
+            {% for bundle in bundles %}
+              {% include "backoffice/_bundle_item.html" with bundle=bundle route=route %}
+            {% empty %}
+              <li class="text-xs text-slate-400">Geen bundels</li>
+            {% endfor %}
+          </ul>
+        </div>
+
+        <hr class="mb-3">
+
+        <!-- RouteParts lijst -->
         <div class="mb-2 flex items-center justify-between">
           <div class="font-medium">RouteParts</div>
           <button class="icon-btn"
@@ -132,11 +156,19 @@
     }
   });
 
-  // Na opslaan routepart: paneel sluiten + legenda refresh
+  // Na opslaan routepart/bundel: paneel sluiten + legenda refresh
   document.body.addEventListener("routepart:saved", () => {
     const sp = document.getElementById("sidepanel");
     if (sp) sp.innerHTML = "";
     window.routepartsMapRefreshLegend && window.routepartsMapRefreshLegend();
+  });
+  document.body.addEventListener("bundle:saved", () => {
+    const sp = document.getElementById("sidepanel");
+    if (sp) sp.innerHTML = "";
+  });
+  document.body.addEventListener("bundle:deleted", () => {
+    // Refresh page to update bundle references on routeparts
+    window.location.reload();
   });
 
   // Init: kleur legenda bij eerste load

@@ -1,6 +1,6 @@
 from django import forms
 from server.apps.dashboard.models import Destination, Edition
-from server.apps.dashboard.models import Route, RoutePart, File, Destination
+from server.apps.dashboard.models import Bundle, Route, RoutePart, File, Destination
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
 
 
@@ -39,6 +39,17 @@ class RouteForm(forms.ModelForm):
             "edition": forms.Select(attrs={"class":"border rounded px-2 py-1 w-full"}),
         }
 
+class BundleForm(forms.ModelForm):
+    class Meta:
+        model = Bundle
+        exclude = ["route"]  # route zetten we zelf
+        widgets = {
+            "name": forms.TextInput(attrs={"class":"border rounded px-2 py-1 w-full"}),
+            "browse_mode": forms.Select(attrs={"class":"border rounded px-2 py-1 w-full"}),
+            "linear_upcoming_mode": forms.Select(attrs={"class":"border rounded px-2 py-1 w-full"}),
+        }
+
+
 class RoutePartForm(forms.ModelForm):
     # gefilterde file-keuzes op category
     routedata_image = forms.ModelChoiceField(
@@ -48,6 +59,21 @@ class RoutePartForm(forms.ModelForm):
     routedata_audio = forms.ModelChoiceField(
         queryset=File.objects.filter(category=FILE_TYPE_AUDIO), required=False,
         widget=forms.Select(attrs={"class":"border rounded px-2 py-1 w-full"})
+    )
+    new_image_upload = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={"class":"border rounded px-2 py-1 w-full", "accept":"image/*"}),
+        label="Of upload nieuw (afbeelding)",
+    )
+    new_audio_upload = forms.FileField(
+        required=False,
+        widget=forms.FileInput(attrs={"class":"border rounded px-2 py-1 w-full", "accept":"audio/*"}),
+        label="Of upload nieuw (audio)",
+    )
+    bundle = forms.ModelChoiceField(
+        queryset=Bundle.objects.none(), required=False,
+        widget=forms.Select(attrs={"class":"border rounded px-2 py-1 w-full"}),
+        label="Bundel",
     )
 
     class Meta:
@@ -60,3 +86,8 @@ class RoutePartForm(forms.ModelForm):
             "routepart_fullscreen": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
             "final": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
         }
+
+    def __init__(self, *args, route=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if route:
+            self.fields["bundle"].queryset = Bundle.objects.filter(route=route)

@@ -11,6 +11,10 @@ from .constants import (
     DESTINATION_TYPES,
     ROUTE_TYPE_COORDINATE,
     ROUTE_TYPES,
+    BUNDLE_BROWSE_FREE,
+    BUNDLE_BROWSE_MODES,
+    BUNDLE_LINEAR_UPCOMING_LOCKED,
+    BUNDLE_LINEAR_UPCOMING_MODES,
     FILE_TYPE_IMAGE,
     FILE_TYPE_AUDIO,
     FILE_TYPES,
@@ -135,9 +139,8 @@ class Team(models.Model):
                 completed_time=last_completed_time
             ).update(completed_time=None)
 
-    def get_next_open_routepart_formatted(self):
-        part = self.get_next_open_routepart()
-
+    def _format_single_part(self, part):
+        """Format a single TeamRoutePart into the app-friendly dict."""
         image_url = (
             urljoin(settings.SERVER_URI, part.routedata_image.file.url)
             if part.routedata_image
@@ -148,21 +151,67 @@ class Team(models.Model):
             if part.routedata_audio
             else None
         )
-
-        formatted_data = {
+        return {
             "type": part.route_type,
             "data": {
                 "fullscreen": part.routepart_fullscreen,
                 "zoomEnabled": part.routepart_zoom,
                 "image": image_url,
                 "audio": audio_url,
-                "hasUndoableCompletions": self.check_undoable_completion(),
                 "coordinates": self.destinations_formatted(
                     part.destinations.filter(completed_time__isnull=True)
                 ),
             },
         }
-        return formatted_data
+
+    def get_next_open_routepart_formatted(self):
+        part = self.get_next_open_routepart()
+
+        # If part belongs to a bundle, send the entire bundle
+        if part.bundle:
+            return self._get_bundle_formatted(part)
+
+        # Single part (no bundle) — original behaviour
+        formatted = self._format_single_part(part)
+        formatted["data"]["hasUndoableCompletions"] = self.check_undoable_completion()
+        return formatted
+
+    def _get_bundle_formatted(self, current_part):
+        """Format all parts in the bundle for the app."""
+        bundle = current_part.bundle
+        bundle_parts = list(
+            self.teamrouteparts
+            .filter(bundle=bundle)
+            .order_by("order")
+            .select_related("routedata_image", "routedata_audio")
+        )
+
+        # Determine the index of the first uncompleted part
+        current_index = 0
+        parts_data = []
+        for i, bp in enumerate(bundle_parts):
+            if not bp.completed_time and current_index == 0 and i > 0:
+                pass  # current_index stays at the first uncompleted
+            if bp.completed_time:
+                status = "completed"
+            elif bp.id == current_part.id:
+                status = "current"
+                current_index = i
+            else:
+                status = "upcoming"
+
+            formatted = self._format_single_part(bp)
+            formatted["status"] = status
+            parts_data.append(formatted)
+
+        return {
+            "bundle": True,
+            "browseMode": bundle.browse_mode,
+            "linearUpcomingMode": bundle.linear_upcoming_mode,
+            "currentIndex": current_index,
+            "hasUndoableCompletions": self.check_undoable_completion(),
+            "parts": parts_data,
+        }
 
     def get_teamroutepart(self, destination_id):
         return self.teamrouteparts.get(destinations__id=destination_id)
@@ -202,6 +251,29 @@ class Route(models.Model):
         return self.name
 
 
+class Bundle(models.Model):
+    name = models.CharField(max_length=255)
+    browse_mode = models.CharField(
+        max_length=20,
+        choices=BUNDLE_BROWSE_MODES,
+        default=BUNDLE_BROWSE_FREE,
+    )
+    linear_upcoming_mode = models.CharField(
+        max_length=20,
+        choices=BUNDLE_LINEAR_UPCOMING_MODES,
+        default=BUNDLE_LINEAR_UPCOMING_LOCKED,
+        help_text="Only used when browse_mode is linear",
+    )
+    route = models.ForeignKey(
+        "dashboard.Route",
+        on_delete=models.CASCADE,
+        related_name="bundles",
+    )
+
+    def __str__(self):
+        return f"{self.name} | {self.route}"
+
+
 class RoutePart(FinalDestinationValidationMixin, models.Model):
     # info
     name = models.CharField(max_length=255)
@@ -237,6 +309,13 @@ class RoutePart(FinalDestinationValidationMixin, models.Model):
         "dashboard.Route",
         on_delete=models.CASCADE,
         related_name="routeparts",
+    )
+    bundle = models.ForeignKey(
+        "dashboard.Bundle",
+        on_delete=models.SET_NULL,
+        related_name="routeparts",
+        blank=True,
+        null=True,
     )
 
     def __str__(self):
@@ -293,6 +372,13 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
         "dashboard.Team",
         on_delete=models.CASCADE,
         related_name="teamrouteparts",
+    )
+    bundle = models.ForeignKey(
+        "dashboard.Bundle",
+        on_delete=models.SET_NULL,
+        related_name="teamrouteparts",
+        blank=True,
+        null=True,
     )
 
     def __str__(self):

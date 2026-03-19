@@ -12,6 +12,7 @@
     hx-post="{% if pk %}{% url 'backoffice:routepart_edit' route.id pk %}{% else %}{% url 'backoffice:routepart_new' route.id %}{% endif %}"
     hx-target="{% if pk %}#rp-{{ pk }}{% else %}#parts-list{% endif %}"
     hx-swap="{% if pk %}outerHTML{% else %}beforeend{% endif %}"
+    hx-encoding="multipart/form-data"
     class="space-y-3"
    >
 
@@ -45,14 +46,29 @@
         </div>
       </div>
 
+      <!-- Bundel -->
+      <div class="col-span-2">
+        {{ form.bundle.label_tag }}
+        {{ form.bundle }}
+        <p class="text-xs text-slate-500 mt-1">Koppel aan een bundel om routedelen als set naar de app te sturen</p>
+      </div>
+
       <!-- Media velden naast elkaar -->
       <div>
-        {{ form.routedata_image.label_tag }} 
+        {{ form.routedata_image.label_tag }}
         {{ form.routedata_image }}
+        <div class="mt-1">
+          {{ form.new_image_upload.label_tag }}
+          {{ form.new_image_upload }}
+        </div>
       </div>
       <div>
-        {{ form.routedata_audio.label_tag }} 
+        {{ form.routedata_audio.label_tag }}
         {{ form.routedata_audio }}
+        <div class="mt-1">
+          {{ form.new_audio_upload.label_tag }}
+          {{ form.new_audio_upload }}
+        </div>
       </div>
     </div>
 

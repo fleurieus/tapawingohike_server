@@ -18,6 +18,22 @@ ROUTE_TYPES = [
     (ROUTE_TYPE_AUDIO, "Audio"),
 ]
 
+BUNDLE_BROWSE_FREE = "free"
+BUNDLE_BROWSE_LINEAR = "linear"
+
+BUNDLE_BROWSE_MODES = [
+    (BUNDLE_BROWSE_FREE, "Vrij bladeren"),
+    (BUNDLE_BROWSE_LINEAR, "Lineair (alleen huidig + bezochte)"),
+]
+
+BUNDLE_LINEAR_UPCOMING_LOCKED = "locked"
+BUNDLE_LINEAR_UPCOMING_HIDDEN = "hidden"
+
+BUNDLE_LINEAR_UPCOMING_MODES = [
+    (BUNDLE_LINEAR_UPCOMING_LOCKED, "Vergrendeld (zichtbaar maar geblurred)"),
+    (BUNDLE_LINEAR_UPCOMING_HIDDEN, "Verborgen"),
+]
+
 FILE_TYPE_IMAGE = "image"
 FILE_TYPE_AUDIO = "audio"
 
