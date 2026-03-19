@@ -1,4 +1,4 @@
-{% load static %}
+{% load compress static %}
 <!doctype html>
 <html lang="nl">
 <head>
@@ -6,7 +6,9 @@
   <title>Backoffice · Destinations (RoutePart #{{ rp.id }})</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  {% compress css %}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  {% endcompress %}
   <script defer src="{% static 'backoffice/destinations.js' %}"></script>
   <style>
     .panel-enter { opacity: 0; transform: translateX(16px); }

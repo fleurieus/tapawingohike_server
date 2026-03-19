@@ -5,11 +5,9 @@
 @plugin "@tailwindcss/forms";
 @plugin "@tailwindcss/typography";
 
-/* (Optioneel) extra bronnen als de auto-detect iets mist: */
-/* pas paden aan t.o.v. dit CSS-bestand */
-@source "../../templates";
+/* Extra bronnen voor Tailwind class scanning */
 @source "../../server/apps/**/templates";
-@source "../../static/**/*.js";
+@source "../../staticfiles";
 
 /* Je eigen kleine utilities kan je gewoon als CSS schrijven */
 .icon-btn { background: transparent; border: 0; padding: .25rem; border-radius: .5rem; line-height: 1; }

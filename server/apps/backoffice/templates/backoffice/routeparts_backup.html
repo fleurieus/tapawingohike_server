@@ -1,4 +1,4 @@
-{% load static %}
+{% load compress static %}
 <!doctype html>
 <html>
 <head>
@@ -8,7 +8,9 @@
 
   <!-- libs -->
   <script src="https://unpkg.com/htmx.org@2.0.2"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+  {% compress css %}
+    <link href="{% static 'css/app.css' %}" rel="stylesheet">
+  {% endcompress %}
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
   <script src="https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js"></script>
 
