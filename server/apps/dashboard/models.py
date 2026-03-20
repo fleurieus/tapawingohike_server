@@ -167,6 +167,9 @@ class Team(models.Model):
     def get_next_open_routepart_formatted(self):
         part = self.get_next_open_routepart()
 
+        if part is None:
+            return None
+
         # If part belongs to a bundle, send the entire bundle
         if part.bundle:
             return self._get_bundle_formatted(part)
