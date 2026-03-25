@@ -14,15 +14,14 @@ LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "handlers": {
-        "daphne_file": {
+        "console": {
             "level": "INFO",
-            "class": "logging.FileHandler",
-            "filename": os.environ.get("LOG_FILE", "/var/log/daphne/server.log"),
+            "class": "logging.StreamHandler",
         },
     },
     "loggers": {
         "daphne": {
-            "handlers": ["daphne_file"],
+            "handlers": ["console"],
             "level": "INFO",
         },
     },
