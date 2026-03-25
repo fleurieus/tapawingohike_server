@@ -1,5 +1,5 @@
 {# Verwacht context: route, p (RoutePart met p.dest_count) #}
-<li id="rp-{{ p.id }}" class="row-hover rounded border {% if p.bundle %}border-indigo-300 bg-indigo-50/50{% else %}border-slate-200{% endif %} px-2 py-2 flex items-center gap-2"
+<li id="rp-{{ p.id }}" class="row-hover rounded border {% if p.bundle %}border-indigo-300 bg-indigo-50{% else %}border-slate-200{% endif %} px-2 py-2 flex items-center gap-2"
     data-id="{{ p.id }}" data-rp-id="{{ p.id }}">
   <span class="inline-block w-3 h-3 rounded" data-legend-color data-rp-id="{{ p.id }}"></span>
   <span class="text-slate-700 flex-1">

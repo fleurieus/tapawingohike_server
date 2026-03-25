@@ -34,7 +34,9 @@ class SocketDataHandler:
         return self.team
 
     def handle_request(self, endpoint, data=None):
-        FUNCTION_MAPPING[endpoint](self, data)
+        """Run the handler and return optional response dict to send."""
+        self.team.touch()
+        return FUNCTION_MAPPING[endpoint](self, data)
 
     def close(self):
         self.team.go_offline()

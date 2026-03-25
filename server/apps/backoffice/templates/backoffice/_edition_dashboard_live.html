@@ -1,0 +1,238 @@
+{# Live-refreshable dashboard content (HTMX partial) #}
+
+{# ── Stats cards ── #}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white border rounded-2xl p-4">
+    <div class="text-xs text-slate-500">Teams</div>
+    <div class="text-2xl font-semibold tabular-nums">{{ teams_total }}</div>
+    <div class="text-xs text-slate-500 mt-1">
+      {{ teams_active }} actief · {{ teams_online }} online
+    </div>
+  </div>
+  <div class="bg-white border rounded-2xl p-4">
+    <div class="text-xs text-slate-500">Routes</div>
+    <div class="text-2xl font-semibold tabular-nums">{{ routes_count }}</div>
+  </div>
+  <div class="bg-white border rounded-2xl p-4">
+    <div class="text-xs text-slate-500">Routeparts</div>
+    <div class="text-2xl font-semibold tabular-nums">{{ routeparts_count }}</div>
+  </div>
+  {% if edition.messaging_enabled %}
+    <div class="bg-white border rounded-2xl p-4">
+      <div class="text-xs text-slate-500">Berichten</div>
+      <div class="text-2xl font-semibold tabular-nums">{{ messages_total }}</div>
+      {% if messages_unread %}
+        <div class="text-xs text-amber-600 mt-1">{{ messages_unread }} ongelezen</div>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="bg-white border rounded-2xl p-4">
+      <div class="text-xs text-slate-500">Berichten</div>
+      <div class="text-sm text-slate-400 mt-1">Uitgeschakeld</div>
+    </div>
+  {% endif %}
+</div>
+
+{# ── Three-column body ── #}
+<div class="grid lg:grid-cols-3 gap-6">
+
+  {# ── Teams ── #}
+  <div class="bg-white border rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold flex items-center gap-2">
+        <iconify-icon icon="heroicons:user-group" width="18" height="18" class="text-slate-400"></iconify-icon>
+        Teams
+      </h2>
+      <a href="{% url 'backoffice:team_list' edition.id %}"
+         class="text-xs text-green-700 hover:underline">Alle teams →</a>
+    </div>
+
+    {% if team_progress %}
+      <div class="space-y-2 max-h-72 overflow-y-auto">
+        {% for tp in team_progress %}
+          <div class="flex items-center gap-3 text-sm">
+            {% if tp.team.online %}
+              <span class="w-2 h-2 rounded-full bg-green-500 shrink-0" title="Online · laatst gezien {{ tp.team.last_seen|timesince }} geleden"></span>
+            {% elif tp.team.is_activated %}
+              <span class="w-2 h-2 rounded-full bg-slate-300 shrink-0" title="Offline{% if tp.team.last_seen %} · laatst gezien {{ tp.team.last_seen|timesince }} geleden{% endif %}"></span>
+            {% else %}
+              <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0" title="Niet geactiveerd"></span>
+            {% endif %}
+
+            <span class="truncate flex-1">{{ tp.team.name }}</span>
+
+            {% if tp.total > 0 %}
+              <div class="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden shrink-0" title="{{ tp.completed }}/{{ tp.total }} routeparts">
+                <div class="h-full bg-green-500 rounded-full" style="width:{{ tp.pct }}%"></div>
+              </div>
+              <span class="text-xs text-slate-400 tabular-nums w-8 text-right">{{ tp.pct }}%</span>
+            {% else %}
+              <span class="text-xs text-slate-300">—</span>
+            {% endif %}
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-400">Nog geen teams.</p>
+    {% endif %}
+  </div>
+
+  {# ── Routes ── #}
+  <div class="bg-white border rounded-2xl p-4">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold flex items-center gap-2">
+        <iconify-icon icon="heroicons:map-pin" width="18" height="18" class="text-slate-400"></iconify-icon>
+        Routes
+      </h2>
+      <a href="{% url 'backoffice:routes_page' %}?edition={{ edition.id }}"
+         class="text-xs text-green-700 hover:underline">Alle routes →</a>
+    </div>
+
+    {% if routes %}
+      <div class="space-y-3">
+        {% for r in routes %}
+          <div class="rounded-xl bg-slate-50 p-3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-medium text-sm">{{ r.name }}</span>
+              {% if r.date %}
+                <span class="text-xs text-slate-400">{{ r.date|date:"d-m-Y" }}</span>
+              {% endif %}
+            </div>
+            <div class="text-xs text-slate-500 mb-2">
+              {{ r.parts_count }} routeparts · {{ r.teams_count }} teams
+            </div>
+            <div class="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+              <div class="h-full bg-green-500 rounded-full" style="width:{{ r.completion_pct }}%"></div>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-xs text-slate-400">{{ r.completion_pct }}% voltooid</span>
+              <div class="flex items-center gap-2">
+                <a href="{% url 'backoffice:routeparts_builder' r.id %}"
+                   class="text-xs text-green-700 hover:underline">Routeparts</a>
+                <a href="{% url 'backoffice:route_map' r.id %}"
+                   class="text-xs text-green-700 hover:underline">Kaart</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-sm text-slate-400">Nog geen routes.</p>
+    {% endif %}
+  </div>
+
+  {# ── Berichten / Registratie ── #}
+  <div class="space-y-6">
+    {% if edition.messaging_enabled %}
+      <div class="bg-white border rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-semibold flex items-center gap-2">
+            <iconify-icon icon="heroicons:chat-bubble-left-right" width="18" height="18" class="text-slate-400"></iconify-icon>
+            Berichten
+          </h2>
+          <a href="{% url 'backoffice:messages' edition.id %}"
+             class="text-xs text-green-700 hover:underline">Alle berichten →</a>
+        </div>
+
+        {% if recent_messages %}
+          <div class="space-y-2 max-h-56 overflow-y-auto">
+            {% for msg in recent_messages %}
+              <div class="text-sm border-b border-slate-100 pb-2 last:border-0 last:pb-0">
+                <div class="flex items-center justify-between">
+                  <span class="font-medium text-xs">
+                    {% if msg.sender_team %}
+                      {{ msg.sender_team.name }}
+                    {% else %}
+                      Organisatie
+                    {% endif %}
+                    {% if msg.recipient_team %}
+                      <span class="text-slate-400">→ {{ msg.recipient_team.name }}</span>
+                    {% elif msg.sender_team %}
+                      <span class="text-slate-400">→ Organisatie</span>
+                    {% else %}
+                      <span class="text-slate-400">→ Iedereen</span>
+                    {% endif %}
+                  </span>
+                  <span class="text-xs text-slate-400">{{ msg.created_at|timesince }} geleden</span>
+                </div>
+                {% if msg.text %}
+                  <p class="text-slate-600 truncate mt-0.5">{{ msg.text }}</p>
+                {% endif %}
+                {% if msg.image %}
+                  <span class="text-xs text-slate-400">📷 Afbeelding</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-slate-400">Nog geen berichten.</p>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    {# Registration status #}
+    <div class="bg-white border rounded-2xl p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="font-semibold flex items-center gap-2">
+          <iconify-icon icon="heroicons:clipboard-document-list" width="18" height="18" class="text-slate-400"></iconify-icon>
+          Registratie
+        </h2>
+        <a href="{% url 'backoffice:edition_registration' edition.id %}"
+           class="text-xs text-green-700 hover:underline">Instellingen →</a>
+      </div>
+
+      <div class="flex items-center gap-2 text-sm">
+        {% if edition.registration_mode == "none" %}
+          <span class="inline-block w-2 h-2 rounded-full bg-slate-300"></span>
+          <span class="text-slate-500">Registratie uitgeschakeld</span>
+        {% elif edition.registration_mode == "quick" %}
+          <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="text-green-700">Snelle registratie</span>
+        {% else %}
+          <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
+          <span class="text-blue-700">Uitgebreide registratie</span>
+        {% endif %}
+      </div>
+      {% if edition.registration_mode != "none" %}
+        <div class="mt-2 flex items-center gap-2">
+          <code class="flex-1 text-xs bg-slate-100 px-2 py-1 rounded truncate" id="reg-url">{{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.id %}</code>
+          <button type="button" title="Link kopiëren"
+                  onclick="navigator.clipboard.writeText(document.getElementById('reg-url').textContent);this.querySelector('iconify-icon').setAttribute('icon','heroicons:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','heroicons:clipboard-document'),1000)"
+                  class="text-slate-400 hover:text-slate-600 shrink-0">
+            <iconify-icon icon="heroicons:clipboard-document" width="16" height="16"></iconify-icon>
+          </button>
+          <a href="{% url 'register' edition.id %}" target="_blank" title="Openen"
+             class="text-slate-400 hover:text-slate-600 shrink-0">
+            <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+          </a>
+        </div>
+      {% endif %}
+    </div>
+
+    {# Quick actions #}
+    <div class="bg-white border rounded-2xl p-4">
+      <h2 class="font-semibold flex items-center gap-2 mb-3">
+        <iconify-icon icon="heroicons:bolt" width="18" height="18" class="text-slate-400"></iconify-icon>
+        Snelle acties
+      </h2>
+      <div class="space-y-2">
+        <a href="{% url 'backoffice:team_add' edition.id %}"
+           class="flex items-center gap-2 text-sm text-green-700 hover:underline">
+          <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+          Team toevoegen
+        </a>
+        <a href="{% url 'backoffice:routes_page' %}?edition={{ edition.id }}"
+           class="flex items-center gap-2 text-sm text-green-700 hover:underline">
+          <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+          Route beheren
+        </a>
+        <a href="{% url 'backoffice:edition_registration' edition.id %}"
+           class="flex items-center gap-2 text-sm text-green-700 hover:underline">
+          <iconify-icon icon="heroicons:cog-6-tooth" width="16" height="16"></iconify-icon>
+          Instellingen
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>

@@ -21,6 +21,7 @@ urlpatterns = [
     path('stats/', login_required(TemplateView.as_view(template_name='base.html')), name='stats'),
     path('pin', pins.chart_pin, name="chart_pin"),
     path("backoffice/", include("server.apps.backoffice.urls", namespace="backoffice")),
+    path("api/", include("server.apps.api.urls", namespace="api")),
     path("login/", auth_views.LoginView.as_view(template_name="_base.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
 ]

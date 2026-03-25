@@ -5,6 +5,7 @@
       <tr>
         <th class="text-left p-3">Naam</th>
         <th class="text-left p-3">Edition</th>
+        <th class="text-left p-3">Datum</th>
         <th class="text-left p-3"># Routeparts</th>
         <th class="text-left p-3">TeamRouteParts</th>
         <th class="text-left p-3">Follow</th>
@@ -16,6 +17,7 @@
         <tr class="border-b last:border-0 hover:bg-slate-50">
           <td class="p-3 font-medium">{{ r.name }}</td>
           <td class="p-3 text-slate-600">{{ r.edition.name }}</td>
+          <td class="p-3 text-slate-600">{% if r.date %}{{ r.date|date:"d M Y" }}{% else %}<span class="text-slate-300">—</span>{% endif %}</td>
           <td class="p-3 tabular-nums"><a title="Naar RouteParts" href="{% url 'backoffice:routeparts_builder' r.id %}">{{ r.parts_count }} <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon></a></td>
           <td class="p-3">
             <a
@@ -61,7 +63,7 @@
         </tr>
       {% empty %}
         <tr>
-          <td class="p-3 text-slate-500" colspan="4">Geen routes.</td>
+          <td class="p-3 text-slate-500" colspan="7">Geen routes.</td>
         </tr>
       {% endfor %}
     </tbody>

@@ -12,6 +12,10 @@ urlpatterns = [
     # Editions gefilterd op een Event
     path("events/<int:event_id>/editions/", views.edition_list, name="edition_list_for_event"),
 
+    # Edition dashboard
+    path("editions/<int:edition_id>/", views.edition_dashboard, name="edition_dashboard"),
+    path("editions/<int:edition_id>/live/", views.edition_dashboard_live, name="edition_dashboard_live"),
+
     #Editions
     path("editions/", views.edition_list, name="edition_list"),
     path("editions/<int:edition_id>/routes-stats/", views.edition_routes_stats, name="edition_routes_stats"),
@@ -23,6 +27,13 @@ urlpatterns = [
     path("editions/<int:edition_id>/teams/<int:pk>/edit/", views.team_edit, name="team_edit"),
     path("editions/<int:edition_id>/teams/<int:pk>/delete/", views.team_delete, name="team_delete"),
     path("editions/<int:edition_id>/teams/<int:pk>/activate/", views.team_activate, name="team_activate"),
+
+    # Messages
+    path("editions/<int:edition_id>/messages/", views.messages_page, name="messages"),
+    path("editions/<int:edition_id>/messages/team/<int:team_id>/", views.messages_page, name="messages_team"),
+    path("editions/<int:edition_id>/messages/mark-read/<int:team_id>/", views.messages_mark_read, name="messages_mark_read"),
+    path("editions/<int:edition_id>/messages/clear/", views.messages_clear, name="messages_clear"),
+    path("editions/<int:edition_id>/messages/clear/<int:team_id>/", views.messages_clear, name="messages_clear_team"),
 
     # Routes
     path("routes/", views.routes_page, name="routes_page"),
@@ -56,10 +67,26 @@ urlpatterns = [
     path("routeparts/<int:rp_id>/destinations/<int:pk>/update", views.destination_update, name="destination_update"),
 
 
-    path("routes/<int:route_id>/teams/", views.teamrouteparts_builder, name="teamrouteparts_builder"), 
+    # Team-level destinations (editing destinations on a TeamRoutePart)
+    path("teamrouteparts/<int:trp_id>/destinations/", views.team_destinations_editor, name="team_destinations_editor"),
+    path("teamrouteparts/<int:trp_id>/destinations/new", views.team_destination_form, name="team_destination_new"),
+    path("teamrouteparts/<int:trp_id>/destinations/<int:pk>", views.team_destination_form, name="team_destination_edit"),
+    path("teamrouteparts/<int:trp_id>/destinations/<int:pk>/delete", views.team_destination_delete, name="team_destination_delete"),
+    path("teamrouteparts/<int:trp_id>/destinations/<int:pk>/move", views.team_destination_move, name="team_destination_move"),
+    path("teamrouteparts/<int:trp_id>/destinations/<int:pk>/update", views.team_destination_update, name="team_destination_update"),
+
+    path("routes/<int:route_id>/teams/", views.teamrouteparts_builder, name="teamrouteparts_builder"),
+    path("routes/<int:route_id>/teams/table/", views.teamrouteparts_table, name="teamrouteparts_table"),
     path("routes/<int:route_id>/distribute", views.distribute_route_to_teams, name="route_distribute"),
     path("teamrouteparts/destinations/bulk_move", views.team_dests_bulk_move, name="team_dests_bulk_move"),
     path("teamrouteparts/destinations/bulk_update", views.team_dests_bulk_update, name="team_dests_bulk_update"),    
     path("teamrouteparts/destinations/bulk_delete", views.team_dests_bulk_delete, name="team_dests_bulk_delete"),
     path("routes/<int:route_id>/teams/clear", views.teamrouteparts_clear, name="teamrouteparts_clear"),
+
+    # User management (superadmin only)
+    path("users/", views.user_list, name="user_list"),
+    path("users/add/", views.user_add, name="user_add"),
+    path("users/<int:pk>/edit/", views.user_edit, name="user_edit"),
+    path("users/<int:pk>/deactivate/", views.user_deactivate, name="user_deactivate"),
+    path("users/<int:pk>/reset-password/", views.user_reset_password, name="user_reset_password"),
 ]

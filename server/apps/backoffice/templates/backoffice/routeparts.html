@@ -21,20 +21,19 @@
 </style>
 {% endblock %}
 
+{% block content_wrapper %}p-0{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto p-4 h-[calc(100vh-107px)] flex flex-col">
+<div class="p-4 h-[calc(100vh-3.5rem)] flex flex-col">
   <div class="flex items-center justify-between mb-4">
     <div>
       <h1 class="text-xl font-semibold">RouteParts · {{ route.name }}</h1>
       <div class="text-sm text-slate-600">Edition: {{ route.edition.name }}</div>
     </div>
-    <div class="flex items-center gap-2">
-      <a class="text-sm hover:underline" href="{% url 'backoffice:routes_page' %}?edition={{ route.edition.id }}">← Terug</a>
-    </div>
   </div>
 
   <div class="grid grid-cols-3 gap-4 flex-1 min-h-0">
-    <!-- Kaart -->
+    {# Map #}
     <div class="col-span-2">
       <div id="map"
            class="w-full h-full bg-white rounded shadow-sm"
@@ -42,14 +41,13 @@
            data-route-id="{{ route.id }}"></div>
     </div>
 
-    <!-- Rechterkolom: 60/40 split + scroll -->
+    {# Right column: bundles + parts list + sidepanel #}
     <div class="col-span-1 h-full min-h-0 grid grid-rows-[11fr_9fr] gap-3">
-      <!-- Bundels + RouteParts lijst met scrollbar -->
       <div class="bg-white rounded shadow-sm p-3 overflow-auto min-h-0">
-        <!-- Bundels sectie -->
+        {# Bundles section #}
         <div class="mb-3">
           <div class="mb-2 flex items-center justify-between">
-            <div class="font-medium text-sm text-indigo-600">Bundels</div>
+            <div class="font-medium text-sm text-green-700">Bundels</div>
             <button class="icon-btn"
                     title="Nieuwe bundel"
                     aria-label="Nieuwe bundel"
@@ -69,7 +67,7 @@
 
         <hr class="mb-3">
 
-        <!-- RouteParts lijst -->
+        {# RouteParts list #}
         <div class="mb-2 flex items-center justify-between">
           <div class="font-medium">RouteParts</div>
           <button class="icon-btn"
@@ -89,24 +87,25 @@
         </ul>
       </div>
 
-      <!-- Zijpaneel voor formulieren (scrollbaar) -->
-      <div id="sidepanel" class="bg-white rounded shadow-sm p-0 overflow-auto min-h-0"></div>
+      {# Sidepanel for forms #}
+      <div id="sidepanel" class="bg-white rounded shadow-sm p-0 overflow-auto min-h-0">
+        <div class="p-4 text-sm text-slate-400 flex flex-col items-center justify-center gap-2 h-32">
+          <iconify-icon icon="heroicons:cursor-arrow-rays" width="24" height="24"></iconify-icon>
+          Klik op een routepart om te bewerken
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- HTMX indicator -->
   <div id="hx-indicator" class="mt-2 text-xs text-slate-500">Laden…</div>
 </div>
 
-<!-- JSON payload met alle destinations voor de kaart -->
 {{ dest_items|json_script:"routeparts-dests" }}
 
-{# csrf_token beschikbaar maken voor JS fallback #}
 {% csrf_token %}
 
 <script>
 (() => {
-  // ---------- CSRF ----------
   function getCsrfToken() {
     const m = document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/);
     return m ? decodeURIComponent(m[1]) : "{{ csrf_token }}";
@@ -115,7 +114,7 @@
     e.detail.headers["X-CSRFToken"] = getCsrfToken();
   });
 
-  // ---------- Sortable (RouteParts reorder) ----------
+  // Sortable (RouteParts reorder)
   document.addEventListener("DOMContentLoaded", () => {
     const el = document.getElementById("parts-list");
     if (!el) return;
@@ -138,25 +137,20 @@
     });
   });
 
-  // ---------- HTMX lifecycle ----------
+  // HTMX lifecycle
   document.body.addEventListener("htmx:afterSwap", (e) => {
     const tgt = e.target;
-
-    // Sidepanel animatie
     if (tgt && tgt.id === "sidepanel") {
       const root = tgt.firstElementChild;
       if (root && root.classList.contains("panel-enter")) {
         requestAnimationFrame(() => root.classList.add("show"));
       }
     }
-
-    // Refresh legenda als parts-list ververst is
     if (tgt && (tgt.id === "parts-list" || tgt.closest?.("#parts-list"))) {
       window.routepartsMapRefreshLegend && window.routepartsMapRefreshLegend();
     }
   });
 
-  // Na opslaan routepart/bundel: paneel sluiten + legenda refresh
   document.body.addEventListener("routepart:saved", () => {
     const sp = document.getElementById("sidepanel");
     if (sp) sp.innerHTML = "";
@@ -167,16 +161,13 @@
     if (sp) sp.innerHTML = "";
   });
   document.body.addEventListener("bundle:deleted", () => {
-    // Refresh page to update bundle references on routeparts
     window.location.reload();
   });
 
-  // Init: kleur legenda bij eerste load
   document.addEventListener("DOMContentLoaded", () => {
     window.routepartsMapRefreshLegend && window.routepartsMapRefreshLegend();
   });
 
-  // Paneel leeg? verlaat add-mode
   (function observeSidepanel() {
     const sp = document.getElementById("sidepanel");
     if (!sp) return;
@@ -187,7 +178,6 @@
     obs.observe(sp, { childList: true });
   })();
 
-  // ESC sluit paneel + verlaat add-mode
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       const sp = document.getElementById("sidepanel");
@@ -196,7 +186,6 @@
     }
   });
 
-  // ---------- Global loading indicator ----------
   (function attachIndicator() {
     const ind = document.getElementById("hx-indicator");
     if (!ind) return;
@@ -209,7 +198,6 @@
 })();
 </script>
 
-<!-- Google Maps -->
 <script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&v=weekly&loading=async{% if GOOGLE_MAPS_MAP_ID %}&map_ids={{ GOOGLE_MAPS_MAP_ID }}{% endif %}"></script>
 <script defer src="{% static 'backoffice/routeparts_map.js' %}"></script>
 {% endblock %}

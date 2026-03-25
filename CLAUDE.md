@@ -34,6 +34,9 @@ Beschrijf je bevindingen beknopt voordat je begint.
    (volledig formulier→bevestigingsmail, handmatige activatie). Commit c81ffdf.
 3. ~~**Bundle model**~~ – `Bundle` model + FK op RoutePart/TeamRoutePart, bundel-aware
    `get_next_open_routepart_formatted()`, backoffice CRUD UI. Migratie `0010_add_bundle_model`.
+4. ~~**Route datum + locatielogs filteren**~~ – Optioneel `date` DateField op Route. Live map
+   filtert locatielogs op route-datum (fallback: vandaag). Datumkiezer in route-formulier,
+   datum-kolom in routes-lijst. Migratie `0015_add_route_date`.
 
 ## Kernmodellen (geverifieerd)
 ```

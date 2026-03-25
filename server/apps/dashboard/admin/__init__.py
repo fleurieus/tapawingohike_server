@@ -14,6 +14,7 @@ from server.apps.dashboard.models import (
     TeamRoutePart,
     File,
     LocationLog,
+    UserProfile,
 )
 
 from adminsortable2.admin import SortableAdminMixin
@@ -27,6 +28,7 @@ admin.site.register(Edition)
 admin.site.register(Bundle)
 admin.site.register(File)
 admin.site.register(LocationLog)
+admin.site.register(UserProfile)
 
 
 @admin.register(Route)

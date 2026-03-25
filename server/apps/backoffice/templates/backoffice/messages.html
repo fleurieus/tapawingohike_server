@@ -1,0 +1,289 @@
+{% extends "_base.html" %}
+{% block title %}Berichten · {{ edition.name }}{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <h1 class="text-2xl font-semibold leading-tight">Berichten · {{ edition.name }}</h1>
+    <p class="text-sm text-slate-600">Event: {{ edition.event.name }}</p>
+  </div>
+</div>
+
+<div class="flex gap-4" style="height: calc(100vh - 10rem);">
+  {# ── Sidebar: team list ── #}
+  <div class="w-56 flex-shrink-0 bg-white border rounded-2xl overflow-y-auto">
+    <a href="{% url 'backoffice:messages' edition.id %}"
+       class="block px-4 py-3 text-sm font-medium border-b hover:bg-slate-50 {% if not selected_team %}bg-slate-100 text-slate-900{% else %}text-slate-600{% endif %}">
+      <iconify-icon icon="heroicons:megaphone" width="16" height="16" class="mr-1"></iconify-icon>
+      Broadcast
+    </a>
+    {% for t in teams %}
+      <a href="{% url 'backoffice:messages_team' edition.id t.id %}"
+         data-team-id="{{ t.id }}"
+         class="team-link flex items-center justify-between px-4 py-3 text-sm border-b hover:bg-slate-50 {% if selected_team.id == t.id %}bg-slate-100 font-medium text-slate-900{% else %}text-slate-600{% endif %}">
+        <span class="flex items-center gap-2">
+          {% if t.online %}
+            <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="Online"></span>
+          {% else %}
+            <span class="inline-block w-2 h-2 rounded-full bg-slate-300" title="Offline"></span>
+          {% endif %}
+          {{ t.name }}
+        </span>
+        <span class="unread-badge {% if t.unread_count == 0 %}hidden{% endif %} inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">{{ t.unread_count }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {# ── Main: thread + input ── #}
+  <div class="flex-1 bg-white border rounded-2xl flex flex-col overflow-hidden">
+    <div class="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-slate-700">
+        {% if selected_team %}
+          {{ selected_team.name }}
+        {% else %}
+          Broadcast (alle teams)
+        {% endif %}
+      </h2>
+      <form method="post"
+            action="{% if selected_team %}{% url 'backoffice:messages_clear_team' edition.id selected_team.id %}{% else %}{% url 'backoffice:messages_clear' edition.id %}{% endif %}"
+            onsubmit="return confirm('Alle berichten in deze thread verwijderen?');">
+        {% csrf_token %}
+        <button type="submit"
+                class="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50">
+          <iconify-icon icon="heroicons:trash" width="14" height="14"></iconify-icon>
+          Chat legen
+        </button>
+      </form>
+    </div>
+
+    {# Thread messages #}
+    <div id="thread" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+      {% include "backoffice/_messages_thread.html" %}
+    </div>
+
+    {# Input bar #}
+    <div class="border-t px-4 py-3">
+      <form method="post" enctype="multipart/form-data" class="flex gap-2 items-end">
+        {% csrf_token %}
+        <label class="cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border hover:bg-slate-50 text-slate-500 hover:text-slate-700 flex-shrink-0"
+               title="Afbeelding toevoegen">
+          <iconify-icon icon="heroicons:photo" width="20" height="20"></iconify-icon>
+          <input type="file" name="image" accept="image/jpeg,image/png" class="hidden"
+                 onchange="updateImagePreview(this)">
+        </label>
+        <div class="flex-1">
+          <div id="image-preview" class="mb-2 relative inline-block" style="display:none">
+            <img id="image-preview-img" class="max-h-20 rounded-lg" alt="Preview">
+            <button type="button" onclick="clearImagePreview()"
+                    class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600">&times;</button>
+          </div>
+          <input type="text" name="text" placeholder="Typ een bericht…"
+                 class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                 autocomplete="off">
+        </div>
+        <button class="px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600 flex-shrink-0">
+          Versturen
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# ── Lightbox overlay ── #}
+<div id="lightbox" class="fixed inset-0 z-50 bg-black/80 items-center justify-center cursor-pointer" style="display:none" onclick="closeLightbox()">
+  <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white text-3xl leading-none hover:text-slate-300">&times;</button>
+  <img id="lightbox-img" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+</div>
+
+<script>
+// ── Lightbox ──
+function openLightbox(url) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lightbox-img');
+  img.src = url;
+  lb.style.display = 'flex';
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.style.display = 'none';
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+
+// ── Image preview helpers ──
+function updateImagePreview(input) {
+  const preview = document.getElementById('image-preview');
+  const previewImg = document.getElementById('image-preview-img');
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      previewImg.src = e.target.result;
+      preview.style.display = 'inline-block';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+
+function clearImagePreview() {
+  const preview = document.getElementById('image-preview');
+  const fileInput = document.querySelector('input[name="image"]');
+  preview.style.display = 'none';
+  fileInput.value = '';
+}
+
+// ── WebSocket for real-time message updates ──
+(function() {
+  const editionId = {{ edition.id }};
+  const selectedTeamId = {{ selected_team.id|default:"null" }};
+  const csrfToken = '{{ csrf_token }}';
+  const markReadUrl = selectedTeamId
+    ? '{% if selected_team %}{% url "backoffice:messages_mark_read" edition.id selected_team.id %}{% endif %}'
+    : null;
+  const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = wsProtocol + '//' + location.host + '/ws/backoffice/' + editionId + '/';
+
+  // ── Unread tracking & activity-based mark-as-read ──
+  let hasUnread = false;
+  let activityTimer = null;
+
+  function onUserActivity() {
+    if (!hasUnread || !markReadUrl) return;
+    clearTimeout(activityTimer);
+    activityTimer = setTimeout(markAsRead, 1500);
+  }
+
+  function markAsRead() {
+    if (!hasUnread || !markReadUrl) return;
+    fetch(markReadUrl, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken },
+    }).then(function(resp) {
+      if (!resp.ok) return;
+      hasUnread = false;
+      // Reset the badge for the active team in the sidebar
+      if (selectedTeamId !== null) {
+        const activeLink = document.querySelector('.team-link[data-team-id="' + selectedTeamId + '"]');
+        if (activeLink) {
+          const badge = activeLink.querySelector('.unread-badge');
+          if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
+        }
+      }
+    });
+  }
+
+  if (selectedTeamId !== null) {
+    const thread = document.getElementById('thread');
+    const inputField = document.querySelector('input[name="text"]');
+    if (thread) thread.addEventListener('scroll', onUserActivity);
+    if (inputField) {
+      inputField.addEventListener('focus', onUserActivity);
+      inputField.addEventListener('input', onUserActivity);
+    }
+    // Mark initial unreads on first activity
+    {% if selected_team.unread_count %}hasUnread = true;{% endif %}
+  }
+
+  // ── WebSocket ──
+  let ws;
+  function connectWs() {
+    ws = new WebSocket(wsUrl);
+
+    ws.onmessage = function(event) {
+      const data = JSON.parse(event.data);
+      if (data.type !== 'message') return;
+
+      const msg = data.data;
+      const isOrg = msg.isOrganisation;
+
+      // Append bubble to thread if it belongs to the active thread
+      const thread = document.getElementById('thread');
+      if (thread) {
+        let belongs = false;
+        if (selectedTeamId === null && isOrg && !msg.recipientTeamId) {
+          belongs = true;
+        } else if (selectedTeamId !== null) {
+          belongs = true;
+        }
+
+        if (belongs) {
+          const bubble = createBubble(msg);
+          thread.appendChild(bubble);
+          const empty = thread.querySelector('.text-slate-400.text-center');
+          if (empty) empty.remove();
+          thread.scrollTop = thread.scrollHeight;
+        }
+      }
+
+      // Increment unread badge for team messages
+      if (!isOrg) {
+        const senderTeamId = msg.senderTeamId;
+        document.querySelectorAll('.team-link').forEach(function(link) {
+          const linkTeamId = parseInt(link.dataset.teamId);
+          if (linkTeamId === senderTeamId) {
+            const badge = link.querySelector('.unread-badge');
+            if (badge) {
+              const current = parseInt(badge.textContent) || 0;
+              badge.textContent = current + 1;
+              badge.classList.remove('hidden');
+            }
+          }
+        });
+
+        // If this message is in the active thread, flag for activity-based read
+        if (selectedTeamId === senderTeamId) {
+          hasUnread = true;
+        }
+      }
+    };
+
+    ws.onclose = function() {
+      setTimeout(connectWs, 3000);
+    };
+  }
+
+  function createBubble(msg) {
+    const isOrg = msg.isOrganisation;
+    const div = document.createElement('div');
+    div.className = 'flex ' + (isOrg ? 'justify-end' : 'justify-start');
+
+    const time = new Date(msg.time);
+    const timeStr = time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0');
+
+    const colorClasses = isOrg
+      ? 'bg-green-50 border-green-200'
+      : 'bg-blue-50 border-blue-200';
+    const labelClass = isOrg ? 'text-green-700' : 'text-blue-700';
+
+    let content = '';
+    if (msg.imageUrl) {
+      content += '<img src="' + escapeHtml(msg.imageUrl) + '" alt="Afbeelding"' +
+        ' class="max-w-xs max-h-48 rounded-lg cursor-pointer hover:opacity-90 mt-1"' +
+        ' onclick="openLightbox(\'' + escapeHtml(msg.imageUrl) + '\')">';
+    }
+    if (msg.text) {
+      content += '<p class="text-sm text-slate-800">' + escapeHtml(msg.text) + '</p>';
+    }
+
+    div.innerHTML =
+      '<div class="max-w-md ' + colorClasses + ' border rounded-xl px-4 py-2">' +
+        '<div class="flex items-center gap-2 mb-1">' +
+          '<span class="text-xs font-semibold ' + labelClass + '">' + escapeHtml(msg.from) + '</span>' +
+          '<span class="text-xs text-slate-400">' + timeStr + '</span>' +
+        '</div>' +
+        content +
+      '</div>';
+    return div;
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  connectWs();
+})();
+</script>
+{% endblock %}

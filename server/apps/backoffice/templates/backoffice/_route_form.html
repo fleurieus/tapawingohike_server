@@ -34,6 +34,15 @@
       {% endif %}
     </div>
 
+    <div class="space-y-1">
+      <label class="block text-sm font-medium">Datum <span class="font-normal text-slate-400">(optioneel)</span></label>
+      {{ form.date }}
+      {% if form.date.errors %}
+        <p class="text-sm text-red-600">{{ form.date.errors.0 }}</p>
+      {% endif %}
+      <p class="text-xs text-slate-500">Wordt gebruikt om locatielogs te filteren op de live map.</p>
+    </div>
+
     <div class="flex items-center justify-end gap-2 pt-4 border-t">
       <button type="button" class="btn-secondary" onclick="closeSidepanel()">Annuleren</button>
       <button type="submit" class="btn-primary">Opslaan</button>

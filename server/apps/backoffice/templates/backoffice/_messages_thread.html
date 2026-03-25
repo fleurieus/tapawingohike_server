@@ -1,0 +1,25 @@
+{% for msg in thread_messages %}
+  <div class="flex {% if msg.sender_team %}justify-start{% else %}justify-end{% endif %}">
+    <div class="max-w-md {% if msg.sender_team %}bg-blue-50 border-blue-200{% else %}bg-green-50 border-green-200{% endif %} border rounded-xl px-4 py-2">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-xs font-semibold {% if msg.sender_team %}text-blue-700{% else %}text-green-700{% endif %}">
+          {% if msg.sender_team %}{{ msg.sender_team.name }}{% else %}Organisatie{% endif %}
+        </span>
+        {% if not msg.sender_team and msg.recipient_team %}
+          <span class="text-xs text-slate-400">→ {{ msg.recipient_team.name }}</span>
+        {% elif not msg.sender_team and not msg.recipient_team %}
+          <span class="text-xs text-slate-400">→ alle teams</span>
+        {% endif %}
+        <span class="text-xs text-slate-400">{{ msg.created_at|date:"d M H:i" }}</span>
+      </div>
+      {% if msg.image %}
+        <img src="{{ msg.image.url }}" alt="Afbeelding"
+             class="max-w-xs max-h-48 rounded-lg cursor-pointer hover:opacity-90 mt-1"
+             onclick="openLightbox('{{ msg.image.url }}')">
+      {% endif %}
+      {% if msg.text %}<p class="text-sm text-slate-800">{{ msg.text }}</p>{% endif %}
+    </div>
+  </div>
+{% empty %}
+  <p class="text-sm text-slate-400 text-center py-8">Nog geen berichten in deze thread.</p>
+{% endfor %}

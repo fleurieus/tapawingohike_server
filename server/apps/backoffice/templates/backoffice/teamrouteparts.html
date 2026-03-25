@@ -21,24 +21,20 @@
 </style>
 {% endblock %}
 
+{% block content_wrapper %}p-0{% endblock %}
+
 {% block content %}
-<div class="max-w-7xl mx-auto p-4 h-[calc(100vh-107px)] flex flex-col">
+<div class="p-4 h-[calc(100vh-3.5rem)] flex flex-col">
     <div class="flex items-center justify-between mb-4">
-    <!-- Titel -->
     <div>
         <h1 class="text-xl font-semibold leading-tight">TeamRouteParts · {{ route.name }}</h1>
         <div class="text-sm text-slate-600">Edition: {{ route.edition.name }}</div>
     </div>
-
-    <!-- Acties rechts: alléén terug (subtiele link) -->
-    <div class="flex items-center gap-3">
-        <a href="{% url 'backoffice:routes_page' %}?edition={{ route.edition.id }}"
-        class="inline-flex items-center gap-1 text-sm text-slate-600 hover:text-slate-900 hover:underline"
-        title="Terug naar routes">
-        <iconify-icon icon="heroicons:arrow-long-left" width="18" height="18"></iconify-icon>
-        Terug
-        </a>
-    </div>
+    <a href="{% url 'backoffice:teamrouteparts_table' route.id %}"
+       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-slate-700 hover:bg-slate-50">
+      <iconify-icon icon="heroicons:table-cells" width="16" height="16"></iconify-icon>
+      Tabelweergave
+    </a>
     </div>
 
   <div class="grid grid-cols-3 gap-4 flex-1 min-h-0">

@@ -6,7 +6,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.forms.models import model_to_dict
 from django.http import Http404
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 
 from server.apps.dashboard.models import (
     Destination,
@@ -18,7 +18,9 @@ from server.forms import ExtendedRegistrationForm, QuickRegistrationForm
 
 
 def index(request):
-    return render(request, "index.html")
+    if request.user.is_authenticated:
+        return redirect("backoffice:events_list")
+    return redirect("login")
 
 
 def _generate_team_code(length=5):

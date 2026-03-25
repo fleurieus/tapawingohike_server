@@ -1,0 +1,86 @@
+{# Sidebar navigation — requires sidebar_edition and nav_active in context #}
+
+{# Edition header #}
+<div class="px-4 py-4 border-b border-green-700/40">
+  <div class="text-white font-semibold text-sm truncate">{{ sidebar_edition.name }}</div>
+  <div class="text-green-300 text-xs truncate">{{ sidebar_edition.event.name }}</div>
+</div>
+
+<nav class="flex-1 px-3 py-4 space-y-6 text-sm">
+  {# ── Overzicht ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Overzicht</div>
+    <a href="{% url 'backoffice:edition_dashboard' sidebar_edition.id %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'dashboard' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:squares-2x2" width="18" height="18"></iconify-icon>
+      Dashboard
+    </a>
+  </div>
+
+  {# ── Plannen ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Plannen</div>
+    <a href="{% url 'backoffice:routes_page' %}?edition={{ sidebar_edition.id }}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'routes' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:map-pin" width="18" height="18"></iconify-icon>
+      Routes
+    </a>
+  </div>
+
+  {# ── Live ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Live</div>
+    <a href="{% url 'backoffice:team_list' sidebar_edition.id %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'teams' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:user-group" width="18" height="18"></iconify-icon>
+      Teams
+    </a>
+
+    {% if sidebar_routes %}
+      {% for route in sidebar_routes %}
+        <a href="{% url 'backoffice:route_map' route.id %}"
+           class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'live_map' and active_route_id == route.id %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+          <iconify-icon icon="heroicons:signal" width="18" height="18"></iconify-icon>
+          <span class="truncate">Kaart · {{ route.name }}</span>
+        </a>
+      {% endfor %}
+    {% endif %}
+
+    {% if sidebar_edition.messaging_enabled %}
+      <a href="{% url 'backoffice:messages' sidebar_edition.id %}"
+         class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'messages' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+        <iconify-icon icon="heroicons:chat-bubble-left-right" width="18" height="18"></iconify-icon>
+        Berichten
+        {% if sidebar_unread_messages %}
+          <span class="ml-auto inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-red-500 text-white text-xs font-semibold tabular-nums">{{ sidebar_unread_messages }}</span>
+        {% endif %}
+      </a>
+    {% endif %}
+  </div>
+
+  {# ── Beheer ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Beheer</div>
+    <a href="{% url 'backoffice:edition_registration' sidebar_edition.id %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'settings' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:cog-6-tooth" width="18" height="18"></iconify-icon>
+      Instellingen
+    </a>
+  </div>
+</nav>
+
+{# ── Bottom links ── #}
+<div class="mt-auto px-3 py-4 border-t border-green-700/40 space-y-1 text-sm">
+  <a href="{% url 'backoffice:events_list' %}"
+     class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-green-200 hover:bg-green-700/50">
+    <iconify-icon icon="heroicons:arrow-left" width="18" height="18"></iconify-icon>
+    Alle events
+  </a>
+  {% if user.is_superuser %}
+    <a href="{% url 'backoffice:user_list' %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-green-200 hover:bg-green-700/50">
+      <iconify-icon icon="heroicons:users" width="18" height="18"></iconify-icon>
+      Gebruikers
+    </a>
+  {% endif %}
+</div>

@@ -1,0 +1,26 @@
+{# Global sidebar — for pages without edition context #}
+{# Requires nav_active in context #}
+
+<nav class="flex-1 px-3 py-4 space-y-6 text-sm">
+  {# ── Navigatie ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Navigatie</div>
+    <a href="{% url 'backoffice:events_list' %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'events' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:calendar-days" width="18" height="18"></iconify-icon>
+      Events
+    </a>
+  </div>
+
+  {% if user.is_superuser %}
+  {# ── Admin ── #}
+  <div>
+    <div class="px-2 mb-1 text-xs font-semibold uppercase tracking-wider text-green-400">Admin</div>
+    <a href="{% url 'backoffice:user_list' %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'users' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:users" width="18" height="18"></iconify-icon>
+      Gebruikers
+    </a>
+  </div>
+  {% endif %}
+</nav>

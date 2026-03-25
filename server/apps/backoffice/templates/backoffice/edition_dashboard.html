@@ -1,0 +1,25 @@
+{% extends "_base.html" %}
+{% block title %}Dashboard · {{ edition.name }}{% endblock %}
+{% block content %}
+
+{# ── Header ── #}
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold">{{ edition.name }}</h1>
+  <p class="text-sm text-slate-500">
+    {{ edition.event.name }}
+    {% if edition.date_start %}
+      · {{ edition.date_start|date:"d-m-Y" }}
+      {% if edition.date_end %} — {{ edition.date_end|date:"d-m-Y" }}{% endif %}
+    {% endif %}
+  </p>
+</div>
+
+{# ── Live content (auto-refreshes every 30s) ── #}
+<div id="dashboard-live"
+     hx-get="{% url 'backoffice:edition_dashboard_live' edition.id %}"
+     hx-trigger="every 30s"
+     hx-swap="innerHTML">
+  {% include "backoffice/_edition_dashboard_live.html" %}
+</div>
+
+{% endblock %}

@@ -13,11 +13,9 @@
   <td class="p-2 text-sm">{{ d.confirm_by_user|yesno:"Ja,Nee" }}</td>
   <td class="p-2 text-sm">{{ d.hide_for_user|yesno:"Ja,Nee" }}</td>
   <td class="p-2 text-right">
-    <button class="px-2 py-1 text-sm bg-slate-200 rounded"
-            hx-get="{% url 'backoffice:destination_edit' d.routepart_id d.id %}"
-            hx-target="#sidepanel" hx-swap="innerHTML">Bewerk</button>
+    <button class="dest-edit-btn px-2 py-1 text-sm bg-slate-200 rounded" data-dest-id="{{ d.id }}">Bewerk</button>
     <button class="ml-1 px-2 py-1 text-sm bg-red-600 text-white rounded"
-            hx-post="{% url 'backoffice:destination_delete' d.routepart_id d.id %}"
+            hx-post="{% if is_team_mode %}{% url 'backoffice:team_destination_delete' d.teamroutepart_id d.id %}{% else %}{% url 'backoffice:destination_delete' d.routepart_id d.id %}{% endif %}"
             hx-confirm="Verwijderen?" hx-target="#row-{{ d.id }}" hx-swap="outerHTML">Verwijder</button>
   </td>
 </tr>

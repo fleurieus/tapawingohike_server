@@ -1,0 +1,109 @@
+{% extends "_base.html" %}
+{% block title %}Gebruikers{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <h1 class="text-2xl font-semibold leading-tight">Gebruikers</h1>
+  <a href="{% url 'backoffice:user_add' %}"
+     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">
+    <iconify-icon icon="heroicons:plus" width="18" height="18"></iconify-icon>
+    Nieuwe gebruiker
+  </a>
+</div>
+
+<div class="bg-white border rounded-2xl overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 border-b">
+      <tr>
+        <th class="text-left p-3">Gebruikersnaam</th>
+        <th class="text-left p-3">Naam</th>
+        <th class="text-left p-3">E-mail</th>
+        <th class="text-left p-3">Organisatie</th>
+        <th class="text-left p-3">Status</th>
+        <th class="text-left p-3 w-48">Acties</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+        <tr class="border-b last:border-0">
+          <td class="p-3 font-medium">
+            {{ u.username }}
+            {% if u.is_superuser %}
+              <span class="ml-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">superadmin</span>
+            {% endif %}
+          </td>
+          <td class="p-3 text-slate-600">{{ u.get_full_name|default:"—" }}</td>
+          <td class="p-3 text-slate-600">{{ u.email|default:"—" }}</td>
+          <td class="p-3 text-slate-600">
+            {% if u.profile.organization %}
+              {{ u.profile.organization.name }}
+            {% else %}
+              <span class="text-slate-400">—</span>
+            {% endif %}
+          </td>
+          <td class="p-3">
+            {% if u.is_active %}
+              <span class="inline-flex items-center gap-1 text-sm text-green-700">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                Actief
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-sm text-red-700">
+                <span class="inline-block w-2 h-2 rounded-full bg-red-400"></span>
+                Inactief
+              </span>
+            {% endif %}
+          </td>
+          <td class="p-3">
+            <div class="flex items-center gap-1">
+              <a href="{% url 'backoffice:user_edit' u.id %}"
+                 title="Bewerken"
+                 class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900">
+                <iconify-icon icon="heroicons:pencil-square" width="18" height="18"></iconify-icon>
+              </a>
+
+              {% if u.pk != request.user.pk %}
+              <form action="{% url 'backoffice:user_deactivate' u.id %}" method="post" class="inline"
+                    onsubmit="return confirm('Gebruiker {% if u.is_active %}deactiveren{% else %}activeren{% endif %}?');">
+                {% csrf_token %}
+                <button type="submit" title="{% if u.is_active %}Deactiveren{% else %}Activeren{% endif %}"
+                        class="inline-flex items-center justify-center p-1 rounded-lg {% if u.is_active %}text-amber-600 hover:text-amber-700{% else %}text-green-600 hover:text-green-700{% endif %}">
+                  <iconify-icon icon="{% if u.is_active %}heroicons:no-symbol{% else %}heroicons:check-circle{% endif %}" width="18" height="18"></iconify-icon>
+                </button>
+              </form>
+
+              <button type="button" title="Wachtwoord resetten"
+                      onclick="document.getElementById('pw-modal-{{ u.id }}').showModal()"
+                      class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900">
+                <iconify-icon icon="heroicons:key" width="18" height="18"></iconify-icon>
+              </button>
+
+              <dialog id="pw-modal-{{ u.id }}" class="rounded-2xl border p-6 max-w-sm backdrop:bg-black/30">
+                <form action="{% url 'backoffice:user_reset_password' u.id %}" method="post" class="space-y-4">
+                  {% csrf_token %}
+                  <h3 class="text-lg font-semibold">Wachtwoord resetten</h3>
+                  <p class="text-sm text-slate-600">Nieuw wachtwoord voor <strong>{{ u.username }}</strong>:</p>
+                  <input type="password" name="new_password" required
+                         class="w-full rounded-lg border px-3 py-2"
+                         placeholder="Nieuw wachtwoord">
+                  <div class="flex gap-3 justify-end">
+                    <button type="button" onclick="this.closest('dialog').close()"
+                            class="px-4 py-2 rounded-lg border">Annuleren</button>
+                    <button type="submit"
+                            class="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">Opslaan</button>
+                  </div>
+                </form>
+              </dialog>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="p-3 text-slate-500" colspan="6">Nog geen gebruikers.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

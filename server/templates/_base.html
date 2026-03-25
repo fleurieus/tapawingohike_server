@@ -17,31 +17,59 @@
 <body class="bg-slate-50 text-slate-900 min-h-screen">
 
 {% if user.is_authenticated %}
-  <!-- Navigatiebalk -->
-  <header class="bg-white border-b">
-    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-      <nav class="flex items-center gap-6 text-sm">
-        <!-- <a href="{% url 'map' %}" class="hover:text-slate-700 font-medium">Live map</a> //-->
-        <!-- <a href="{% url 'stats' %}" class="hover:text-slate-700 font-medium">Stats</a> //-->
-        <a href="{% url 'backoffice:events_list' %}" class="hover:text-slate-700 font-medium">Events</a>
-        <a href="{% url 'admin:index' %}" class="hover:text-slate-700 font-medium">Oude admin</a>
-      </nav>
+  {# ── Topbar ── #}
+  <header class="fixed top-0 left-0 right-0 z-30 bg-white border-b h-14">
+    <div class="h-full px-4 flex items-center justify-between">
+      {# Left: logo + optional edition breadcrumb #}
+      <div class="flex items-center gap-3">
+        <a href="{% url 'backoffice:events_list' %}" class="flex items-center gap-2 text-green-800 hover:text-green-700 font-semibold text-sm">
+          <iconify-icon icon="heroicons:map" width="20" height="20"></iconify-icon>
+          TapawingoHike
+        </a>
+        {% if sidebar_edition %}
+          <span class="text-slate-300">/</span>
+          <span class="text-sm text-slate-600">{{ sidebar_edition.event.name }}</span>
+          <span class="text-slate-300">/</span>
+          <span class="text-sm font-medium text-slate-800">{{ sidebar_edition.name }}</span>
+        {% endif %}
+      </div>
+
+      {# Right: clock + user + logout #}
       <div class="flex items-center gap-4 text-sm">
-        <span id="clock" class="tabular-nums font-mono"></span>
-        <span class="text-slate-500">|</span>
-        <span class="font-medium">Ingelogd als {{ user.username }}</span>
+        <span id="clock" class="tabular-nums font-mono text-slate-500"></span>
+        <span class="text-slate-300">|</span>
+        <span class="font-medium">{{ user.username }}{% if user.profile.organization %} <span class="text-slate-400">· {{ user.profile.organization.name }}</span>{% endif %}</span>
         <form action="{% url 'logout' %}" method="post" class="inline">
           {% csrf_token %}
-          <button class="px-3 py-1.5 rounded-lg border hover:bg-slate-100">Uitloggen</button>
+          <button class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-sm">Uitloggen</button>
         </form>
       </div>
     </div>
   </header>
 
-  <!-- Hoofdcontent -->
-  <main class="max-w-6xl mx-auto px-4 py-6">
-    {% block content %}{% endblock %}
+  {# ── Sidebar — altijd zichtbaar ── #}
+  <aside class="fixed top-14 left-0 bottom-0 w-60 z-20 bg-green-800 text-green-100 overflow-y-auto flex flex-col">
+    {% block sidebar %}
+      {% if sidebar_edition %}
+        {% include "backoffice/_sidebar.html" %}
+      {% else %}
+        {% include "backoffice/_sidebar_global.html" %}
+      {% endif %}
+    {% endblock %}
+  </aside>
+
+  {# ── Main content ── #}
+  <main class="pt-14 ml-60 {% block main_class %}{% endblock %}">
+    <div class="{% block content_wrapper %}p-6{% endblock %}">
+      {% block content %}{% endblock %}
+    </div>
   </main>
+
+  {# ── HTMX loading indicator ── #}
+  <div id="htmx-indicator" class="fixed top-14 left-60 right-0 z-50 h-0.5 pointer-events-none">
+    <div class="h-full bg-green-500 rounded-r-full transition-all duration-300"
+         style="width:0%;opacity:0"></div>
+  </div>
 
   <script>
     function updateClock() {
@@ -53,28 +81,45 @@
     }
     updateClock();
     setInterval(updateClock, 1000);
+
+    // HTMX loading indicator
+    (function() {
+      const bar = document.querySelector('#htmx-indicator > div');
+      if (!bar) return;
+      document.body.addEventListener('htmx:beforeRequest', () => {
+        bar.style.opacity = '1';
+        bar.style.width = '70%';
+      });
+      document.body.addEventListener('htmx:afterRequest', () => {
+        bar.style.width = '100%';
+        setTimeout(() => { bar.style.opacity = '0'; bar.style.width = '0%'; }, 200);
+      });
+    })();
   </script>
 
 {% else %}
-  <!-- Login scherm -->
-  <main class="min-h-screen grid place-items-center px-4">
+  {# ── Login screen ── #}
+  <main class="min-h-screen grid place-items-center px-4 bg-green-50">
     <div class="w-full max-w-sm bg-white border rounded-2xl shadow-sm p-6">
-      <h1 class="text-xl font-semibold mb-1">Inloggen</h1>
+      <div class="flex items-center gap-2 mb-4 text-green-800">
+        <iconify-icon icon="heroicons:map" width="24" height="24"></iconify-icon>
+        <h1 class="text-xl font-semibold">TapawingoHike</h1>
+      </div>
       <p class="text-sm text-slate-600 mb-6">Log in om de editor te gebruiken.</p>
       <form method="post" action="{% url 'login' %}" class="space-y-4">
         {% csrf_token %}
         <div>
           <label class="block text-sm font-medium mb-1" for="id_username">Gebruikersnaam</label>
           <input id="id_username" name="username" type="text" required
-                 class="w-full rounded-lg border px-3 py-2">
+                 class="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400">
         </div>
         <div>
           <label class="block text-sm font-medium mb-1" for="id_password">Wachtwoord</label>
           <input id="id_password" name="password" type="password" required
-                 class="w-full rounded-lg border px-3 py-2">
+                 class="w-full rounded-lg border px-3 py-2 focus:ring-2 focus:ring-green-300 focus:border-green-400">
         </div>
         {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-        <button class="w-full rounded-lg bg-slate-900 text-white py-2 hover:bg-slate-800">
+        <button class="w-full rounded-lg bg-green-700 text-white py-2 hover:bg-green-600">
           Inloggen
         </button>
       </form>

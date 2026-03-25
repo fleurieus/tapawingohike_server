@@ -1,0 +1,189 @@
+{% extends "_base.html" %}
+{% block title %}TeamRouteParts · {{ route.name }} · Tabel{% endblock %}
+
+{% block head %}
+<style>
+  .sortable { cursor: pointer; user-select: none; }
+  .sortable:hover { color: #0f172a; }
+  .sort-asc::after { content: " ▲"; font-size: 0.65em; }
+  .sort-desc::after { content: " ▼"; font-size: 0.65em; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-4">
+  <div>
+    <h1 class="text-xl font-semibold leading-tight">TeamRouteParts · {{ route.name }}</h1>
+    <div class="text-sm text-slate-600">Edition: {{ route.edition.name }}</div>
+  </div>
+  <a href="{% url 'backoffice:teamrouteparts_builder' route.id %}"
+     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-slate-700 hover:bg-slate-50">
+    <iconify-icon icon="heroicons:map" width="16" height="16"></iconify-icon>
+    Kaartweergave
+  </a>
+</div>
+
+{# ── Filters ── #}
+<form method="get" class="flex items-center gap-3 mb-4 flex-wrap">
+  <div class="relative flex-1 max-w-xs">
+    <iconify-icon icon="heroicons:magnifying-glass" width="16" height="16"
+                   class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></iconify-icon>
+    <input type="text" name="q" value="{{ search }}" placeholder="Zoek team of routepart..."
+           class="w-full rounded-lg border pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400">
+  </div>
+  <select name="team" multiple
+          class="rounded-lg border px-3 py-2 text-sm min-w-[200px]">
+    {% for t in teams %}
+      <option value="{{ t.id }}" {% if t.id in selected_ids %}selected{% endif %}>{{ t.name }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="px-3 py-2 rounded-lg border text-sm hover:bg-slate-50">Filter</button>
+  {% if search or selected_ids|length != teams|length %}
+    <a href="{% url 'backoffice:teamrouteparts_table' route.id %}" class="text-sm text-slate-500 hover:underline">Reset</a>
+  {% endif %}
+</form>
+
+{# ── Table ── #}
+<div class="bg-white border rounded-2xl overflow-hidden">
+  <table class="w-full text-sm" id="trp-table">
+    <thead class="bg-slate-50 border-b">
+      <tr>
+        <th class="text-left p-3 sortable" data-col="0" data-type="text">Team</th>
+        <th class="text-left p-3 sortable" data-col="1" data-type="num">#</th>
+        <th class="text-left p-3 sortable" data-col="2" data-type="text">Routepart</th>
+        <th class="text-left p-3 sortable" data-col="3" data-type="text">Type</th>
+        <th class="text-left p-3 sortable" data-col="4" data-type="text">Bundel</th>
+        <th class="text-left p-3 sortable" data-col="5" data-type="text">Status</th>
+        <th class="text-left p-3 sortable" data-col="6" data-type="text">Voltooid om</th>
+        <th class="text-left p-3 sortable" data-col="7" data-type="text">Destinations</th>
+        <th class="text-left p-3 w-20">Acties</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for trp in table_trps %}
+        <tr class="border-b last:border-0 hover:bg-slate-50">
+          <td class="p-3 font-medium">{{ trp.team.name }}</td>
+          <td class="p-3 tabular-nums text-slate-500">{{ trp.order }}</td>
+          <td class="p-3">{{ trp.name }}</td>
+          <td class="p-3 text-slate-500">
+            {% if trp.route_type == "coordinate" %}
+              <span class="inline-flex items-center gap-1"><iconify-icon icon="heroicons:map-pin" width="14" height="14"></iconify-icon> Coördinaat</span>
+            {% elif trp.route_type == "image" %}
+              <span class="inline-flex items-center gap-1"><iconify-icon icon="heroicons:photo" width="14" height="14"></iconify-icon> Foto</span>
+            {% elif trp.route_type == "audio" %}
+              <span class="inline-flex items-center gap-1"><iconify-icon icon="heroicons:speaker-wave" width="14" height="14"></iconify-icon> Audio</span>
+            {% else %}
+              {{ trp.route_type }}
+            {% endif %}
+          </td>
+          <td class="p-3 text-slate-500">
+            {% if trp.bundle %}
+              <span class="inline-flex items-center gap-1 text-indigo-600">
+                <iconify-icon icon="heroicons:rectangle-stack" width="14" height="14"></iconify-icon>
+                {{ trp.bundle.name }}
+              </span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="p-3">
+            {% if trp.completed_time %}
+              <span class="inline-flex items-center gap-1 text-green-700">
+                <iconify-icon icon="heroicons:check-circle" width="16" height="16"></iconify-icon>
+                Voltooid
+              </span>
+            {% else %}
+              <span class="inline-flex items-center gap-1 text-slate-400">
+                <iconify-icon icon="heroicons:clock" width="16" height="16"></iconify-icon>
+                Open
+              </span>
+            {% endif %}
+          </td>
+          <td class="p-3 text-slate-500 tabular-nums">
+            {% if trp.completed_time %}
+              {{ trp.completed_time|time:"H:i" }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td class="p-3">
+            {% if trp.dest_total > 0 %}
+              <div class="flex items-center gap-2">
+                <div class="w-14 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full {% if trp.dest_completed == trp.dest_total %}bg-green-500{% else %}bg-amber-400{% endif %}"
+                       style="width:{% widthratio trp.dest_completed trp.dest_total 100 %}%"></div>
+                </div>
+                <span class="text-xs tabular-nums {% if trp.dest_completed == trp.dest_total %}text-green-600{% else %}text-slate-500{% endif %}">{{ trp.dest_completed }}/{{ trp.dest_total }}</span>
+              </div>
+            {% else %}
+              <span class="text-xs text-slate-300">—</span>
+            {% endif %}
+          </td>
+          <td class="p-3">
+            <a href="{% url 'backoffice:team_destinations_editor' trp.id %}" title="Destinations bewerken"
+               class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300">
+              <iconify-icon icon="heroicons:pencil-square" width="18" height="18"></iconify-icon>
+            </a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td class="p-3 text-slate-500" colspan="9">Geen teamrouteparts gevonden.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+// Client-side table sorting
+(function() {
+  const table = document.getElementById('trp-table');
+  if (!table) return;
+  const headers = table.querySelectorAll('th.sortable');
+  let currentCol = -1;
+  let ascending = true;
+
+  headers.forEach(th => {
+    th.addEventListener('click', () => {
+      const col = parseInt(th.dataset.col);
+      const type = th.dataset.type;
+
+      if (currentCol === col) {
+        ascending = !ascending;
+      } else {
+        currentCol = col;
+        ascending = true;
+      }
+
+      headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+      th.classList.add(ascending ? 'sort-asc' : 'sort-desc');
+
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+
+      rows.sort((a, b) => {
+        const aCell = a.cells[col];
+        const bCell = b.cells[col];
+        if (!aCell || !bCell) return 0;
+
+        let aVal = aCell.textContent.trim();
+        let bVal = bCell.textContent.trim();
+
+        if (type === 'num') {
+          aVal = parseFloat(aVal) || 0;
+          bVal = parseFloat(bVal) || 0;
+          return ascending ? aVal - bVal : bVal - aVal;
+        }
+
+        return ascending
+          ? aVal.localeCompare(bVal, 'nl')
+          : bVal.localeCompare(aVal, 'nl');
+      });
+
+      rows.forEach(row => tbody.appendChild(row));
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -3,6 +3,7 @@ from urllib.parse import urljoin
 
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 from .validators import FinalDestinationValidationMixin
 from .constants import (
@@ -28,6 +29,24 @@ class Organization(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="profile",
+    )
+    organization = models.ForeignKey(
+        "dashboard.Organization",
+        on_delete=models.CASCADE,
+        related_name="user_profiles",
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.user.username} ({self.organization or 'Superadmin'})"
 
 
 class Event(models.Model):
@@ -68,6 +87,11 @@ class Edition(models.Model):
         help_text="Confirmation email body for extended registration",
     )
 
+    messaging_enabled = models.BooleanField(
+        default=False,
+        help_text="Enable messaging between organisation and teams",
+    )
+
     event = models.ForeignKey(
         "dashboard.Event",
         on_delete=models.CASCADE,
@@ -88,7 +112,12 @@ class Team(models.Model):
     member_names = models.TextField(blank=True, default="")
     remarks = models.TextField(blank=True, default="")
     online = models.BooleanField(default=False)
+    last_seen = models.DateTimeField(null=True, blank=True)
     is_activated = models.BooleanField(default=True)
+    location_update_interval = models.PositiveIntegerField(
+        default=300,
+        help_text="GPS location upload interval in seconds",
+    )
 
     edition = models.ForeignKey(
         "dashboard.Edition",
@@ -101,11 +130,18 @@ class Team(models.Model):
 
     def go_online(self):
         self.online = True
-        self.save()
+        self.last_seen = timezone.now()
+        self.save(update_fields=["online", "last_seen"])
 
     def go_offline(self):
         self.online = False
-        self.save()
+        self.last_seen = timezone.now()
+        self.save(update_fields=["online", "last_seen"])
+
+    def touch(self):
+        """Update last_seen timestamp on any WebSocket activity."""
+        self.last_seen = timezone.now()
+        self.save(update_fields=["last_seen"])
 
     def get_next_open_routepart(self):
         return (
@@ -243,6 +279,11 @@ class Team(models.Model):
 
 class Route(models.Model):
     name = models.CharField(max_length=255)
+    date = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Optional date for this route. Used to filter location logs on the live map.",
+    )
 
     edition = models.ForeignKey(
         "dashboard.Edition",
@@ -469,6 +510,62 @@ class File(models.Model):
 
     def __str__(self) -> str:
         return self.file.name
+
+
+class Message(models.Model):
+    edition = models.ForeignKey(
+        "dashboard.Edition",
+        on_delete=models.CASCADE,
+        related_name="messages",
+    )
+    sender_team = models.ForeignKey(
+        "dashboard.Team",
+        on_delete=models.CASCADE,
+        related_name="sent_messages",
+        null=True,
+        blank=True,
+        help_text="Null = sent by organisation",
+    )
+    recipient_team = models.ForeignKey(
+        "dashboard.Team",
+        on_delete=models.CASCADE,
+        related_name="received_messages",
+        null=True,
+        blank=True,
+        help_text="Null = broadcast to all teams",
+    )
+    text = models.TextField(blank=True, default="")
+    image = models.ImageField(
+        upload_to="messages/",
+        null=True,
+        blank=True,
+        help_text="Optional image attachment (max 5 MB, JPG/PNG)",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("created_at",)
+
+    def __str__(self):
+        sender = self.sender_team.name if self.sender_team else "Organisatie"
+        recipient = self.recipient_team.name if self.recipient_team else "Alle teams"
+        return f"{sender} → {recipient} ({self.created_at:%H:%M})"
+
+    def to_app_format(self):
+        """Format for WebSocket delivery to the app and backoffice."""
+        data = {
+            "id": self.id,
+            "text": self.text,
+            "from": self.sender_team.name if self.sender_team else "Organisatie",
+            "isOrganisation": self.sender_team is None,
+            "senderTeamId": self.sender_team_id,
+            "recipientTeamId": self.recipient_team_id,
+            "time": self.created_at.isoformat(),
+        }
+        if self.image:
+            data["imageUrl"] = self.image.url
+        return data
 
 
 class LocationLog(models.Model):
