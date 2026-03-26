@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev:css": "tailwindcss -i ./assets/css/app.css -o ./staticfiles/css/app.css --watch",
-    "build:css": "tailwindcss -i ./assets/css/app.css -o ./staticfiles/css/app.css"
+    "dev:css": "tailwindcss -i ./assets/css/tailwind.css -o ./staticfiles/css/tailwind.css --watch",
+    "build:css": "tailwindcss -i ./assets/css/tailwind.css -o ./staticfiles/css/tailwind.css"
   },
   "repository": {
     "type": "git",

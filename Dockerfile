@@ -33,7 +33,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Copy built CSS from stage 1 into staticfiles source directory
-COPY --from=css-builder /build/staticfiles/css/app.css /app/staticfiles/css/app.css
+COPY --from=css-builder /build/staticfiles/css/tailwind.css /app/staticfiles/css/tailwind.css
 
 # Make entrypoint executable
 RUN chmod +x /app/entrypoint.sh

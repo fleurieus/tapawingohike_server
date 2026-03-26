@@ -8,6 +8,7 @@ django_bootstrap5==25.2
 django-compressor==4.5.1
 googlemaps==4.10.0
 Pillow>=10.0
+whitenoise>=6.5,<7
 psycopg2-binary>=2.9,<3
 dj-database-url>=2.0,<3
 
