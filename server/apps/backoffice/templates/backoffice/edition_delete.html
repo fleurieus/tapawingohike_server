@@ -1,0 +1,44 @@
+{% extends "_base.html" %}
+{% block title %}Editie verwijderen — {{ edition.name }}{% endblock %}
+{% block content %}
+<div class="max-w-lg">
+<h1 class="text-2xl font-semibold mb-2">Editie verwijderen</h1>
+<p class="text-slate-600 mb-6">Je staat op het punt de editie <strong>{{ edition.name }}</strong> ({{ edition.event.name }}) te verwijderen.</p>
+
+<div class="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
+  <div class="flex gap-3 mb-3">
+    <iconify-icon icon="heroicons:exclamation-triangle" width="20" height="20" class="text-red-600 shrink-0 mt-0.5"></iconify-icon>
+    <div class="text-sm text-red-800">
+      <p class="font-semibold mb-1">Dit verwijdert ook alle bijbehorende data:</p>
+      <ul class="list-disc list-inside space-y-0.5">
+        <li>Alle routes, routeparts en destinations</li>
+        <li>Alle teams en hun voortgang</li>
+        <li>Alle berichten en locatiegegevens</li>
+        <li>Alle teamregistraties</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="bg-white border rounded-2xl p-5">
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+    <div>
+      <label class="block text-sm font-medium mb-1">
+        Typ de naam van de editie ter bevestiging: <strong>{{ edition.name }}</strong>
+      </label>
+      <input type="text" name="confirm_name" autocomplete="off"
+             class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+             placeholder="{{ edition.name }}">
+      {% if error %}
+        <p class="text-sm text-red-600 mt-1">{{ error }}</p>
+      {% endif %}
+    </div>
+    <div class="flex gap-3 pt-2">
+      <a href="{% url 'backoffice:edition_dashboard' edition.id %}" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Annuleren</a>
+      <button class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Definitief verwijderen</button>
+    </div>
+  </form>
+</div>
+</div>
+{% endblock %}

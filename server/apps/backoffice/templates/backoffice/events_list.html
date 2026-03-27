@@ -2,7 +2,14 @@
 {% block title %}Events{% endblock %}
 {% block content %}
 <div class="max-w-5xl">
-<h1 class="text-2xl font-semibold mb-6">Events</h1>
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-semibold">Events</h1>
+  <a href="{% url 'backoffice:event_add' %}"
+     class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
+    <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+    Nieuw event
+  </a>
+</div>
 
 {% for org, events in grouped_events %}
   <div class="mb-8">
@@ -60,6 +67,25 @@
                 <iconify-icon icon="heroicons:arrow-right" width="16" height="16"></iconify-icon>
               </a>
             {% endif %}
+          </div>
+          <div class="mt-2 pt-2 border-t flex items-center gap-2">
+            <a href="{% url 'backoffice:edition_add_for_event' ev.id %}"
+               class="inline-flex items-center gap-1 text-xs text-green-700 hover:text-green-600 hover:underline">
+              <iconify-icon icon="heroicons:plus" width="12" height="12"></iconify-icon>
+              Editie toevoegen
+            </a>
+            <span class="text-slate-200">|</span>
+            <a href="{% url 'backoffice:event_edit' ev.id %}"
+               class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 hover:underline">
+              <iconify-icon icon="heroicons:pencil" width="12" height="12"></iconify-icon>
+              Bewerken
+            </a>
+            <span class="text-slate-200">|</span>
+            <a href="{% url 'backoffice:event_delete' ev.id %}"
+               class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:underline">
+              <iconify-icon icon="heroicons:trash" width="12" height="12"></iconify-icon>
+              Verwijderen
+            </a>
           </div>
         </div>
       {% endfor %}

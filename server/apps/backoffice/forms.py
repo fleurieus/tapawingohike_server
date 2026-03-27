@@ -1,10 +1,46 @@
 from django import forms
 from django.contrib.auth.models import User
-from server.apps.dashboard.models import Destination, Edition, Organization
+from server.apps.dashboard.models import Destination, Edition, Event, Organization
 from server.apps.dashboard.models import Bundle, Route, RoutePart, File, Destination
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
 
 INPUT_CLASSES = "w-full rounded-lg border px-3 py-2"
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ["name", "organization"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "organization": forms.Select(attrs={"class": INPUT_CLASSES}),
+        }
+
+
+class EditionForm(forms.ModelForm):
+    class Meta:
+        model = Edition
+        fields = ["name", "event", "date_start", "date_end"]
+        widgets = {
+            "name": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "event": forms.Select(attrs={"class": INPUT_CLASSES}),
+            "date_start": forms.DateInput(
+                attrs={"type": "date", "class": INPUT_CLASSES}, format="%Y-%m-%d"
+            ),
+            "date_end": forms.DateInput(
+                attrs={"type": "date", "class": INPUT_CLASSES}, format="%Y-%m-%d"
+            ),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user and not user.is_superuser:
+            # Limit event choices to the user's own organization
+            try:
+                org = user.profile.organization
+                self.fields["event"].queryset = Event.objects.filter(organization=org)
+            except Exception:
+                self.fields["event"].queryset = Event.objects.none()
 
 
 class UserManagementForm(forms.Form):

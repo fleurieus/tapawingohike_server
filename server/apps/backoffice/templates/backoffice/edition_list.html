@@ -13,6 +13,19 @@
       </p>
     {% endif %}
   </div>
+  {% if event %}
+    <a href="{% url 'backoffice:edition_add_for_event' event.id %}"
+       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
+      <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+      Nieuwe editie
+    </a>
+  {% else %}
+    <a href="{% url 'backoffice:edition_add' %}"
+       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
+      <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+      Nieuwe editie
+    </a>
+  {% endif %}
 </div>
 
 <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -72,6 +85,21 @@
         <iconify-icon icon="heroicons:arrow-right" width="16" height="16"></iconify-icon>
         Open editie
       </a>
+
+      {# Edit / delete #}
+      <div class="mt-2 pt-2 border-t flex items-center gap-2">
+        <a href="{% url 'backoffice:edition_edit' e.id %}"
+           class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 hover:underline">
+          <iconify-icon icon="heroicons:pencil" width="12" height="12"></iconify-icon>
+          Bewerken
+        </a>
+        <span class="text-slate-200">|</span>
+        <a href="{% url 'backoffice:edition_delete' e.id %}"
+           class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:underline">
+          <iconify-icon icon="heroicons:trash" width="12" height="12"></iconify-icon>
+          Verwijderen
+        </a>
+      </div>
 
     </div>
   {% empty %}

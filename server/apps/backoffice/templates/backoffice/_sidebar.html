@@ -66,6 +66,16 @@
       <iconify-icon icon="heroicons:cog-6-tooth" width="18" height="18"></iconify-icon>
       Instellingen
     </a>
+    <a href="{% url 'backoffice:edition_edit' sidebar_edition.id %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg {% if nav_active == 'edition_edit' %}bg-green-700 text-white{% else %}text-green-100 hover:bg-green-700/50{% endif %}">
+      <iconify-icon icon="heroicons:pencil" width="18" height="18"></iconify-icon>
+      Editie bewerken
+    </a>
+    <a href="{% url 'backoffice:edition_delete' sidebar_edition.id %}"
+       class="flex items-center gap-2 px-2 py-1.5 rounded-lg text-red-300 hover:bg-green-700/50">
+      <iconify-icon icon="heroicons:trash" width="18" height="18"></iconify-icon>
+      Editie verwijderen
+    </a>
   </div>
 </nav>
 

@@ -16,7 +16,7 @@ import json
 import googlemaps
 from collections import defaultdict
 from server.apps.asgi_socket.consumers import push_to_team, push_to_edition, push_to_backoffice
-from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm, UserManagementForm
+from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm, UserManagementForm, EventForm, EditionForm
 from django.contrib.auth.models import User
 from server.apps.dashboard.models import (
     Event, Edition, Route, Bundle, RoutePart, TeamRoutePart, Destination, Team, File, LocationLog,
@@ -86,6 +86,138 @@ def events_list(request):
         "grouped_events": grouped,
         "nav_active": "events",
     })
+
+
+@staff_member_required
+def event_add(request):
+    if request.method == "POST":
+        form = EventForm(request.POST)
+        if not request.user.is_superuser:
+            # Force the user's own organization
+            try:
+                form.instance.organization = request.user.profile.organization
+            except Exception:
+                pass
+        if form.is_valid():
+            if not request.user.is_superuser:
+                obj = form.save(commit=False)
+                obj.organization = request.user.profile.organization
+                obj.save()
+            else:
+                form.save()
+            return redirect("backoffice:events_list")
+    else:
+        form = EventForm()
+    if not request.user.is_superuser:
+        del form.fields["organization"]
+    return render(request, "backoffice/event_form.html", {
+        "form": form,
+        "mode": "add",
+        "nav_active": "events",
+    })
+
+
+@staff_member_required
+def event_edit(request, pk: int):
+    event = get_object_or_404(org_qs(request.user, Event.objects, "organization"), pk=pk)
+    if request.method == "POST":
+        form = EventForm(request.POST, instance=event)
+        if form.is_valid():
+            if not request.user.is_superuser:
+                obj = form.save(commit=False)
+                obj.organization = event.organization  # never change org for non-superadmin
+                obj.save()
+            else:
+                form.save()
+            return redirect("backoffice:events_list")
+    else:
+        form = EventForm(instance=event)
+    if not request.user.is_superuser:
+        del form.fields["organization"]
+    return render(request, "backoffice/event_form.html", {
+        "form": form,
+        "mode": "edit",
+        "event": event,
+        "nav_active": "events",
+    })
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def event_delete(request, pk: int):
+    event = get_object_or_404(org_qs(request.user, Event.objects, "organization"), pk=pk)
+    error = None
+    if request.method == "POST":
+        confirm = request.POST.get("confirm_name", "").strip()
+        if confirm.lower() == event.name.lower():
+            event.delete()
+            return redirect("backoffice:events_list")
+        error = "De ingevoerde naam komt niet overeen."
+    return render(request, "backoffice/event_delete.html", {
+        "event": event,
+        "error": error,
+        "nav_active": "events",
+    })
+
+
+@staff_member_required
+def edition_add(request, event_id: int | None = None):
+    event = None
+    if event_id:
+        event = get_object_or_404(org_qs(request.user, Event.objects, "organization"), pk=event_id)
+    if request.method == "POST":
+        form = EditionForm(request.POST, user=request.user)
+        if form.is_valid():
+            form.save()
+            edition = form.instance
+            return redirect("backoffice:edition_dashboard", edition_id=edition.id)
+    else:
+        initial = {"event": event} if event else {}
+        form = EditionForm(initial=initial, user=request.user)
+    return render(request, "backoffice/edition_form.html", {
+        "form": form,
+        "mode": "add",
+        "event": event,
+        "nav_active": "events",
+    })
+
+
+@staff_member_required
+def edition_edit(request, edition_id: int):
+    edition = get_object_or_404(
+        org_qs(request.user, Edition.objects, "event__organization"), pk=edition_id
+    )
+    if request.method == "POST":
+        form = EditionForm(request.POST, instance=edition, user=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect("backoffice:edition_dashboard", edition_id=edition.id)
+    else:
+        form = EditionForm(instance=edition, user=request.user)
+    ctx = {"form": form, "mode": "edit", "edition": edition}
+    ctx.update(edition_ctx(edition, "dashboard"))
+    return render(request, "backoffice/edition_form.html", ctx)
+
+
+@staff_member_required
+@require_http_methods(["GET", "POST"])
+def edition_delete(request, edition_id: int):
+    edition = get_object_or_404(
+        org_qs(request.user, Edition.objects, "event__organization")
+        .select_related("event"),
+        pk=edition_id,
+    )
+    error = None
+    if request.method == "POST":
+        confirm = request.POST.get("confirm_name", "").strip()
+        if confirm.lower() == edition.name.lower():
+            event_id = edition.event_id
+            edition.delete()
+            return redirect("backoffice:edition_list_for_event", event_id=event_id)
+        error = "De ingevoerde naam komt niet overeen."
+    ctx = {"edition": edition, "error": error}
+    ctx.update(edition_ctx(edition, "dashboard"))
+    return render(request, "backoffice/edition_delete.html", ctx)
 
 
 def _dashboard_ctx(edition):

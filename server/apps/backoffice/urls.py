@@ -6,11 +6,15 @@ app_name = "backoffice"
 urlpatterns = [
     #path("", views.dashboard, name="dashboard"),
 
-    # Events → lijst
+    # Events → lijst + CRUD
     path("events/", views.events_list, name="events_list"),
+    path("events/add/", views.event_add, name="event_add"),
+    path("events/<int:pk>/edit/", views.event_edit, name="event_edit"),
+    path("events/<int:pk>/delete/", views.event_delete, name="event_delete"),
 
     # Editions gefilterd op een Event
     path("events/<int:event_id>/editions/", views.edition_list, name="edition_list_for_event"),
+    path("events/<int:event_id>/editions/add/", views.edition_add, name="edition_add_for_event"),
 
     # Edition dashboard
     path("editions/<int:edition_id>/", views.edition_dashboard, name="edition_dashboard"),
@@ -18,6 +22,9 @@ urlpatterns = [
 
     #Editions
     path("editions/", views.edition_list, name="edition_list"),
+    path("editions/add/", views.edition_add, name="edition_add"),
+    path("editions/<int:edition_id>/edit/", views.edition_edit, name="edition_edit"),
+    path("editions/<int:edition_id>/delete/", views.edition_delete, name="edition_delete"),
     path("editions/<int:edition_id>/routes-stats/", views.edition_routes_stats, name="edition_routes_stats"),
     path("editions/<int:edition_id>/registration/", views.edition_registration, name="edition_registration"),
 
