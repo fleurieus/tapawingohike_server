@@ -1,8 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from django.conf import settings
 from django.conf.urls.static import static
+from django.views.static import serve as static_serve
 
 from server.apps.dashboard import views
 from server.apps.dashboard import pins
@@ -26,7 +27,16 @@ urlpatterns = [
     path("logout/", auth_views.LogoutView.as_view(next_page="login"), name="logout"),
 ]
 
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve user-uploaded media files. django.conf.urls.static.static() is a
+# no-op when DEBUG=False, so register the serve view directly to make
+# /media/ available in production as well.
+urlpatterns += [
+    re_path(
+        r"^%s(?P<path>.*)$" % settings.MEDIA_URL.lstrip("/"),
+        static_serve,
+        {"document_root": settings.MEDIA_ROOT},
+    ),
+]
 
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
