@@ -35,6 +35,15 @@ SERVER_URI = f"http://{SERVER_IP}:{SERVER_PORT}"
 
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
+# Behind a TLS-terminating reverse proxy (nginx) the upstream request reaches
+# Django as plain HTTP, so request.scheme/is_secure() are wrong (e.g. the
+# registration share-URL rendered as http://). Trust the proxy's forwarded
+# scheme. REQUIRES the nginx vhost to forward it:
+#     proxy_set_header X-Forwarded-Proto $scheme;
+# and the web container must only be reachable via that proxy (otherwise the
+# header is client-spoofable). No effect in local dev (header absent).
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 
 # Application definition
 
