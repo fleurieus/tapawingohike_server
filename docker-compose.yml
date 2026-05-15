@@ -7,6 +7,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-tapawingohike}
       POSTGRES_USER: ${POSTGRES_USER:-tapawingo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tapawingo} -d ${POSTGRES_DB:-tapawingohike}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   web:
@@ -21,5 +26,28 @@ services:
       - db
     restart: unless-stopped
 
+  # Periodic backup sidecar — opt-in via `--profile backup`.
+  # Dumps to /backups inside the db_backup_data volume with daily/weekly/monthly retention.
+  db-backup:
+    image: prodrigestivill/postgres-backup-local:16-alpine
+    profiles: ["backup"]
+    volumes:
+      - db_backup_data:/backups
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: ${POSTGRES_DB:-tapawingohike}
+      POSTGRES_USER: ${POSTGRES_USER:-tapawingo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_EXTRA_OPTS: "-Fc"
+      SCHEDULE: "@daily"
+      BACKUP_KEEP_DAYS: 7
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   pgdata:
+  db_backup_data:

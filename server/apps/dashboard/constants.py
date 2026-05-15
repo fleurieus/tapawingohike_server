@@ -11,11 +11,13 @@ DESTINATION_TYPES = [
 ROUTE_TYPE_COORDINATE = "coordinate"
 ROUTE_TYPE_IMAGE = "image"
 ROUTE_TYPE_AUDIO = "audio"
+ROUTE_TYPE_GALLERY = "gallery"
 
 ROUTE_TYPES = [
     (ROUTE_TYPE_COORDINATE, "Coördinaat"),
     (ROUTE_TYPE_IMAGE, "Afbeelding"),
     (ROUTE_TYPE_AUDIO, "Audio"),
+    (ROUTE_TYPE_GALLERY, "Galerij"),
 ]
 
 BUNDLE_BROWSE_FREE = "free"

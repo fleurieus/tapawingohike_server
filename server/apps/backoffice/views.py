@@ -19,7 +19,7 @@ from server.apps.asgi_socket.consumers import push_to_team, push_to_edition, pus
 from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm, UserManagementForm, EventForm, EditionForm
 from django.contrib.auth.models import User
 from server.apps.dashboard.models import (
-    Event, Edition, Route, Bundle, RoutePart, TeamRoutePart, Destination, Team, File, LocationLog,
+    Event, Edition, Route, Bundle, RoutePart, RoutePartImage, TeamRoutePart, Destination, Team, File, LocationLog,
     Message, UserProfile, DESTINATION_TYPE_MANDATORY, DESTINATION_TYPE_CHOICE,
 )
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
@@ -467,7 +467,7 @@ def destinations_editor(request, rp_id:int):
 
     dest_items = list(dests.values(
         "id", "lat", "lng", "destination_type", "radius",
-        "confirm_by_user", "hide_for_user"
+        "confirm_by_user", "hide_for_user", "skip_location_check"
     ))
 
     ctx = {
@@ -607,6 +607,9 @@ def destination_update(request, rp_id: int, pk: int):
     if "hide_for_user" in payload:
         inst.hide_for_user = bool(payload["hide_for_user"])
         changed.append("hide_for_user")
+    if "skip_location_check" in payload:
+        inst.skip_location_check = bool(payload["skip_location_check"])
+        changed.append("skip_location_check")
 
     if changed:
         inst.save(update_fields=changed)
@@ -617,6 +620,7 @@ def destination_update(request, rp_id: int, pk: int):
         "radius": inst.radius,
         "confirm_by_user": inst.confirm_by_user,
         "hide_for_user": inst.hide_for_user,
+        "skip_location_check": inst.skip_location_check,
     })
 
 
@@ -631,7 +635,7 @@ def team_destinations_editor(request, trp_id: int):
     dests = trp.destinations.all().order_by("id")
     dest_items = list(dests.values(
         "id", "lat", "lng", "destination_type", "radius",
-        "confirm_by_user", "hide_for_user"
+        "confirm_by_user", "hide_for_user", "skip_location_check"
     ))
     ctx = {
         "rp": trp,  # reuse 'rp' context key so the template works for both
@@ -770,6 +774,9 @@ def team_destination_update(request, trp_id: int, pk: int):
     if "hide_for_user" in payload:
         inst.hide_for_user = bool(payload["hide_for_user"])
         changed.append("hide_for_user")
+    if "skip_location_check" in payload:
+        inst.skip_location_check = bool(payload["skip_location_check"])
+        changed.append("skip_location_check")
 
     if changed:
         inst.save(update_fields=changed)
@@ -780,6 +787,7 @@ def team_destination_update(request, trp_id: int, pk: int):
         "radius": inst.radius,
         "confirm_by_user": inst.confirm_by_user,
         "hide_for_user": inst.hide_for_user,
+        "skip_location_check": inst.skip_location_check,
     })
 
 
@@ -879,6 +887,7 @@ def routeparts_builder(request, route_id:int):
             "radius": d.radius,
             "confirm_by_user": d.confirm_by_user,
             "hide_for_user": d.hide_for_user,
+            "skip_location_check": d.skip_location_check,
             "rp_id": rp.id,
             "rp_order": rp.order,
             "rp_name": rp.name,
@@ -936,6 +945,23 @@ def routepart_form(request, route_id:int, pk:int=None):
 
             obj.save()  # nu veilig saven
 
+            # Gallery uploads (multi-file input handled outside ModelForm)
+            gallery_uploads = request.FILES.getlist("gallery_uploads")
+            if gallery_uploads:
+                next_order = (
+                    obj.gallery_images.aggregate(Max("order")).get("order__max") or 0
+                ) + 1
+                for upload in gallery_uploads:
+                    f = File(category=FILE_TYPE_IMAGE)
+                    f.file = upload
+                    f.save()
+                    RoutePartImage.objects.create(
+                        routepart=obj,
+                        image=f,
+                        order=next_order,
+                    )
+                    next_order += 1
+
             # Render het list item (met dest_count)
             p = (
                 RoutePart.objects.filter(pk=obj.pk)
@@ -981,6 +1007,60 @@ def routepart_delete(request, route_id:int, pk:int):
     resp = HttpResponse("")
     resp["HX-Trigger"] = json.dumps({"routepart:deleted": {"rp_id": pk}})
     return resp
+
+
+def _render_gallery_images(request, routepart):
+    """Render the gallery images list partial for HTMX swaps."""
+    return render_to_string(
+        "backoffice/_gallery_images.html",
+        {
+            "routepart": routepart,
+            "gallery_images": list(routepart.gallery_images.select_related("image").all()),
+            "request": request,
+        },
+    )
+
+
+@staff_member_required
+@require_POST
+def gallery_image_delete(request, route_id: int, rp_id: int, image_id: int):
+    route = get_object_or_404(
+        org_qs(request.user, Route.objects, "edition__event__organization"), pk=route_id
+    )
+    routepart = get_object_or_404(RoutePart, pk=rp_id, route=route)
+    img = get_object_or_404(RoutePartImage, pk=image_id, routepart=routepart)
+    img.delete()
+    return HttpResponse(_render_gallery_images(request, routepart))
+
+
+@staff_member_required
+@require_POST
+def gallery_image_move(request, route_id: int, rp_id: int, image_id: int, direction: str):
+    """Swap order with the previous/next gallery image."""
+    route = get_object_or_404(
+        org_qs(request.user, Route.objects, "edition__event__organization"), pk=route_id
+    )
+    routepart = get_object_or_404(RoutePart, pk=rp_id, route=route)
+    img = get_object_or_404(RoutePartImage, pk=image_id, routepart=routepart)
+
+    if direction == "up":
+        neighbour = (
+            routepart.gallery_images.filter(order__lt=img.order).order_by("-order", "-id").first()
+        )
+    elif direction == "down":
+        neighbour = (
+            routepart.gallery_images.filter(order__gt=img.order).order_by("order", "id").first()
+        )
+    else:
+        return HttpResponseBadRequest("invalid direction")
+
+    if neighbour is not None:
+        img.order, neighbour.order = neighbour.order, img.order
+        with transaction.atomic():
+            img.save(update_fields=["order"])
+            neighbour.save(update_fields=["order"])
+
+    return HttpResponse(_render_gallery_images(request, routepart))
 
 
 @staff_member_required
@@ -1088,7 +1168,7 @@ def distribute_route_to_teams(request, route_id: int):
                         "routepart_fullscreen": part.routepart_fullscreen,
                         "routedata_image": part.routedata_image,
                         "routedata_audio": part.routedata_audio,
-                        "final": part.final,
+                        "gallery_caption": part.gallery_caption,                        "final": part.final,
                         "order": part.order,
                         "bundle": part.bundle,
                     },
@@ -1106,7 +1186,7 @@ def distribute_route_to_teams(request, route_id: int):
                         "routepart_fullscreen": part.routepart_fullscreen,
                         "routedata_image": part.routedata_image,
                         "routedata_audio": part.routedata_audio,
-                        "final": part.final,
+                        "gallery_caption": part.gallery_caption,                        "final": part.final,
                         "order": part.order,
                         "bundle": part.bundle,
                     }.items():
@@ -1126,12 +1206,15 @@ def distribute_route_to_teams(request, route_id: int):
                         destination_type=d.destination_type,
                         confirm_by_user=d.confirm_by_user,
                         hide_for_user=d.hide_for_user,
+                        skip_location_check=d.skip_location_check,
                         defaults={
                             # completed_time, routepart niet overnemen
                         },
                     )
                     if d_created:
                         dest_created += 1
+
+                trp.sync_gallery_from_routepart(part)
 
     target = reverse("backoffice:teamrouteparts_builder", args=[route.id])
 
@@ -1185,6 +1268,7 @@ def teamrouteparts_builder(request, route_id:int):
                 "radius": d.radius,
                 "confirm_by_user": d.confirm_by_user,
                 "hide_for_user": d.hide_for_user,
+                "skip_location_check": d.skip_location_check,
                 "trp_id": trp.id,
                 "team_id": trp.team_id,
                 "team_name": trp.team.name,
@@ -1301,6 +1385,8 @@ def team_dests_bulk_update(request):
         changed["confirm_by_user"] = bool(payload["confirm_by_user"])
     if "hide_for_user" in payload:
         changed["hide_for_user"] = bool(payload["hide_for_user"])
+    if "skip_location_check" in payload:
+        changed["skip_location_check"] = bool(payload["skip_location_check"])
 
     if not changed:
         return HttpResponseBadRequest("Nothing to update")

@@ -34,3 +34,5 @@ def distribute_to_teams(modeladmin, request, queryset):
                     dest_dict["teamroutepart"] = team_route_part.pk
 
                     team_route_part.destinations.get_or_create(**dest_dict)
+
+                team_route_part.sync_gallery_from_routepart(part)

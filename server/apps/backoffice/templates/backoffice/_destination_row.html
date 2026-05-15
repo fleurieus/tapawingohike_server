@@ -5,13 +5,15 @@
     data-type="{{ d.destination_type }}"
     data-radius="{{ d.radius }}"
     data-confirm="{{ d.confirm_by_user|yesno:'1,0' }}"
-    data-hide="{{ d.hide_for_user|yesno:'1,0' }}">
+    data-hide="{{ d.hide_for_user|yesno:'1,0' }}"
+    data-skip="{{ d.skip_location_check|yesno:'1,0' }}">
   <td class="p-2 text-sm">#{{ d.id }}</td>
   <td class="p-2 text-sm">{{ d.lat }}, {{ d.lng }}</td>
   <td class="p-2 text-sm">{{ d.destination_type }}</td>
   <td class="p-2 text-sm">{{ d.radius }}</td>
   <td class="p-2 text-sm">{{ d.confirm_by_user|yesno:"Ja,Nee" }}</td>
   <td class="p-2 text-sm">{{ d.hide_for_user|yesno:"Ja,Nee" }}</td>
+  <td class="p-2 text-sm">{{ d.skip_location_check|yesno:"Ja,Nee" }}</td>
   <td class="p-2 text-right">
     <button class="dest-edit-btn px-2 py-1 text-sm bg-slate-200 rounded" data-dest-id="{{ d.id }}">Bewerk</button>
     <button class="ml-1 px-2 py-1 text-sm bg-red-600 text-white rounded"

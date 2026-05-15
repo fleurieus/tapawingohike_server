@@ -112,7 +112,7 @@ class EditionRegistrationForm(forms.ModelForm):
 class DestinationForm(forms.ModelForm):
     class Meta:
         model = Destination
-        fields = ["lat", "lng", "destination_type", "radius", "confirm_by_user", "hide_for_user"]
+        fields = ["lat", "lng", "destination_type", "radius", "confirm_by_user", "hide_for_user", "skip_location_check"]
         widgets = {
             "lat":  forms.NumberInput(attrs={"step":"any", "class":"border rounded px-2 py-1 w-full"}),
             "lng":  forms.NumberInput(attrs={"step":"any", "class":"border rounded px-2 py-1 w-full"}),
@@ -120,6 +120,7 @@ class DestinationForm(forms.ModelForm):
             "radius": forms.NumberInput(attrs={"class":"border rounded px-2 py-1 w-full", "min":"1"}),
             "confirm_by_user": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
             "hide_for_user":   forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
+            "skip_location_check": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
         }
 
 class RouteForm(forms.ModelForm):
@@ -178,6 +179,11 @@ class RoutePartForm(forms.ModelForm):
             "routepart_zoom": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
             "routepart_fullscreen": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
             "final": forms.CheckboxInput(attrs={"class":"h-4 w-4"}),
+            "gallery_caption": forms.Textarea(attrs={
+                "class": "border rounded px-2 py-1 w-full",
+                "rows": 3,
+                "placeholder": "Tekst boven de foto's (optioneel)",
+            }),
         }
 
     def __init__(self, *args, route=None, **kwargs):

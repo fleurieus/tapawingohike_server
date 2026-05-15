@@ -6,6 +6,7 @@
     <span class="text-slate-500 mr-1">#{{ p.order }}</span> {{ p.name }}
     <span class="ml-1 text-xs text-slate-500">(<span class="dest-count">{{ p.dest_count }}</span> dest)</span>
     {% if p.bundle %}<span class="ml-1 text-xs text-indigo-500" title="Bundel: {{ p.bundle.name }}"><iconify-icon icon="heroicons-outline:collection" width="12" height="12"></iconify-icon> {{ p.bundle.name }}</span>{% endif %}
+    {% if p.route_type == "gallery" %}<span class="ml-1 text-xs text-amber-600" title="Galerij ({{ p.gallery_images.count }} foto's)"><iconify-icon icon="heroicons-outline:photograph" width="12" height="12"></iconify-icon> {{ p.gallery_images.count }}</span>{% endif %}
   </span>
 
   <button class="icon-btn"

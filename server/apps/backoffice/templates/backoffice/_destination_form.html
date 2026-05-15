@@ -12,9 +12,10 @@
       <div>{{ form.lng.label_tag }} {{ form.lng }}</div>
       <div>{{ form.destination_type.label_tag }} {{ form.destination_type }}</div>
       <div>{{ form.radius.label_tag }} {{ form.radius }}</div>
-      <div class="flex items-center gap-4 col-span-2">
+      <div class="flex items-center gap-4 col-span-2 flex-wrap">
         <label class="inline-flex items-center gap-2">{{ form.confirm_by_user }} <span>Confirm by User</span></label>
         <label class="inline-flex items-center gap-2">{{ form.hide_for_user }} <span>Hide from User</span></label>
+        <label class="inline-flex items-center gap-2" title="Sla de GPS-radiuscheck over: de app behandelt dit punt direct als bereikt na het vorige routedeel. Combineer met 'Confirm by User' voor een tik-om-door scherm, of laat dat uit om automatisch door te gaan. Voor tussen-schermen/galerijen.">{{ form.skip_location_check }} <span>Skip location check</span></label>
       </div>
     </div>
 

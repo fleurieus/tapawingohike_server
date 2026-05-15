@@ -61,6 +61,12 @@ urlpatterns = [
     path("routes/<int:route_id>/parts/<int:pk>/delete", views.routepart_delete, name="routepart_delete"),
     path("routes/<int:route_id>/parts/reorder", views.routeparts_reorder, name="routeparts_reorder"),
 
+    # Gallery images on a RoutePart (type=gallery)
+    path("routes/<int:route_id>/parts/<int:rp_id>/gallery/<int:image_id>/delete",
+         views.gallery_image_delete, name="gallery_image_delete"),
+    path("routes/<int:route_id>/parts/<int:rp_id>/gallery/<int:image_id>/move/<str:direction>",
+         views.gallery_image_move, name="gallery_image_move"),
+
     # Bundles
     path("routes/<int:route_id>/bundles/new", views.bundle_form, name="bundle_new"),
     path("routes/<int:route_id>/bundles/<int:pk>", views.bundle_form, name="bundle_edit"),

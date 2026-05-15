@@ -53,8 +53,8 @@
         <p class="text-xs text-slate-500 mt-1">Koppel aan een bundel om routedelen als set naar de app te sturen</p>
       </div>
 
-      <!-- Media velden naast elkaar -->
-      <div>
+      <!-- Media velden naast elkaar (verborgen voor type=gallery) -->
+      <div class="media-section">
         {{ form.routedata_image.label_tag }}
         {{ form.routedata_image }}
         <div class="mt-1">
@@ -62,12 +62,45 @@
           {{ form.new_image_upload }}
         </div>
       </div>
-      <div>
+      <div class="media-section">
         {{ form.routedata_audio.label_tag }}
         {{ form.routedata_audio }}
         <div class="mt-1">
           {{ form.new_audio_upload.label_tag }}
           {{ form.new_audio_upload }}
+        </div>
+      </div>
+
+      <!-- Gallery: alleen zichtbaar voor type=gallery (zie JS onderaan) -->
+      <div class="col-span-2 gallery-section border-t border-slate-200 pt-3" hidden>
+        <h3 class="text-sm font-semibold mb-2">Galerij-foto's</h3>
+
+        <p class="text-xs text-slate-500 mb-2">
+          Tussen-gallery (foto's meteen tonen zonder GPS-check)? Zet dat per
+          <em>destination</em> via <strong>"Skip location check"</strong> in het
+          destination-formulier — eventueel samen met "Confirm by User" voor een
+          tik-om-door-knop.
+        </p>
+
+        <div class="mb-2">
+          {{ form.gallery_caption.label_tag }}
+          {{ form.gallery_caption }}
+        </div>
+
+        {% if form.instance.pk %}
+          <div class="mb-2">
+            <p class="text-xs text-slate-600 mb-1">Huidige foto's (sleep niet — gebruik de pijltjes):</p>
+            {% include "backoffice/_gallery_images.html" with routepart=form.instance gallery_images=form.instance.gallery_images.all %}
+          </div>
+        {% else %}
+          <p class="text-xs text-slate-500 mb-2 italic">Sla eerst op om foto's te uploaden.</p>
+        {% endif %}
+
+        <div>
+          <label class="block text-sm">Nieuwe foto's uploaden</label>
+          <input type="file" name="gallery_uploads" accept="image/*" multiple
+                 class="border rounded px-2 py-1 w-full">
+          <p class="text-xs text-slate-500 mt-1">Selecteer meerdere foto's tegelijk (Ctrl/Cmd + klik).</p>
         </div>
       </div>
     </div>
@@ -82,4 +115,22 @@
       <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
     </div>
   </form>
+
+  <script>
+    (function() {
+      const form = document.currentScript.previousElementSibling;
+      const select = form.querySelector('select[name="route_type"]');
+      const gallerySection = form.querySelector('.gallery-section');
+      const mediaSections = form.querySelectorAll('.media-section');
+      if (!select) return;
+
+      const toggle = () => {
+        const isGallery = select.value === "gallery";
+        if (gallerySection) gallerySection.hidden = !isGallery;
+        mediaSections.forEach(el => { el.hidden = isGallery; });
+      };
+      select.addEventListener("change", toggle);
+      toggle();
+    })();
+  </script>
 </div>

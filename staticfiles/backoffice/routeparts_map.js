@@ -212,6 +212,12 @@
                     class="h-4 w-4 rounded border-slate-300">
                 <span>Hide for user</span>
             </label>
+
+            <label class="inline-flex items-center gap-2" title="Sla de GPS-radiuscheck over: de app behandelt dit punt direct als bereikt na het vorige routedeel. Combineer met 'Confirm by user' voor een tik-om-door scherm, of laat dat uit om automatisch door te gaan.">
+                <input id="f-skip" type="checkbox" ${it.skip_location_check ? "checked" : ""}
+                    class="h-4 w-4 rounded border-slate-300">
+                <span>Skip location check</span>
+            </label>
             </div>
 
             <div class="flex justify-end gap-2">
@@ -233,11 +239,13 @@
             const radius = parseInt(wrap.querySelector("#f-radius").value || "0", 10);
             const confirm_by_user = wrap.querySelector("#f-confirm").checked;
             const hide_for_user = wrap.querySelector("#f-hide").checked;
+            const skip_location_check = wrap.querySelector("#f-skip").checked;
             try {
                 await postUpdate(it, {
                     radius,
                     confirm_by_user,
-                    hide_for_user
+                    hide_for_user,
+                    skip_location_check
                 });
                 infoWindow && infoWindow.close();
                 clearActivePart();
@@ -472,6 +480,7 @@
         it.radius = out.radius;
         it.confirm_by_user = out.confirm_by_user;
         it.hide_for_user = out.hide_for_user;
+        it.skip_location_check = out.skip_location_check;
         ensureCircle(it, {
             lat: num(it.lat),
             lng: num(it.lng)

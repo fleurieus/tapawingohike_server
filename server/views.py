@@ -61,6 +61,7 @@ def _distribute_routes_for_team(team):
                     "routepart_fullscreen": part.routepart_fullscreen,
                     "routedata_image": part.routedata_image,
                     "routedata_audio": part.routedata_audio,
+                    "gallery_caption": part.gallery_caption,
                     "final": part.final,
                     "order": part.order,
                     "bundle": part.bundle,
@@ -77,8 +78,11 @@ def _distribute_routes_for_team(team):
                     defaults={
                         "confirm_by_user": d.confirm_by_user,
                         "hide_for_user": d.hide_for_user,
+                        "skip_location_check": d.skip_location_check,
                     },
                 )
+
+            trp.sync_gallery_from_routepart(part)
 
 
 def _send_team_code_email(team):

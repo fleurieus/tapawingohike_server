@@ -11,6 +11,7 @@ from .constants import (
     DESTINATION_TYPE_CHOICE,
     DESTINATION_TYPES,
     ROUTE_TYPE_COORDINATE,
+    ROUTE_TYPE_GALLERY,
     ROUTE_TYPES,
     BUNDLE_BROWSE_FREE,
     BUNDLE_BROWSE_MODES,
@@ -187,17 +188,24 @@ class Team(models.Model):
             if part.routedata_audio
             else None
         )
+        data = {
+            "fullscreen": part.routepart_fullscreen,
+            "zoomEnabled": part.routepart_zoom,
+            "image": image_url,
+            "audio": audio_url,
+            "coordinates": self.destinations_formatted(
+                part.destinations.filter(completed_time__isnull=True)
+            ),
+        }
+        if part.route_type == ROUTE_TYPE_GALLERY:
+            data["images"] = [
+                urljoin(settings.SERVER_URI, gi.image.file.url)
+                for gi in part.gallery_images.select_related("image").all()
+            ]
+            data["caption"] = part.gallery_caption
         return {
             "type": part.route_type,
-            "data": {
-                "fullscreen": part.routepart_fullscreen,
-                "zoomEnabled": part.routepart_zoom,
-                "image": image_url,
-                "audio": audio_url,
-                "coordinates": self.destinations_formatted(
-                    part.destinations.filter(completed_time__isnull=True)
-                ),
-            },
+            "data": data,
         }
 
     def get_next_open_routepart_formatted(self):
@@ -266,6 +274,7 @@ class Team(models.Model):
                 radius=d.radius,
                 confirmByUser=d.confirm_by_user,
                 hideForUser=d.hide_for_user,
+                skipLocationCheck=d.skip_location_check,
             )
             for d in destinations
         ]
@@ -344,6 +353,11 @@ class RoutePart(FinalDestinationValidationMixin, models.Model):
         blank=True,
         null=True,
     )
+    gallery_caption = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional text shown above the images on a gallery routepart.",
+    )
 
     # extra
     final = models.BooleanField(default=False)
@@ -394,6 +408,11 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
         limit_choices_to={"category": FILE_TYPE_AUDIO},
         blank=True,
         null=True,
+    )
+    gallery_caption = models.TextField(
+        blank=True,
+        default="",
+        help_text="Optional text shown above the images on a gallery routepart.",
     )
 
     # extra
@@ -462,8 +481,71 @@ class TeamRoutePart(FinalDestinationValidationMixin, models.Model):
 
     completed.boolean = True
 
+    def sync_gallery_from_routepart(self, routepart):
+        """Idempotently mirror gallery images from the source RoutePart.
+
+        Called by every distribution path (admin action, public registration,
+        backoffice HTMX distribution).
+        """
+        if routepart.route_type != ROUTE_TYPE_GALLERY:
+            return
+
+        existing_image_ids = set(
+            self.gallery_images.values_list("image_id", flat=True)
+        )
+        for gi in routepart.gallery_images.all():
+            if gi.image_id in existing_image_ids:
+                continue
+            TeamRoutePartImage.objects.create(
+                teamroutepart=self,
+                image=gi.image,
+                order=gi.order,
+            )
+
     class Meta:
         ordering = ("order",)
+
+
+class RoutePartImage(models.Model):
+    routepart = models.ForeignKey(
+        "dashboard.RoutePart",
+        on_delete=models.CASCADE,
+        related_name="gallery_images",
+    )
+    image = models.ForeignKey(
+        "dashboard.File",
+        on_delete=models.CASCADE,
+        related_name="gallery_routepart_images",
+        limit_choices_to={"category": FILE_TYPE_IMAGE},
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order", "id")
+
+    def __str__(self):
+        return f"{self.routepart} | image {self.order}"
+
+
+class TeamRoutePartImage(models.Model):
+    teamroutepart = models.ForeignKey(
+        "dashboard.TeamRoutePart",
+        on_delete=models.CASCADE,
+        related_name="gallery_images",
+    )
+    image = models.ForeignKey(
+        "dashboard.File",
+        on_delete=models.CASCADE,
+        related_name="gallery_teamroutepart_images",
+        limit_choices_to={"category": FILE_TYPE_IMAGE},
+    )
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order", "id")
+
+    def __str__(self):
+        return f"{self.teamroutepart} | image {self.order}"
 
 
 class Destination(models.Model):
@@ -475,6 +557,16 @@ class Destination(models.Model):
     )
     confirm_by_user = models.BooleanField(default=False)
     hide_for_user = models.BooleanField(default=False)
+    skip_location_check = models.BooleanField(
+        default=False,
+        help_text=(
+            "Skip the GPS-radius check: the app treats this destination as "
+            "reached immediately after the previous routepart completes. "
+            "Combine with 'confirm by user' for a tap-to-continue screen, or "
+            "leave that off to auto-advance. Use for in-between info/gallery "
+            "screens."
+        ),
+    )
 
     completed_time = models.DateTimeField(null=True, blank=True)
 
