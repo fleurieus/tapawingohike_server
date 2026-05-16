@@ -1,5 +1,6 @@
 import secrets
 import string
+from smtplib import SMTPException
 
 from django.conf import settings
 from django.core.mail import send_mail
@@ -128,45 +129,55 @@ def register(request, slug):
     FormClass = QuickRegistrationForm if is_quick else ExtendedRegistrationForm
 
     if request.method == "POST":
-        form = FormClass(request.POST)
+        form = FormClass(request.POST, edition=edition)
         if form.is_valid():
-            with transaction.atomic():
-                if is_quick:
-                    code = _unique_team_code(edition)
-                    team = Team.objects.create(
-                        edition=edition,
-                        name=form.cleaned_data["contact_name"],
-                        contact_name=form.cleaned_data["contact_name"],
-                        contact_email=form.cleaned_data["contact_email"],
-                        code=code,
-                        is_activated=True,
-                    )
-                    _distribute_routes_for_team(team)
-                    _send_team_code_email(team)
-                else:
-                    team = Team.objects.create(
-                        edition=edition,
-                        name=form.cleaned_data["team_name"],
-                        contact_name=form.cleaned_data["contact_name"],
-                        contact_email=form.cleaned_data["contact_email"],
-                        contact_phone=form.cleaned_data.get("contact_phone", ""),
-                        contact_address=form.cleaned_data.get("contact_address", ""),
-                        member_names=form.cleaned_data.get("member_names", ""),
-                        remarks=form.cleaned_data.get("remarks", ""),
-                        code="",
-                        is_activated=False,
-                    )
-                    _send_confirmation_email(
-                        team, edition.registration_confirmation_text
-                    )
+            try:
+                with transaction.atomic():
+                    if is_quick:
+                        code = _unique_team_code(edition)
+                        team = Team.objects.create(
+                            edition=edition,
+                            name=form.cleaned_data["contact_name"],
+                            contact_name=form.cleaned_data["contact_name"],
+                            contact_email=form.cleaned_data["contact_email"],
+                            code=code,
+                            is_activated=True,
+                        )
+                        _distribute_routes_for_team(team)
+                        _send_team_code_email(team)
+                    else:
+                        team = Team.objects.create(
+                            edition=edition,
+                            name=form.cleaned_data["team_name"],
+                            contact_name=form.cleaned_data["contact_name"],
+                            contact_email=form.cleaned_data["contact_email"],
+                            contact_phone=form.cleaned_data.get("contact_phone", ""),
+                            contact_address=form.cleaned_data.get("contact_address", ""),
+                            member_names=form.cleaned_data.get("member_names", ""),
+                            remarks=form.cleaned_data.get("remarks", ""),
+                            code="",
+                            is_activated=False,
+                        )
+                        _send_confirmation_email(
+                            team, edition.registration_confirmation_text
+                        )
 
-            return render(
-                request,
-                "registration/success.html",
-                {"edition": edition, "is_quick": is_quick, "team": team},
-            )
+                return render(
+                    request,
+                    "registration/success.html",
+                    {"edition": edition, "is_quick": is_quick, "team": team},
+                )
+            except (SMTPException, OSError):
+                # Mail couldn't be delivered (bad/undeliverable address or a
+                # mail-server problem). The atomic block rolled back, so no
+                # half-registration — show a clear field error instead of 500.
+                form.add_error(
+                    "contact_email",
+                    "We konden geen e-mail sturen naar dit adres. "
+                    "Controleer het e-mailadres en probeer het opnieuw.",
+                )
     else:
-        form = FormClass()
+        form = FormClass(edition=edition)
 
     return render(
         request,
