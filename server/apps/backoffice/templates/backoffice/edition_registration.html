@@ -9,13 +9,13 @@
 </div>
 
 <div class="bg-white border rounded-2xl p-5 max-w-2xl">
-  <form method="post" class="space-y-6">
+  <form id="reg-settings" method="post" class="space-y-8">
     {% csrf_token %}
     {{ form.non_field_errors }}
 
-    {# ── Registratie ── #}
+    {# ── Aanmeldpagina ── #}
     <fieldset class="space-y-4">
-      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide">Registratie</legend>
+      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">Aanmeldpagina</legend>
 
       <div>
         <label class="block text-sm font-medium mb-1" for="{{ form.registration_mode.id_for_label }}">
@@ -34,7 +34,7 @@
         {{ form.registration_intro }}
         <trix-editor id="trix-registration-intro"
                      input="{{ form.registration_intro.id_for_label }}"
-                     class="trix-content bg-white rounded-lg border block min-h-[10rem]"></trix-editor>
+                     class="trix-content"></trix-editor>
         <p class="text-xs text-slate-500 mt-1">
           Wordt bovenaan de publieke aanmeldpagina getoond. Opmaak wordt
           server-side opgeschoond — alleen veilige tags blijven behouden.
@@ -43,6 +43,31 @@
           <p class="text-sm text-red-600 mt-1">{{ form.registration_intro.errors|striptags }}</p>
         {% endif %}
       </div>
+
+      {% if edition.registration_mode != "none" %}
+        <div>
+          <span class="block text-sm font-medium mb-1">Registratielink</span>
+          <div class="bg-slate-50 rounded-lg p-3 text-sm flex items-center gap-2">
+            <code class="flex-1 min-w-0 text-xs bg-white px-2 py-1 rounded border truncate" id="reg-url">{{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.slug %}</code>
+            <button type="button" title="Link kopiëren"
+                    onclick="navigator.clipboard.writeText(document.getElementById('reg-url').textContent);this.querySelector('iconify-icon').setAttribute('icon','heroicons:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','heroicons:clipboard-document'),1000)"
+                    class="text-slate-400 hover:text-slate-600 shrink-0">
+              <iconify-icon icon="heroicons:clipboard-document" width="16" height="16"></iconify-icon>
+            </button>
+            <a href="{% url 'register' edition.slug %}" target="_blank" title="Openen"
+               class="text-slate-400 hover:text-slate-600 shrink-0">
+              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </fieldset>
+
+    <hr class="border-slate-200">
+
+    {# ── E-mail ── #}
+    <fieldset class="space-y-3">
+      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">E-mail</legend>
 
       <div>
         <label class="block text-sm font-medium mb-1" for="{{ form.registration_confirmation_text.id_for_label }}">
@@ -56,29 +81,13 @@
           <p class="text-sm text-red-600 mt-1">{{ form.registration_confirmation_text.errors|striptags }}</p>
         {% endif %}
       </div>
-
-      {% if edition.registration_mode != "none" %}
-        <div class="bg-slate-50 rounded-lg p-3 text-sm flex items-center gap-2">
-          <span class="font-medium shrink-0">Registratielink:</span>
-          <code class="flex-1 text-xs bg-white px-2 py-1 rounded border truncate" id="reg-url">{{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.slug %}</code>
-          <button type="button" title="Link kopiëren"
-                  onclick="navigator.clipboard.writeText(document.getElementById('reg-url').textContent);this.querySelector('iconify-icon').setAttribute('icon','heroicons:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','heroicons:clipboard-document'),1000)"
-                  class="text-slate-400 hover:text-slate-600 shrink-0">
-            <iconify-icon icon="heroicons:clipboard-document" width="16" height="16"></iconify-icon>
-          </button>
-          <a href="{% url 'register' edition.slug %}" target="_blank" title="Openen"
-             class="text-slate-400 hover:text-slate-600 shrink-0">
-            <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
-          </a>
-        </div>
-      {% endif %}
     </fieldset>
 
     <hr class="border-slate-200">
 
     {# ── Berichten ── #}
     <fieldset class="space-y-3">
-      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide">Berichten</legend>
+      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">Berichten</legend>
 
       <label class="flex items-center gap-3 cursor-pointer">
         {{ form.messaging_enabled }}
@@ -97,7 +106,24 @@
   </form>
 </div>
 
-{# Trix WYSIWYG for the registration intro (CDN, like iconify elsewhere) #}
+{# Trix WYSIWYG for the registration intro (CDN, like iconify elsewhere). #}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.css">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.umd.min.js"></script>
+{# Scoped: Trix has no intrinsic width/height cap, which overflowed the
+   card; arbitrary Tailwind classes (min-h-[…]) aren't in the prebuilt CSS. #}
+<style>
+  #reg-settings trix-toolbar,
+  #reg-settings trix-editor { box-sizing: border-box; max-width: 100%; }
+  #reg-settings trix-toolbar .trix-button-row { flex-wrap: wrap; }
+  #reg-settings trix-editor {
+    display: block;
+    width: 100%;
+    min-height: 12rem;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+  }
+  #reg-settings textarea { max-width: 100%; box-sizing: border-box; }
+</style>
 {% endblock %}
