@@ -19,6 +19,21 @@
     </h1>
     <p class="text-sm text-slate-600 mb-6">{{ edition.name }} · {{ edition.event.name }}</p>
 
+    {% if edition.registration_intro %}
+      <style>
+        .intro-rich p{margin:.5rem 0}
+        .intro-rich ul{list-style:disc;padding-left:1.5rem;margin:.5rem 0}
+        .intro-rich ol{list-style:decimal;padding-left:1.5rem;margin:.5rem 0}
+        .intro-rich a{color:#15803d;text-decoration:underline}
+        .intro-rich h1,.intro-rich h2,.intro-rich h3,.intro-rich h4{font-weight:600;margin:.75rem 0 .25rem}
+        .intro-rich blockquote{border-left:3px solid #cbd5e1;padding-left:.75rem;color:#475569;margin:.5rem 0}
+        .intro-rich strong,.intro-rich b{font-weight:600}
+      </style>
+      <div class="intro-rich text-sm text-slate-700 mb-6">
+        {{ edition.registration_intro|safe }}
+      </div>
+    {% endif %}
+
     <form method="post" class="space-y-4">
       {% csrf_token %}
       {{ form.non_field_errors }}

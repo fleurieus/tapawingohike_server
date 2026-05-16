@@ -14,7 +14,7 @@ from .views import index, register
 
 urlpatterns = [
     path('', index, name='index'),
-    path('register/<int:edition_id>/', register, name='register'),
+    path('register/<slug:slug>/', register, name='register'),
     path("admin/", admin.site.urls),
     path('stats/<int:route_id>/', views.stats_view, name='stats_view_with_route_id'),
     path('map/<int:route_id>/', views.map_view, name='map_view_with_route_id'),

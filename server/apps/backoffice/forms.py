@@ -1,3 +1,4 @@
+import bleach
 from django import forms
 from django.contrib.auth.models import User
 from server.apps.dashboard.models import Destination, Edition, Event, Organization
@@ -5,6 +6,26 @@ from server.apps.dashboard.models import Bundle, Route, RoutePart, File, Destina
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
 
 INPUT_CLASSES = "w-full rounded-lg border px-3 py-2"
+
+# Whitelist for the rich-text registration intro (Trix output). Anything not
+# listed is stripped server-side so the public page can't be XSS'd.
+INTRO_ALLOWED_TAGS = [
+    "p", "br", "div", "span", "strong", "b", "em", "i", "u", "del", "s",
+    "a", "ul", "ol", "li", "h1", "h2", "h3", "h4", "blockquote", "pre",
+]
+INTRO_ALLOWED_ATTRS = {"a": ["href", "title", "target", "rel"]}
+INTRO_ALLOWED_PROTOCOLS = ["http", "https", "mailto"]
+
+
+def sanitize_intro_html(raw: str) -> str:
+    """Strip everything outside the whitelist (scripts, styles, on* attrs…)."""
+    return bleach.clean(
+        raw or "",
+        tags=INTRO_ALLOWED_TAGS,
+        attributes=INTRO_ALLOWED_ATTRS,
+        protocols=INTRO_ALLOWED_PROTOCOLS,
+        strip=True,
+    )
 
 
 class EventForm(forms.ModelForm):
@@ -20,9 +41,18 @@ class EventForm(forms.ModelForm):
 class EditionForm(forms.ModelForm):
     class Meta:
         model = Edition
-        fields = ["name", "event", "date_start", "date_end"]
+        fields = ["name", "slug", "event", "date_start", "date_end"]
+        labels = {"slug": "URL-naam (slug)"}
+        help_texts = {
+            "slug": "Gebruikt in de aanmeld-URL. Leeg laten = automatisch "
+                    "afgeleid van de naam.",
+        }
         widgets = {
             "name": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "slug": forms.TextInput(
+                attrs={"class": INPUT_CLASSES,
+                       "placeholder": "automatisch van de naam"}
+            ),
             "event": forms.Select(attrs={"class": INPUT_CLASSES}),
             "date_start": forms.DateInput(
                 attrs={"type": "date", "class": INPUT_CLASSES}, format="%Y-%m-%d"
@@ -96,11 +126,18 @@ class UserManagementForm(forms.Form):
 class EditionRegistrationForm(forms.ModelForm):
     class Meta:
         model = Edition
-        fields = ["registration_mode", "registration_confirmation_text", "messaging_enabled"]
+        fields = [
+            "registration_mode",
+            "registration_intro",
+            "registration_confirmation_text",
+            "messaging_enabled",
+        ]
         widgets = {
             "registration_mode": forms.Select(
                 attrs={"class": "w-full rounded-lg border px-3 py-2"}
             ),
+            # Bound to a Trix WYSIWYG in the template; sanitised in clean().
+            "registration_intro": forms.HiddenInput(),
             "registration_confirmation_text": forms.Textarea(
                 attrs={"class": "w-full rounded-lg border px-3 py-2", "rows": 5}
             ),
@@ -108,6 +145,10 @@ class EditionRegistrationForm(forms.ModelForm):
                 attrs={"class": "rounded border-slate-300 text-slate-900 focus:ring-slate-500"}
             ),
         }
+
+    def clean_registration_intro(self):
+        # Never trust the client-side editor — whitelist server-side.
+        return sanitize_intro_html(self.cleaned_data.get("registration_intro", ""))
 
 class DestinationForm(forms.ModelForm):
     class Meta:

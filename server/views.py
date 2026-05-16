@@ -117,9 +117,9 @@ def _send_confirmation_email(team, confirmation_text):
     )
 
 
-def register(request, edition_id):
+def register(request, slug):
     """Public registration view — shows quick or extended form based on edition settings."""
-    edition = get_object_or_404(Edition, pk=edition_id)
+    edition = get_object_or_404(Edition, slug=slug)
 
     if edition.registration_mode == Edition.REGISTRATION_NONE:
         raise Http404

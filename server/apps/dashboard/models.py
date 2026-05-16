@@ -4,6 +4,7 @@ from urllib.parse import urljoin
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.text import slugify
 
 from .validators import FinalDestinationValidationMixin
 from .constants import (
@@ -74,6 +75,13 @@ class Edition(models.Model):
     ]
 
     name = models.CharField(max_length=255)
+    slug = models.SlugField(
+        max_length=255,
+        unique=True,
+        blank=True,
+        help_text="Used in the public registration URL. Leave blank to "
+                  "auto-generate from the name.",
+    )
     date_start = models.DateTimeField()
     date_end = models.DateTimeField()
 
@@ -87,6 +95,12 @@ class Edition(models.Model):
         default="",
         help_text="Confirmation email body for extended registration",
     )
+    registration_intro = models.TextField(
+        blank=True,
+        default="",
+        help_text="Rich-text intro shown on the public registration page. "
+                  "Sanitised server-side before storing.",
+    )
 
     messaging_enabled = models.BooleanField(
         default=False,
@@ -98,6 +112,20 @@ class Edition(models.Model):
         on_delete=models.CASCADE,
         related_name="editions",
     )
+
+    def save(self, *args, **kwargs):
+        # Auto-derive a URL slug from the name when none is set, and keep it
+        # unique. An explicit slug (e.g. edited in the backoffice) is kept;
+        # renaming an edition does NOT change an existing slug, so already
+        # shared registration links stay stable.
+        if not self.slug:
+            self.slug = slugify(self.name) or "editie"
+        base = self.slug
+        n = 2
+        while Edition.objects.exclude(pk=self.pk).filter(slug=self.slug).exists():
+            self.slug = f"{base}-{n}"
+            n += 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} | {self.event}"
