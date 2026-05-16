@@ -8,7 +8,7 @@
   </div>
 </div>
 
-<div class="bg-white border rounded-2xl p-5 max-w-2xl">
+<div class="bg-white border rounded-2xl p-5 max-w-4xl">
   <form id="reg-settings" method="post" class="space-y-8">
     {% csrf_token %}
     {{ form.non_field_errors }}
@@ -34,7 +34,7 @@
         {{ form.registration_intro }}
         <trix-editor id="trix-registration-intro"
                      input="{{ form.registration_intro.id_for_label }}"
-                     class="trix-content"></trix-editor>
+                     class="trix-content block w-full min-h-[12rem] rounded-lg border bg-white px-3 py-2"></trix-editor>
         <p class="text-xs text-slate-500 mt-1">
           Wordt bovenaan de publieke aanmeldpagina getoond. Opmaak wordt
           server-side opgeschoond — alleen veilige tags blijven behouden.
@@ -109,21 +109,4 @@
 {# Trix WYSIWYG for the registration intro (CDN, like iconify elsewhere). #}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.css">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.umd.min.js"></script>
-{# Scoped: Trix has no intrinsic width/height cap, which overflowed the
-   card; arbitrary Tailwind classes (min-h-[…]) aren't in the prebuilt CSS. #}
-<style>
-  #reg-settings trix-toolbar,
-  #reg-settings trix-editor { box-sizing: border-box; max-width: 100%; }
-  #reg-settings trix-toolbar .trix-button-row { flex-wrap: wrap; }
-  #reg-settings trix-editor {
-    display: block;
-    width: 100%;
-    min-height: 12rem;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-  }
-  #reg-settings textarea { max-width: 100%; box-sizing: border-box; }
-</style>
 {% endblock %}
