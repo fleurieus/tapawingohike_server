@@ -1,0 +1,15 @@
+# Shell scripts must stay LF: they're executed in Linux containers
+# (entrypoint.sh, scripts/*.sh). A Windows clone with autocrlf=true would
+# otherwise add CR characters and break Docker exec.
+*.sh text eol=lf
+
+# Mark common binary asset/data files so Git doesn't diff or attempt
+# end-of-line normalisation on them.
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.webp binary
+*.dump binary
+*.sqlite3 binary
