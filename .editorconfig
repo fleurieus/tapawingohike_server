@@ -1,0 +1,22 @@
+# https://editorconfig.org — picked up automatically by VS Code, PyCharm,
+# Sublime, etc. Keeps indentation/EOL/encoding consistent across editors.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.py]
+indent_size = 4
+
+[*.{html,js,css,json,yml,yaml,sh,toml}]
+indent_size = 2
+
+[Dockerfile]
+indent_size = 4
+
+[Makefile]
+indent_style = tab
