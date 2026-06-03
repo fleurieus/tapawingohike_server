@@ -9,18 +9,18 @@
   <div class="flex justify-end gap-1">
     <a class="icon-btn" title="Open RouteParts"
        href="{% url 'backoffice:routeparts_builder' route.id %}">
-      <iconify-icon icon="heroicons-outline:map"></iconify-icon>
+      <iconify-icon icon="material-symbols:map-outline"></iconify-icon>
     </a>    
     <a class="icon-btn" title="Bewerken"
        hx-get="{% url 'backoffice:route_edit' route.id %}"
        hx-target="#sidepanel" hx-swap="innerHTML">
-      <iconify-icon icon="heroicons-outline:cog-6-tooth"></iconify-icon>
+      <iconify-icon icon="material-symbols:settings-outline"></iconify-icon>
     </a>
-    <button class="icon-btn text-red-600" title="Verwijderen"
+    <button class="icon-btn text-error" title="Verwijderen"
             hx-delete="{% url 'backoffice:route_delete' route.id %}"
             hx-confirm="Weet je zeker dat je deze route wilt verwijderen?"
             hx-swap="outerHTML">
-      <iconify-icon icon="heroicons-outline:trash"></iconify-icon>
+      <iconify-icon icon="material-symbols:delete-outline"></iconify-icon>
     </button>
   </div>
 </div>

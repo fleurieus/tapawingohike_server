@@ -416,10 +416,12 @@
     const mapId = getMapId();
     const useAdvanced = !!mapId;
 
+    const isDark = document.documentElement.classList.contains("dark");
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 52.1, lng: 5.1 },
       zoom: 7,
       mapTypeControl: false,
+      colorScheme: isDark ? "DARK" : "LIGHT",
       ...(useAdvanced ? { mapId } : {})
     });
 

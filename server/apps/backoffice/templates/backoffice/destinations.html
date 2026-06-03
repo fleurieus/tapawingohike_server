@@ -7,7 +7,7 @@
 <style>
   .panel-enter { opacity: 0; transform: translateX(16px); }
   .panel-enter.htmx-added { opacity: 1; transform: translateX(0); transition: all .18s; }
-  .row-hover:hover { background-color: #f8fafc; }
+  .row-hover:hover { background-color: var(--color-surface-container); }
 </style>
 {% endblock %}
 
@@ -15,33 +15,33 @@
 
 {% block content %}
 <div class="p-4">
-  <div class="flex items-center justify-between mb-3">
-    <h1 class="text-xl font-semibold">Destinations · {% if is_team_mode %}<span class="text-slate-500">{{ team.name }}</span> · {% endif %}{{ rp.name }}</h1>
-    <div class="text-sm text-slate-600">Klik op de kaart om een destination toe te voegen</div>
+  <div class="flex items-start justify-between gap-3 mb-3">
+    <h1 class="text-headline-sm leading-tight">Destinations · {% if is_team_mode %}<span class="text-on-surface-variant">{{ team.name }}</span> · {% endif %}{{ rp.name }}</h1>
+    <div class="hidden md:block text-body-sm text-on-surface-variant shrink-0">Klik op de kaart om een destination toe te voegen</div>
   </div>
 
-  <div class="grid grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
     {# Map #}
-    <div class="col-span-2">
-      <div id="map" class="w-full h-[540px] bg-white rounded shadow-sm"
+    <div class="md:col-span-2">
+      <div id="map" class="w-full h-[320px] md:h-[540px] bg-surface-container-low rounded shadow-elev-1"
       data-map-id="{{ GOOGLE_MAPS_MAP_ID }}"
       data-rp-id="{{ rp.id }}"
       data-base-url="{% if is_team_mode %}/backoffice/teamrouteparts/{{ rp.id }}{% else %}/backoffice/routeparts/{{ rp.id }}{% endif %}"></div>
     </div>
 
     {# Side panel (form) #}
-    <div id="sidepanel" class="col-span-1 panel-enter">
-      <div class="p-4 text-sm text-slate-400 flex flex-col items-center justify-center gap-2 h-32">
-        <iconify-icon icon="heroicons:cursor-arrow-rays" width="24" height="24"></iconify-icon>
-        Klik op de kaart om een destination toe te voegen
+    <div id="sidepanel" class="md:col-span-1 panel-enter">
+      <div class="p-4 text-body-md text-on-surface-variant flex flex-col items-center justify-center gap-2 h-32">
+        <iconify-icon icon="material-symbols:touch-app-outline" width="24" height="24"></iconify-icon>
+        <span class="text-center">Klik op de kaart om een destination toe te voegen</span>
       </div>
     </div>
 
-    {# Table #}
-    <div class="col-span-3">
-      <div class="bg-white rounded shadow-sm">
+    {# Desktop: tabel #}
+    <div class="hidden md:block md:col-span-3">
+      <div class="bg-surface-container-low border border-outline-variant rounded-lg overflow-hidden">
         <table class="w-full">
-          <thead class="text-left text-sm text-slate-600">
+          <thead class="bg-surface-container text-left text-body-md text-on-surface-variant border-b border-outline-variant">
             <tr>
               <th class="p-2">ID</th>
               <th class="p-2">Lat, Lng</th>
@@ -57,11 +57,43 @@
             {% for d in destinations %}
               {% include "backoffice/_destination_row.html" with d=d %}
             {% empty %}
-              <tr><td colspan="7" class="p-4 text-slate-500">Nog geen destinations</td></tr>
+              <tr><td colspan="8" class="p-4 text-on-surface-variant">Nog geen destinations</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+    </div>
+
+    {# Mobile: card-lijst #}
+    <div class="md:hidden -mx-2 space-y-2 pb-4">
+      {% for d in destinations %}
+        <div class="card-elevated p-3">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-title-sm">#{{ d.id }} · {{ d.destination_type }}</div>
+              <div class="text-body-sm text-on-surface-variant tabular-nums">{{ d.lat }}, {{ d.lng }}</div>
+              <div class="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-label-md text-on-surface-variant">
+                <span>R: {{ d.radius }}m</span>
+                {% if d.confirm_by_user %}<span class="text-tertiary">Confirm</span>{% endif %}
+                {% if d.hide_for_user %}<span class="text-tertiary">Hide</span>{% endif %}
+                {% if d.skip_location_check %}<span class="text-tertiary">Skip GPS</span>{% endif %}
+              </div>
+            </div>
+            <div class="flex flex-col gap-1 shrink-0">
+              <button class="dest-edit-btn icon-btn-md3" data-dest-id="{{ d.id }}" title="Bewerken">
+                <iconify-icon icon="material-symbols:edit-outline" width="20" height="20"></iconify-icon>
+              </button>
+              <button class="icon-btn-md3 danger" title="Verwijderen"
+                      hx-post="{% if is_team_mode %}{% url 'backoffice:team_destination_delete' d.teamroutepart_id d.id %}{% else %}{% url 'backoffice:destination_delete' d.routepart_id d.id %}{% endif %}"
+                      hx-confirm="Verwijderen?" hx-target="#row-{{ d.id }}" hx-swap="outerHTML">
+                <iconify-icon icon="material-symbols:delete-outline" width="20" height="20"></iconify-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="card-outlined p-6 text-center text-on-surface-variant">Nog geen destinations</div>
+      {% endfor %}
     </div>
   </div>
 </div>

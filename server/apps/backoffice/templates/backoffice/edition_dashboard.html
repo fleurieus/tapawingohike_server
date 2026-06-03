@@ -4,8 +4,8 @@
 
 {# ── Header ── #}
 <div class="mb-6">
-  <h1 class="text-2xl font-semibold">{{ edition.name }}</h1>
-  <p class="text-sm text-slate-500">
+  <h1 class="text-headline-sm leading-tight">{{ edition.name }}</h1>
+  <p class="text-body-sm text-on-surface-variant">
     {{ edition.event.name }}
     {% if edition.date_start %}
       · {{ edition.date_start|date:"d-m-Y" }}

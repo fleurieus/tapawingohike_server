@@ -16,6 +16,31 @@
     return Number.isFinite(v) ? v : NaN;
   }
 
+  // Touch-detect — op touch zetten we gmpDraggable: false zodat Maps geen
+  // pointer-capture neemt en de DOM click op de marker-content normaal vuurt.
+  const IS_TOUCH = (typeof window !== "undefined") && (
+    ("ontouchstart" in window) ||
+    (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+    (navigator.maxTouchPoints > 0)
+  );
+
+  // ── Advanced vs Classic marker event helpers ──────────────
+  function onMarker(marker, useAdvanced, eventName, handler) {
+    if (useAdvanced) {
+      marker.addEventListener("gmp-" + eventName, handler);
+    } else {
+      marker.addListener(eventName, handler);
+    }
+  }
+  function evLatLng(ev) {
+    const ll = ev?.latLng || ev?.detail?.latLng;
+    if (!ll) return null;
+    const lat = typeof ll.lat === "function" ? ll.lat() : ll.lat;
+    const lng = typeof ll.lng === "function" ? ll.lng() : ll.lng;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
+  }
+
   function getMapEl() {
     return document.getElementById("map");
   }
@@ -114,7 +139,6 @@
     it.radius = out.radius;
     it.confirm_by_user = out.confirm_by_user;
     it.hide_for_user = out.hide_for_user;
-    it.skip_location_check = out.skip_location_check;
     ensureCircle(it, { lat: num(it.lat), lng: num(it.lng) });
   }
 
@@ -164,11 +188,6 @@
             class="h-4 w-4 rounded border-slate-300">
           <span>Hide for user</span>
         </label>
-        <label class="inline-flex items-center gap-2" title="Sla de GPS-radiuscheck over: de app behandelt dit punt direct als bereikt na het vorige routedeel. Combineer met 'Confirm by user' voor een tik-om-door scherm, of laat dat uit om automatisch door te gaan.">
-          <input id="f-skip" type="checkbox" ${it.skip_location_check ? "checked" : ""}
-            class="h-4 w-4 rounded border-slate-300">
-          <span>Skip location check</span>
-        </label>
       </div>
       <div class="flex justify-end gap-2">
         <button id="deleteBtn" class="px-2 py-1 rounded bg-red-600 text-white">Verwijderen</button>
@@ -179,9 +198,8 @@
       const radius = parseInt(wrap.querySelector("#f-radius").value || "0", 10);
       const confirm_by_user = wrap.querySelector("#f-confirm").checked;
       const hide_for_user = wrap.querySelector("#f-hide").checked;
-      const skip_location_check = wrap.querySelector("#f-skip").checked;
       try {
-        await postUpdate(it, { radius, confirm_by_user, hide_for_user, skip_location_check });
+        await postUpdate(it, { radius, confirm_by_user, hide_for_user });
         if (infoWindow) infoWindow.close();
         // update table row
         const row = document.getElementById(`row-${it.id}`);
@@ -224,16 +242,22 @@
     const text = labelText(it, idx);
 
     let marker;
+    let advContent = null;  // marker content (img) — nodig voor click-binding op touch
     if (useAdvanced && google.maps.marker && google.maps.marker.AdvancedMarkerElement) {
       const img = document.createElement("img");
       img.src = pinUrl(text, PIN_COLOR);
       img.width = 48; img.height = 64; img.alt = text;
+      img.style.touchAction = "manipulation";
+      img.style.cursor = "pointer";
+      advContent = img;
 
       marker = new google.maps.marker.AdvancedMarkerElement({
-        map, position: pos, content: img, title: text, gmpDraggable: true,
+        map, position: pos, content: img, title: text,
+        gmpDraggable: !IS_TOUCH, gmpClickable: true,
       });
-      marker.addListener("drag", (ev) => {
-        const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
+      onMarker(marker, true, "drag", (ev) => {
+        const p = evLatLng(ev);
+        if (!p) return;
         const c = circles.get(it.id);
         if (c) c.setCenter(p);
         // live update popup + table
@@ -243,8 +267,9 @@
         const row = document.getElementById(`row-${it.id}`);
         if (row) row.cells[1].textContent = `${p.lat.toFixed(6)}, ${p.lng.toFixed(6)}`;
       });
-      marker.addListener("dragend", async (ev) => {
-        const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
+      onMarker(marker, true, "dragend", async (ev) => {
+        const p = evLatLng(ev);
+        if (!p) return;
         try { await postMove(it, p); } catch (err) { console.error(err); alert("Opslaan mislukt: " + err); }
       });
     } else {
@@ -268,11 +293,26 @@
       });
     }
 
-    marker.addListener("gmp-click", () => {
+    // click → popup. Advanced: directe DOM click op content (mobile-safe).
+    const onClick = () => {
       if (!infoWindow) infoWindow = new google.maps.InfoWindow();
       infoWindow.setContent(buildPopupContent(it));
       infoWindow.open({ map, anchor: marker });
-    });
+    };
+    if (advContent) {
+      let dragged = false;
+      if (!IS_TOUCH) {
+        onMarker(marker, true, "dragstart", () => { dragged = true; });
+        onMarker(marker, true, "dragend",   () => { setTimeout(() => { dragged = false; }, 50); });
+      }
+      advContent.addEventListener("click", (e) => {
+        if (dragged) return;
+        e.stopPropagation();
+        onClick();
+      });
+    } else {
+      marker.addListener("click", onClick);
+    }
 
     markers.set(it.id, marker);
     bounds.extend(pos);
@@ -300,9 +340,11 @@
     const mapId = getMapId();
     const useAdvanced = !!mapId;
 
+    const isDark = document.documentElement.classList.contains("dark");
     map = new google.maps.Map(getMapEl(), {
       center: { lat: 52.1, lng: 5.1 }, zoom: 7,
       mapTypeControl: false,
+      colorScheme: isDark ? "DARK" : "LIGHT",
       ...(useAdvanced ? { mapId } : {}),
     });
 

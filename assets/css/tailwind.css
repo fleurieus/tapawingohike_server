@@ -10,6 +10,527 @@
 @source "../../server/templates";
 @source "../../staticfiles";
 
-/* Je eigen kleine utilities kan je gewoon als CSS schrijven */
+/* ────────────────────────────────────────────────
+   Dark mode via class strategy
+   ──────────────────────────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ────────────────────────────────────────────────
+   Material 3 design tokens — TapawingoHike brand palette
+   Brand seeds:
+     Black Forest #003000 → primary
+     Golden Glow  #d9c406 → secondary (accent / containers)
+     Coffee Bean  #694a35 → tertiary
+     Mahogany Red #b32d20 → error
+   ──────────────────────────────────────────────── */
+@theme {
+  /* Font family */
+  --font-sans: "Roboto", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* ── MD3 color tokens (light) ── */
+  --color-primary: #003000;
+  --color-on-primary: #FFFFFF;
+  --color-primary-container: #9DDB8E;
+  --color-on-primary-container: #002107;
+
+  --color-secondary: #6B5C00;
+  --color-on-secondary: #FFFFFF;
+  --color-secondary-container: #F3E59C;
+  --color-on-secondary-container: #211B00;
+
+  --color-tertiary: #75553F;
+  --color-on-tertiary: #FFFFFF;
+  --color-tertiary-container: #FFDDB8;
+  --color-on-tertiary-container: #2A1700;
+
+  --color-error: #B32D20;
+  --color-on-error: #FFFFFF;
+  --color-error-container: #FFDAD4;
+  --color-on-error-container: #410100;
+
+  --color-surface: #FCFBF6;
+  --color-on-surface: #1B1C18;
+  --color-surface-variant: #E4E3D6;
+  --color-on-surface-variant: #46483D;
+  --color-surface-dim: #DDDCD0;
+  --color-surface-bright: #FCFBF6;
+
+  --color-surface-container-lowest: #FFFFFF;
+  --color-surface-container-low: #F6F4EA;
+  --color-surface-container: #F0EDDF;
+  --color-surface-container-high: #EAE7D5;
+  --color-surface-container-highest: #E4E1CB;
+
+  --color-outline: #76786A;
+  --color-outline-variant: #C7C7B7;
+
+  --color-inverse-surface: #2F302A;
+  --color-inverse-on-surface: #F2F1E5;
+  --color-inverse-primary: #82DE7B;
+
+  --color-scrim: #000000;
+  --color-shadow: #000000;
+
+  /* Topbar — brand-dark in light, dark-elevated in dark */
+  --color-topbar: #003000;
+  --color-on-topbar: #FFFFFF;
+
+  /* ── Shape (corner radius) — minder rond dan MD3 defaults ── */
+  --radius-none: 0;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-full: 9999px;
+
+  /* ── MD3 elevation (box-shadow scale 1..5) ── */
+  --shadow-elev-1: 0px 1px 2px 0px rgba(0,0,0,0.30), 0px 1px 3px 1px rgba(0,0,0,0.15);
+  --shadow-elev-2: 0px 1px 2px 0px rgba(0,0,0,0.30), 0px 2px 6px 2px rgba(0,0,0,0.15);
+  --shadow-elev-3: 0px 4px 8px 3px rgba(0,0,0,0.15), 0px 1px 3px 0px rgba(0,0,0,0.30);
+  --shadow-elev-4: 0px 6px 10px 4px rgba(0,0,0,0.15), 0px 2px 3px 0px rgba(0,0,0,0.30);
+  --shadow-elev-5: 0px 8px 12px 6px rgba(0,0,0,0.15), 0px 4px 4px 0px rgba(0,0,0,0.30);
+}
+
+/* ── Dark theme color overrides ── */
+@layer base {
+  .dark {
+    --color-primary: #82DE7B;
+    --color-on-primary: #003908;
+    --color-primary-container: #064E16;
+    --color-on-primary-container: #9DDB8E;
+
+    --color-secondary: #DDC848;
+    --color-on-secondary: #383000;
+    --color-secondary-container: #514600;
+    --color-on-secondary-container: #F3E59C;
+
+    --color-tertiary: #E6BF95;
+    --color-on-tertiary: #422B14;
+    --color-tertiary-container: #5C4127;
+    --color-on-tertiary-container: #FFDDB8;
+
+    --color-error: #FFB4AB;
+    --color-on-error: #690005;
+    --color-error-container: #93000A;
+    --color-on-error-container: #FFDAD4;
+
+    --color-surface: #121410;
+    --color-on-surface: #E2E2D6;
+    --color-surface-variant: #46483D;
+    --color-on-surface-variant: #C7C7B7;
+    --color-surface-dim: #121410;
+    --color-surface-bright: #383934;
+
+    --color-surface-container-lowest: #0D0F0B;
+    --color-surface-container-low: #1A1C17;
+    --color-surface-container: #1E201B;
+    --color-surface-container-high: #292B25;
+    --color-surface-container-highest: #343630;
+
+    --color-outline: #909383;
+    --color-outline-variant: #46483D;
+
+    --color-inverse-surface: #E2E2D6;
+    --color-inverse-on-surface: #2F302A;
+    --color-inverse-primary: #2E6B3F;
+
+    /* Topbar in dark: subtiele elevated surface i.p.v. branding-groen */
+    --color-topbar: #343630;
+    --color-on-topbar: #E2E2D6;
+  }
+
+  html, body {
+    background-color: var(--color-surface);
+    color: var(--color-on-surface);
+    font-family: var(--font-sans);
+  }
+
+  /* Voorkom horizontal scroll wanneer een kind per ongeluk over de viewport heen rendert
+     (lange URLs, code blocks, drawers in transit). */
+  html, body {
+    overflow-x: hidden;
+  }
+
+  /* Default border-color → outline-variant (Tailwind v4 default is currentColor).
+     Expliciete border-X classes blijven werken via specificity. */
+  *, ::before, ::after {
+    border-color: var(--color-outline-variant);
+  }
+
+  /* Adapt form inputs to MD3 surfaces */
+  input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+  input[type="search"], input[type="url"], input[type="tel"], input[type="date"],
+  input[type="datetime-local"], input[type="time"], textarea, select {
+    background-color: var(--color-surface-container-low);
+    color: var(--color-on-surface);
+    border-color: var(--color-outline);
+  }
+  input::placeholder, textarea::placeholder {
+    color: var(--color-on-surface-variant);
+    opacity: 0.7;
+  }
+}
+
+/* ────────────────────────────────────────────────
+   MD3 type-scale utilities
+   ──────────────────────────────────────────────── */
+@utility text-display-lg { font-size: 57px; line-height: 64px; letter-spacing: -0.25px; font-weight: 400; }
+@utility text-display-md { font-size: 45px; line-height: 52px; letter-spacing: 0; font-weight: 400; }
+@utility text-display-sm { font-size: 36px; line-height: 44px; letter-spacing: 0; font-weight: 400; }
+@utility text-headline-lg { font-size: 32px; line-height: 40px; letter-spacing: 0; font-weight: 400; }
+@utility text-headline-md { font-size: 28px; line-height: 36px; letter-spacing: 0; font-weight: 400; }
+@utility text-headline-sm { font-size: 24px; line-height: 32px; letter-spacing: 0; font-weight: 400; }
+@utility text-title-lg { font-size: 22px; line-height: 28px; letter-spacing: 0; font-weight: 500; }
+@utility text-title-md { font-size: 16px; line-height: 24px; letter-spacing: 0.15px; font-weight: 500; }
+@utility text-title-sm { font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500; }
+@utility text-body-lg { font-size: 16px; line-height: 24px; letter-spacing: 0.5px; font-weight: 400; }
+@utility text-body-md { font-size: 14px; line-height: 20px; letter-spacing: 0.25px; font-weight: 400; }
+@utility text-body-sm { font-size: 12px; line-height: 16px; letter-spacing: 0.4px; font-weight: 400; }
+@utility text-label-lg { font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500; }
+@utility text-label-md { font-size: 12px; line-height: 16px; letter-spacing: 0.5px; font-weight: 500; }
+@utility text-label-sm { font-size: 11px; line-height: 16px; letter-spacing: 0.5px; font-weight: 500; }
+
+/* ────────────────────────────────────────────────
+   MD3 component patterns
+   ──────────────────────────────────────────────── */
+@layer components {
+  /* Buttons */
+  .btn-filled {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 2.5rem; padding: 0 1.5rem; border-radius: 9999px;
+    background-color: var(--color-primary); color: var(--color-on-primary);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: box-shadow 0.15s, filter 0.15s;
+  }
+  .btn-filled:hover { box-shadow: var(--shadow-elev-1); filter: brightness(1.08); }
+  .btn-filled:active { box-shadow: none; filter: brightness(0.95); }
+  .btn-filled:disabled { opacity: 0.4; pointer-events: none; }
+
+  .btn-tonal {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 2.5rem; padding: 0 1.5rem; border-radius: 9999px;
+    background-color: var(--color-secondary-container); color: var(--color-on-secondary-container);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: filter 0.15s;
+  }
+  .btn-tonal:hover { filter: brightness(0.96); }
+  .btn-tonal:disabled { opacity: 0.4; pointer-events: none; }
+
+  .btn-outlined {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 2.5rem; padding: 0 1.5rem; border-radius: 9999px;
+    border: 1px solid var(--color-outline);
+    background-color: transparent; color: var(--color-primary);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: background-color 0.15s;
+  }
+  .btn-outlined:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+  .btn-outlined:disabled { opacity: 0.4; pointer-events: none; }
+
+  .btn-text {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 2.5rem; padding: 0 0.75rem; border-radius: 9999px;
+    color: var(--color-primary);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: background-color 0.15s;
+  }
+  .btn-text:hover {
+    background-color: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  }
+  .btn-text:disabled { opacity: 0.4; pointer-events: none; }
+
+  .btn-danger {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 2.5rem; padding: 0 1.5rem; border-radius: 9999px;
+    background-color: var(--color-error); color: var(--color-on-error);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: box-shadow 0.15s, filter 0.15s;
+  }
+  .btn-danger:hover { box-shadow: var(--shadow-elev-1); filter: brightness(1.08); }
+
+  /* MD3 icon button */
+  .icon-btn-md3 {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 2.5rem; height: 2.5rem; border-radius: 9999px;
+    color: var(--color-on-surface-variant);
+    background-color: transparent; border: 0;
+    transition: background-color 0.15s, color 0.15s;
+    cursor: pointer;
+  }
+  .icon-btn-md3:hover {
+    background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+    color: var(--color-on-surface);
+  }
+  .icon-btn-md3:active {
+    background-color: color-mix(in srgb, var(--color-on-surface) 12%, transparent);
+  }
+  .icon-btn-md3.danger { color: var(--color-error); }
+  .icon-btn-md3.danger:hover {
+    background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
+    color: var(--color-error);
+  }
+
+  /* ── Topbar-scoped overrides ──
+     Op de topbar staat een donkere achtergrond. Knoppen en links
+     moeten daar witte (on-topbar) kleuren krijgen i.p.v. on-surface. */
+  .topbar .icon-btn-md3 {
+    color: var(--color-on-topbar);
+  }
+  .topbar .icon-btn-md3:hover {
+    background-color: color-mix(in srgb, var(--color-on-topbar) 12%, transparent);
+    color: var(--color-on-topbar);
+  }
+  .topbar .icon-btn-md3:active {
+    background-color: color-mix(in srgb, var(--color-on-topbar) 16%, transparent);
+  }
+  .topbar .btn-text {
+    color: var(--color-on-topbar);
+  }
+  .topbar .btn-text:hover {
+    background-color: color-mix(in srgb, var(--color-on-topbar) 10%, transparent);
+  }
+
+  /* Floating Action Button (FAB) */
+  .fab {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 30;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 3.5rem; height: 3.5rem; border-radius: var(--radius-xl);
+    background-color: var(--color-primary-container); color: var(--color-on-primary-container);
+    box-shadow: var(--shadow-elev-3); border: 0; cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .fab:hover { box-shadow: var(--shadow-elev-4); }
+  .fab:active { box-shadow: var(--shadow-elev-2); }
+
+  .fab-extended {
+    position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 30;
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+    height: 3.5rem; padding: 0 1rem; border-radius: var(--radius-xl);
+    background-color: var(--color-primary-container); color: var(--color-on-primary-container);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    box-shadow: var(--shadow-elev-3); border: 0; cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .fab-extended:hover { box-shadow: var(--shadow-elev-4); }
+  .fab-extended:active { box-shadow: var(--shadow-elev-2); }
+
+  /* Cards */
+  .card-elevated {
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-container-low);
+    box-shadow: var(--shadow-elev-1);
+    transition: box-shadow 0.15s;
+  }
+  .card-elevated:hover { box-shadow: var(--shadow-elev-2); }
+  .card-filled {
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface-container-highest);
+  }
+  .card-outlined {
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-outline-variant);
+  }
+
+  /* MD3 list items (used in drawer + other lists) */
+  .list-item-md3 {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.625rem 1rem; border-radius: 9999px;
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    color: var(--color-on-surface-variant);
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .list-item-md3:hover {
+    background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+    color: var(--color-on-surface);
+  }
+  .list-item-md3.is-active {
+    background-color: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+  }
+  .list-item-md3.is-active:hover {
+    background-color: var(--color-secondary-container);
+    filter: brightness(0.96);
+  }
+  .list-item-md3.is-danger { color: var(--color-error); }
+  .list-item-md3.is-danger:hover {
+    background-color: color-mix(in srgb, var(--color-error) 8%, transparent);
+    color: var(--color-error);
+  }
+
+  /* Section header inside drawer/list */
+  .list-section-label {
+    padding: 0.5rem 1rem 0.25rem;
+    font-size: 11px; line-height: 16px; letter-spacing: 0.5px; font-weight: 500;
+    text-transform: uppercase;
+    color: var(--color-on-surface-variant);
+  }
+
+  /* Filter chip */
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.375rem;
+    height: 2rem; padding: 0 0.75rem; border-radius: var(--radius-sm);
+    border: 1px solid var(--color-outline-variant);
+    background-color: transparent; color: var(--color-on-surface-variant);
+    font-size: 14px; line-height: 20px; letter-spacing: 0.1px; font-weight: 500;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    cursor: pointer;
+  }
+  .chip:hover {
+    background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+  }
+  .chip.is-selected {
+    background-color: var(--color-secondary-container);
+    color: var(--color-on-secondary-container);
+    border-color: transparent;
+  }
+
+  /* MD3 outlined text field — simplified, used in forms */
+  .field {
+    display: flex; flex-direction: column; gap: 0.25rem;
+  }
+  .field-label {
+    font-size: 12px; line-height: 16px; letter-spacing: 0.5px; font-weight: 500;
+    color: var(--color-on-surface-variant);
+  }
+  .field-input {
+    width: 100%; padding: 0.75rem 1rem;
+    background-color: transparent;
+    border: 1px solid var(--color-outline);
+    border-radius: var(--radius-xs);
+    color: var(--color-on-surface);
+    font-size: 16px; line-height: 24px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  /* Snackbar */
+  .snackbar {
+    position: fixed; left: 50%; bottom: 1.5rem; transform: translateX(-50%) translateY(8rem);
+    min-width: 18rem; max-width: 90vw;
+    padding: 0.875rem 1rem; border-radius: var(--radius-xs);
+    background-color: var(--color-inverse-surface);
+    color: var(--color-inverse-on-surface);
+    font-size: 14px; line-height: 20px;
+    box-shadow: var(--shadow-elev-3);
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .snackbar.is-visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .snackbar.is-error {
+    background-color: var(--color-error-container);
+    color: var(--color-on-error-container);
+  }
+  .snackbar-action {
+    margin-left: auto;
+    background: transparent; border: 0;
+    color: var(--color-inverse-primary);
+    font-weight: 500; cursor: pointer;
+    padding: 0.25rem 0.5rem; border-radius: 9999px;
+  }
+  .snackbar.is-error .snackbar-action {
+    color: var(--color-on-error-container);
+  }
+  .snackbar-action:hover {
+    background-color: color-mix(in srgb, currentColor 12%, transparent);
+  }
+}
+
+/* ── Backwards-compat: existing icon-btn class wordt later vervangen ── */
 .icon-btn { background: transparent; border: 0; padding: .25rem; border-radius: .5rem; line-height: 1; }
-.icon-btn:hover { color: rgb(15 23 42); } /* slate-900 */
+.icon-btn:hover { color: var(--color-on-surface); }
+
+/* ────────────────────────────────────────────────
+   Routeparts/Teamrouteparts editor — mobile patterns
+   - Tab-pane switching via [data-active-view] op de container
+   - Sidepanel als bottom-sheet op < md (modal-achtig, slide-up)
+   ──────────────────────────────────────────────── */
+@media (max-width: 767.98px) {
+  .editor-grid[data-active-view="map"]  [data-pane="list"] { display: none; }
+  .editor-grid[data-active-view="list"] [data-pane="map"]  { display: none; }
+
+  /* Bottom-sheet alleen wanneer expliciet aangevraagd (--sheet variant).
+     Routeparts gebruikt het voor dynamische edit-forms; teamrouteparts heeft
+     statische acties die gewoon in de lijst-pane stacken. */
+  .editor-grid--sheet #sidepanel {
+    position: fixed;
+    inset: auto 0 0 0;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(110%);
+    transition: transform 0.25s ease;
+    z-index: 40;
+    border-top-left-radius: var(--radius-xl);
+    border-top-right-radius: var(--radius-xl);
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  }
+  .editor-grid--sheet #sidepanel.is-open {
+    transform: translateY(0);
+  }
+}
+
+.editor-scrim {
+  position: fixed;
+  inset: 0;
+  background: var(--color-scrim);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+  z-index: 39;
+}
+.editor-scrim.is-open {
+  opacity: 0.4;
+  pointer-events: auto;
+}
+@media (min-width: 768px) {
+  .editor-scrim { display: none; }
+}
+
+/* MD3 segmented button (tab control) */
+.segmented {
+  display: inline-flex;
+  background-color: var(--color-surface-container-high);
+  border-radius: 9999px;
+  padding: 4px;
+  gap: 4px;
+}
+.segmented-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--color-on-surface-variant);
+  font-size: 14px;
+  line-height: 20px;
+  letter-spacing: 0.1px;
+  font-weight: 500;
+  border: 0;
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+}
+.segmented-btn:hover {
+  background-color: color-mix(in srgb, var(--color-on-surface) 8%, transparent);
+}
+.segmented-btn.is-active {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+

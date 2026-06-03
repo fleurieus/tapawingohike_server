@@ -3,105 +3,105 @@
 {% block content %}
 <div class="flex items-center justify-between mb-4">
   <div>
-    <h1 class="text-2xl font-semibold">Editie-instellingen</h1>
-    <p class="text-sm text-slate-600">{{ edition.name }} · {{ edition.event.name }}</p>
+    <h1 class="text-headline-sm leading-tight">Editie-instellingen</h1>
+    <p class="text-body-sm text-on-surface-variant">{{ edition.name }} · {{ edition.event.name }}</p>
   </div>
 </div>
 
-<div class="bg-white border rounded-2xl p-5 max-w-4xl">
+<div class="card-elevated p-5 max-w-4xl">
   <form id="reg-settings" method="post" class="space-y-8">
     {% csrf_token %}
     {{ form.non_field_errors }}
 
     {# ── Aanmeldpagina ── #}
     <fieldset class="space-y-4">
-      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">Aanmeldpagina</legend>
+      <legend class="text-label-md font-semibold text-on-surface uppercase tracking-wide mb-1">Aanmeldpagina</legend>
 
       <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.registration_mode.id_for_label }}">
+        <label class="block text-label-lg text-on-surface mb-1" for="{{ form.registration_mode.id_for_label }}">
           Registratiemodus
         </label>
         {{ form.registration_mode }}
         {% if form.registration_mode.errors %}
-          <p class="text-sm text-red-600 mt-1">{{ form.registration_mode.errors|striptags }}</p>
+          <p class="text-body-sm text-error mt-1">{{ form.registration_mode.errors|striptags }}</p>
         {% endif %}
       </div>
 
       <div>
-        <label class="block text-sm font-medium mb-1" for="trix-registration-intro">
+        <label class="block text-label-lg text-on-surface mb-1" for="trix-registration-intro">
           Uitleg op de aanmeldpagina
         </label>
         {{ form.registration_intro }}
         <trix-editor id="trix-registration-intro"
                      input="{{ form.registration_intro.id_for_label }}"
-                     class="trix-content prose prose-sm prose-slate max-w-none block w-full min-h-[12rem] rounded-lg border bg-white px-3 py-2"></trix-editor>
-        <p class="text-xs text-slate-500 mt-1">
+                     class="trix-content prose prose-sm prose-slate max-w-none block w-full min-h-[8rem] max-h-[20rem] overflow-y-auto rounded-lg border border-outline bg-surface-container-low text-on-surface px-3 py-2"></trix-editor>
+        <p class="text-label-md text-on-surface-variant mt-1">
           Wordt bovenaan de publieke aanmeldpagina getoond. Opmaak wordt
           server-side opgeschoond — alleen veilige tags blijven behouden.
         </p>
         {% if form.registration_intro.errors %}
-          <p class="text-sm text-red-600 mt-1">{{ form.registration_intro.errors|striptags }}</p>
+          <p class="text-body-sm text-error mt-1">{{ form.registration_intro.errors|striptags }}</p>
         {% endif %}
       </div>
 
       {% if edition.registration_mode != "none" %}
         <div>
-          <span class="block text-sm font-medium mb-1">Registratielink</span>
-          <div class="bg-slate-50 rounded-lg p-3 text-sm flex items-center gap-2">
-            <code class="flex-1 min-w-0 text-xs bg-white px-2 py-1 rounded border truncate" id="reg-url">{{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.slug %}</code>
+          <span class="block text-label-lg text-on-surface mb-1">Registratielink</span>
+          <div class="bg-surface-container rounded-lg p-3 flex items-center gap-2">
+            <code class="flex-1 min-w-0 text-label-md bg-surface-container-low text-on-surface px-2 py-1 rounded border border-outline-variant truncate" id="reg-url">{{ request.scheme }}://{{ request.get_host }}{% url 'register' edition.slug %}</code>
             <button type="button" title="Link kopiëren"
-                    onclick="navigator.clipboard.writeText(document.getElementById('reg-url').textContent);this.querySelector('iconify-icon').setAttribute('icon','heroicons:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','heroicons:clipboard-document'),1000)"
-                    class="text-slate-400 hover:text-slate-600 shrink-0">
-              <iconify-icon icon="heroicons:clipboard-document" width="16" height="16"></iconify-icon>
+                    onclick="navigator.clipboard.writeText(document.getElementById('reg-url').textContent);this.querySelector('iconify-icon').setAttribute('icon','material-symbols:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','material-symbols:content-copy-outline'),1000)"
+                    class="text-on-surface-variant hover:text-on-surface shrink-0">
+              <iconify-icon icon="material-symbols:content-copy-outline" width="16" height="16"></iconify-icon>
             </button>
             <a href="{% url 'register' edition.slug %}" target="_blank" title="Openen"
-               class="text-slate-400 hover:text-slate-600 shrink-0">
-              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+               class="text-on-surface-variant hover:text-on-surface shrink-0">
+              <iconify-icon icon="material-symbols:open-in-new" width="16" height="16"></iconify-icon>
             </a>
           </div>
         </div>
       {% endif %}
     </fieldset>
 
-    <hr class="border-slate-200">
+    <hr class="border-outline-variant">
 
     {# ── E-mail ── #}
     <fieldset class="space-y-3">
-      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">E-mail</legend>
+      <legend class="text-label-md font-semibold text-on-surface uppercase tracking-wide mb-1">E-mail</legend>
 
       <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.registration_confirmation_text.id_for_label }}">
+        <label class="block text-label-lg text-on-surface mb-1" for="{{ form.registration_confirmation_text.id_for_label }}">
           Bevestigingstekst e-mail (uitgebreide registratie)
         </label>
         {{ form.registration_confirmation_text }}
-        <p class="text-xs text-slate-500 mt-1">
+        <p class="text-label-md text-on-surface-variant mt-1">
           Laat leeg voor de standaard bevestigingstekst. Alleen gebruikt bij uitgebreide registratie.
         </p>
         {% if form.registration_confirmation_text.errors %}
-          <p class="text-sm text-red-600 mt-1">{{ form.registration_confirmation_text.errors|striptags }}</p>
+          <p class="text-body-sm text-error mt-1">{{ form.registration_confirmation_text.errors|striptags }}</p>
         {% endif %}
       </div>
     </fieldset>
 
-    <hr class="border-slate-200">
+    <hr class="border-outline-variant">
 
     {# ── Berichten ── #}
     <fieldset class="space-y-3">
-      <legend class="text-sm font-semibold text-slate-900 uppercase tracking-wide mb-1">Berichten</legend>
+      <legend class="text-label-md font-semibold text-on-surface uppercase tracking-wide mb-1">Berichten</legend>
 
       <label class="flex items-center gap-3 cursor-pointer">
         {{ form.messaging_enabled }}
-        <span class="text-sm">Berichten inschakelen tussen organisatie en teams</span>
+        <span class="text-body-md">Berichten inschakelen tussen organisatie en teams</span>
       </label>
-      <p class="text-xs text-slate-500 ml-8">
+      <p class="text-label-md text-on-surface-variant ml-8">
         Als ingeschakeld kunnen teams berichten sturen naar de organisatie en vice versa vanuit de app en backoffice.
       </p>
     </fieldset>
 
-    <div class="flex gap-3 pt-2">
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-outline-variant">
       <a href="{% url 'backoffice:edition_dashboard' edition.id %}"
-         class="px-4 py-2 rounded-lg border">Annuleren</a>
-      <button type="submit" class="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">Opslaan</button>
+         class="btn-text w-full sm:w-auto">Annuleren</a>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 </div>
@@ -109,4 +109,12 @@
 {# Trix WYSIWYG for the registration intro (CDN, like iconify elsewhere). #}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.css">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/trix@2/dist/trix.umd.min.js"></script>
+
+{# Override Trix toolbar: wrap knoppen op smalle schermen #}
+<style>
+  trix-toolbar .trix-button-row {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+</style>
 {% endblock %}

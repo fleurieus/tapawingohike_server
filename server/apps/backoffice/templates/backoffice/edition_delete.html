@@ -2,13 +2,13 @@
 {% block title %}Editie verwijderen — {{ edition.name }}{% endblock %}
 {% block content %}
 <div class="max-w-lg">
-<h1 class="text-2xl font-semibold mb-2">Editie verwijderen</h1>
-<p class="text-slate-600 mb-6">Je staat op het punt de editie <strong>{{ edition.name }}</strong> ({{ edition.event.name }}) te verwijderen.</p>
+<h1 class="text-headline-sm leading-tight mb-2">Editie verwijderen</h1>
+<p class="text-on-surface-variant mb-6">Je staat op het punt de editie <strong>{{ edition.name }}</strong> ({{ edition.event.name }}) te verwijderen.</p>
 
-<div class="bg-red-50 border border-red-200 rounded-2xl p-5 mb-6">
-  <div class="flex gap-3 mb-3">
-    <iconify-icon icon="heroicons:exclamation-triangle" width="20" height="20" class="text-red-600 shrink-0 mt-0.5"></iconify-icon>
-    <div class="text-sm text-red-800">
+<div class="bg-error-container/30 border border-error-container rounded-lg p-5 mb-6">
+  <div class="flex gap-3">
+    <iconify-icon icon="material-symbols:warning-outline" width="20" height="20" class="text-error shrink-0 mt-0.5"></iconify-icon>
+    <div class="text-body-sm text-on-error-container">
       <p class="font-semibold mb-1">Dit verwijdert ook alle bijbehorende data:</p>
       <ul class="list-disc list-inside space-y-0.5">
         <li>Alle routes, routeparts en destinations</li>
@@ -20,23 +20,23 @@
   </div>
 </div>
 
-<div class="bg-white border rounded-2xl p-5">
+<div class="card-elevated p-5">
   <form method="post" class="space-y-4">
     {% csrf_token %}
     <div>
-      <label class="block text-sm font-medium mb-1">
+      <label class="block text-label-lg text-on-surface mb-1">
         Typ de naam van de editie ter bevestiging: <strong>{{ edition.name }}</strong>
       </label>
       <input type="text" name="confirm_name" autocomplete="off"
-             class="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-400"
+             class="w-full rounded-lg border border-outline px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-error/60 focus:border-error"
              placeholder="{{ edition.name }}">
       {% if error %}
-        <p class="text-sm text-red-600 mt-1">{{ error }}</p>
+        <p class="text-body-sm text-error mt-1">{{ error }}</p>
       {% endif %}
     </div>
-    <div class="flex gap-3 pt-2">
-      <a href="{% url 'backoffice:edition_dashboard' edition.id %}" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Annuleren</a>
-      <button class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Definitief verwijderen</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-outline-variant">
+      <a href="{% url 'backoffice:edition_dashboard' edition.id %}" class="btn-text w-full sm:w-auto">Annuleren</a>
+      <button type="submit" class="btn-danger w-full sm:w-auto">Definitief verwijderen</button>
     </div>
   </form>
 </div>

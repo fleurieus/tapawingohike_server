@@ -17,6 +17,37 @@
         return Number.isFinite(v) ? v : NaN;
     }
 
+    // Touch-device detection — Maps' AdvancedMarkerElement met gmpDraggable: true
+    // 'pakt' op touch devices de pointer-events voor drag-detectie waardoor click
+    // niet meer dispatch't. Op touch dus gmpDraggable uit; sleep-edits gebeuren
+    // toch op desktop.
+    const IS_TOUCH = (typeof window !== "undefined") && (
+        ("ontouchstart" in window) ||
+        (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+        (navigator.maxTouchPoints > 0)
+    );
+
+    // ── Advanced vs Classic marker event helpers ──────────────
+    // Advanced markers (AdvancedMarkerElement) zijn HTMLElements en luisteren
+    // naar DOM-events met `gmp-` prefix; classic Marker gebruikt nog Maps'
+    // MVCObject events ("click", "drag", "dragend").
+    function onMarker(marker, useAdvanced, eventName, handler) {
+        if (useAdvanced) {
+            marker.addEventListener("gmp-" + eventName, handler);
+        } else {
+            marker.addListener(eventName, handler);
+        }
+    }
+    // Trek lat/lng uit een marker-event ongeacht type.
+    function evLatLng(ev) {
+        const ll = ev?.latLng || ev?.detail?.latLng;
+        if (!ll) return null;
+        const lat = typeof ll.lat === "function" ? ll.lat() : ll.lat;
+        const lng = typeof ll.lng === "function" ? ll.lng() : ll.lng;
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+        return { lat, lng };
+    }
+
     function getMapId() {
         return document.getElementById("map")?.dataset?.mapId || "";
     }
@@ -212,12 +243,6 @@
                     class="h-4 w-4 rounded border-slate-300">
                 <span>Hide for user</span>
             </label>
-
-            <label class="inline-flex items-center gap-2" title="Sla de GPS-radiuscheck over: de app behandelt dit punt direct als bereikt na het vorige routedeel. Combineer met 'Confirm by user' voor een tik-om-door scherm, of laat dat uit om automatisch door te gaan.">
-                <input id="f-skip" type="checkbox" ${it.skip_location_check ? "checked" : ""}
-                    class="h-4 w-4 rounded border-slate-300">
-                <span>Skip location check</span>
-            </label>
             </div>
 
             <div class="flex justify-end gap-2">
@@ -239,13 +264,11 @@
             const radius = parseInt(wrap.querySelector("#f-radius").value || "0", 10);
             const confirm_by_user = wrap.querySelector("#f-confirm").checked;
             const hide_for_user = wrap.querySelector("#f-hide").checked;
-            const skip_location_check = wrap.querySelector("#f-skip").checked;
             try {
                 await postUpdate(it, {
                     radius,
                     confirm_by_user,
-                    hide_for_user,
-                    skip_location_check
+                    hide_for_user
                 });
                 infoWindow && infoWindow.close();
                 clearActivePart();
@@ -480,7 +503,6 @@
         it.radius = out.radius;
         it.confirm_by_user = out.confirm_by_user;
         it.hide_for_user = out.hide_for_user;
-        it.skip_location_check = out.skip_location_check;
         ensureCircle(it, {
             lat: num(it.lat),
             lng: num(it.lng)
@@ -582,10 +604,11 @@
         const col = colorForRoutePart(it.rp_order, it.rp_id);
 
         let markerInstance;
+        let wrap = null;  // advanced marker content; later nodig voor click-binding
         if (useAdvanced && google.maps.marker && google.maps.marker.AdvancedMarkerElement){
             // wrapper met img + (optioneel) badge
             const count = overlapCountFor(it);
-            const wrap = document.createElement("div");
+            wrap = document.createElement("div");
             wrap.style.position = "relative";
             wrap.style.width = "48px";
             wrap.style.height = "64px";
@@ -618,13 +641,21 @@
                 wrap.appendChild(badge);
             }
 
+            // Op touch: drag uitschakelen zodat Maps geen pointer-capture neemt
+            // en de DOM click op de wrap netjes vuurt.
             markerInstance = new google.maps.marker.AdvancedMarkerElement({
-                map, position: pos, content: wrap, title: labelText(it), gmpDraggable: true
+                map, position: pos, content: wrap, title: labelText(it),
+                gmpDraggable: !IS_TOUCH, gmpClickable: true
             });
 
-            // live cirkel-center tijdens slepen
-            markerInstance.addListener("drag", (ev)=>{
-                const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
+            // Maak de wrap tap-friendly: geen 300ms-delay, geen double-tap zoom
+            wrap.style.touchAction = "manipulation";
+            wrap.style.cursor = "pointer";
+
+            // live cirkel-center tijdens slepen (advanced marker → gmp-drag)
+            onMarker(markerInstance, true, "drag", (ev) => {
+                const p = evLatLng(ev);
+                if (!p) return;
                 const c = circles.get(it.id);
                 if (c) c.setCenter(p);
                 // lat/lng in popup bijwerken als die open is
@@ -633,9 +664,10 @@
                 if (latEl && lngEl) { latEl.value = p.lat.toFixed(6); lngEl.value = p.lng.toFixed(6); }
             });
 
-            markerInstance.addListener("dragend", async (ev)=>{
-                const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
-                try { await postMove(it, p); } catch(err){ console.error(err); alert("Opslaan mislukt: "+err); }
+            onMarker(markerInstance, true, "dragend", async (ev) => {
+                const p = evLatLng(ev);
+                if (!p) return;
+                try { await postMove(it, p); } catch(err){ console.error(err); alert("Opslaan mislukt: " + err); }
                 // na move kan overlapcount wijzigen → badges verversen
                 refreshOverlapBadges();
             });
@@ -679,22 +711,35 @@
         }
 
         // klik → mooi popup-formulier
-        markerInstance.addListener("click", () => {
-            // highlight + scroll naar het juiste RoutePart-item
+        const onClick = () => {
             if (window.setActivePart) window.setActivePart(it.rp_id);
             scrollPartIntoView(it.rp_id);
 
-            if(!infoWindow) {
+            if (!infoWindow) {
                 infoWindow = new google.maps.InfoWindow();
-                infoWindow.addListener('closeclick', clearActivePart);
+                infoWindow.addListener("closeclick", clearActivePart);
             }
-            
             infoWindow.setContent(buildPopupContent(it));
-            infoWindow.open({
-                map,
-                anchor: markerInstance
+            infoWindow.open({ map, anchor: markerInstance });
+        };
+
+        if (wrap) {
+            // Advanced markers: bind direct op de wrap zodat browser-default tap-to-click werkt.
+            // Drag-guard alleen relevant op desktop (op touch is gmpDraggable nu false).
+            let dragged = false;
+            if (!IS_TOUCH) {
+                onMarker(markerInstance, true, "dragstart", () => { dragged = true; });
+                onMarker(markerInstance, true, "dragend",   () => { setTimeout(() => { dragged = false; }, 50); });
+            }
+            wrap.addEventListener("click", (e) => {
+                if (dragged) return;
+                e.stopPropagation();
+                onClick();
             });
-        });
+        } else {
+            // Classic markers: Maps' click event werkt prima.
+            markerInstance.addListener("click", onClick);
+        }
 
 
         markers.set(it.id, markerInstance);
@@ -712,6 +757,7 @@
         const mapId = getMapId();
         const useAdvanced = !!mapId;
 
+        const isDark = document.documentElement.classList.contains("dark");
         map = new google.maps.Map(document.getElementById("map"), {
             center: {
                 lat: 52.1,
@@ -719,6 +765,7 @@
             },
             zoom: 7,
             mapTypeControl: false,
+            colorScheme: isDark ? "DARK" : "LIGHT",
             ...(useAdvanced ? {
                 mapId
             } : {})

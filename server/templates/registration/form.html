@@ -10,14 +10,14 @@
     <link href="{% static 'css/tailwind.css' %}" rel="stylesheet">
   {% endcompress %}
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-surface-container text-on-surface min-h-screen">
 
 <main class="min-h-screen grid place-items-center px-4 py-8">
-  <div class="w-full max-w-lg bg-white border rounded-2xl shadow-sm p-6">
+  <div class="w-full max-w-lg bg-surface-container-low border rounded-2xl shadow-sm p-6">
     <h1 class="text-xl font-semibold mb-1">
       {% if is_quick %}Aanmelden{% else %}Inschrijven{% endif %}
     </h1>
-    <p class="text-sm text-slate-600 mb-6">{{ edition.name }} · {{ edition.event.name }}</p>
+    <p class="text-sm text-on-surface-variant mb-6">{{ edition.name }} · {{ edition.event.name }}</p>
 
     {% if edition.registration_intro %}
       <div class="prose prose-sm prose-slate max-w-none mb-6">
@@ -35,12 +35,12 @@
           </label>
           {{ field }}
           {% if field.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>
+            <p class="text-sm text-error mt-1">{{ field.errors|striptags }}</p>
           {% endif %}
         </div>
       {% endfor %}
       <button type="submit"
-              class="w-full rounded-lg bg-green-700 text-white py-2 hover:bg-green-600">
+              class="w-full rounded-lg bg-primary text-on-primary py-2 hover:brightness-110">
         {% if is_quick %}Aanmelden{% else %}Inschrijven{% endif %}
       </button>
     </form>

@@ -5,7 +5,7 @@ from server.apps.dashboard.models import Destination, Edition, Event, Organizati
 from server.apps.dashboard.models import Bundle, Route, RoutePart, File, Destination
 from server.apps.dashboard.constants import FILE_TYPE_IMAGE, FILE_TYPE_AUDIO
 
-INPUT_CLASSES = "w-full rounded-lg border px-3 py-2"
+INPUT_CLASSES = "w-full rounded-lg border border-outline px-3 py-2 text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
 
 # Whitelist for the rich-text registration intro (Trix output). Anything not
 # listed is stripped server-side so the public page can't be XSS'd.
@@ -98,7 +98,7 @@ class UserManagementForm(forms.Form):
     )
     is_active = forms.BooleanField(
         required=False, initial=True,
-        widget=forms.CheckboxInput(attrs={"class": "rounded border-slate-300"}),
+        widget=forms.CheckboxInput(attrs={"class": "rounded border-outline"}),
     )
     password = forms.CharField(
         required=False,
@@ -142,7 +142,7 @@ class EditionRegistrationForm(forms.ModelForm):
                 attrs={"class": "w-full rounded-lg border px-3 py-2", "rows": 5}
             ),
             "messaging_enabled": forms.CheckboxInput(
-                attrs={"class": "rounded border-slate-300 text-slate-900 focus:ring-slate-500"}
+                attrs={"class": "rounded border-outline text-on-surface focus:ring-primary"}
             ),
         }
 

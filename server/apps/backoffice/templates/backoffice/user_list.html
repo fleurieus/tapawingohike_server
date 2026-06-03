@@ -3,17 +3,97 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-4">
-  <h1 class="text-2xl font-semibold leading-tight">Gebruikers</h1>
+  <h1 class="text-headline-sm leading-tight">Gebruikers</h1>
+  {# Desktop: button in header. Mobile: FAB onderaan #}
   <a href="{% url 'backoffice:user_add' %}"
-     class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">
-    <iconify-icon icon="heroicons:plus" width="18" height="18"></iconify-icon>
+     class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-on-primary hover:brightness-110">
+    <iconify-icon icon="material-symbols:add" width="18" height="18"></iconify-icon>
     Nieuwe gebruiker
   </a>
 </div>
 
-<div class="bg-white border rounded-2xl overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-slate-50 border-b">
+{# Mobile: card-lijst #}
+<div class="md:hidden -mx-2 sm:-mx-4 space-y-2 pb-24">
+  {% for u in users %}
+    <div class="card-elevated p-3">
+      <div class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <div class="text-title-md truncate">{{ u.username }}</div>
+            {% if u.is_superuser %}
+              <span class="text-label-sm bg-tertiary-container text-on-tertiary-container px-2 py-0.5 rounded-full">superadmin</span>
+            {% endif %}
+          </div>
+          {% if u.get_full_name %}
+            <div class="text-body-sm text-on-surface truncate">{{ u.get_full_name }}</div>
+          {% endif %}
+          {% if u.email %}
+            <div class="text-body-sm text-on-surface-variant truncate">{{ u.email }}</div>
+          {% endif %}
+          {% if u.profile.organization %}
+            <div class="text-body-sm text-on-surface-variant truncate">
+              <iconify-icon icon="material-symbols:business-outline" width="12" height="12" class="align-text-bottom"></iconify-icon>
+              {{ u.profile.organization.name }}
+            </div>
+          {% endif %}
+        </div>
+        <div class="shrink-0">
+          {% if u.is_active %}
+            <span class="inline-flex items-center gap-1 text-label-md text-primary">
+              <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+              Actief
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 text-label-md text-error">
+              <span class="inline-block w-2 h-2 rounded-full bg-red-400"></span>
+              Inactief
+            </span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="mt-3 pt-3 border-t border-outline-variant flex items-center justify-end gap-1">
+        <a href="{% url 'backoffice:user_edit' u.id %}" title="Bewerken" class="icon-btn-md3" aria-label="Bewerken">
+          <iconify-icon icon="material-symbols:edit-square-outline" width="20" height="20"></iconify-icon>
+        </a>
+        {% if u.pk != request.user.pk %}
+          <form action="{% url 'backoffice:user_deactivate' u.id %}" method="post" class="inline"
+                onsubmit="return confirm('Gebruiker {% if u.is_active %}deactiveren{% else %}activeren{% endif %}?');">
+            {% csrf_token %}
+            <button type="submit" title="{% if u.is_active %}Deactiveren{% else %}Activeren{% endif %}"
+                    class="icon-btn-md3" aria-label="{% if u.is_active %}Deactiveren{% else %}Activeren{% endif %}">
+              <iconify-icon icon="{% if u.is_active %}material-symbols:block{% else %}material-symbols:check-circle-outline{% endif %}" width="20" height="20"></iconify-icon>
+            </button>
+          </form>
+          <button type="button" title="Wachtwoord resetten"
+                  onclick="document.getElementById('pw-modal-mobile-{{ u.id }}').showModal()"
+                  class="icon-btn-md3" aria-label="Wachtwoord resetten">
+            <iconify-icon icon="material-symbols:key-outline" width="20" height="20"></iconify-icon>
+          </button>
+          <dialog id="pw-modal-mobile-{{ u.id }}" class="card-elevated p-6 max-w-sm backdrop:bg-scrim/40">
+            <form action="{% url 'backoffice:user_reset_password' u.id %}" method="post" class="space-y-4">
+              {% csrf_token %}
+              <h3 class="text-title-lg">Wachtwoord resetten</h3>
+              <p class="text-body-md text-on-surface-variant">Nieuw wachtwoord voor <strong>{{ u.username }}</strong>:</p>
+              <input type="password" name="new_password" required class="field-input" placeholder="Nieuw wachtwoord">
+              <div class="flex gap-2 justify-end">
+                <button type="button" onclick="this.closest('dialog').close()" class="btn-text">Annuleren</button>
+                <button type="submit" class="btn-filled">Opslaan</button>
+              </div>
+            </form>
+          </dialog>
+        {% endif %}
+      </div>
+    </div>
+  {% empty %}
+    <div class="card-outlined p-6 text-center text-on-surface-variant">Nog geen gebruikers.</div>
+  {% endfor %}
+</div>
+
+{# Desktop: tabel #}
+<div class="hidden md:block bg-surface-container-low border border-outline-variant rounded-lg overflow-hidden">
+  <table class="w-full text-body-md">
+    <thead class="bg-surface-container border-b border-outline-variant">
       <tr>
         <th class="text-left p-3">Gebruikersnaam</th>
         <th class="text-left p-3">Naam</th>
@@ -25,30 +105,30 @@
     </thead>
     <tbody>
       {% for u in users %}
-        <tr class="border-b last:border-0">
+        <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container/40">
           <td class="p-3 font-medium">
             {{ u.username }}
             {% if u.is_superuser %}
-              <span class="ml-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-700">superadmin</span>
+              <span class="ml-1 inline-flex items-center rounded-full bg-tertiary-container px-2 py-0.5 text-label-sm text-on-tertiary-container">superadmin</span>
             {% endif %}
           </td>
-          <td class="p-3 text-slate-600">{{ u.get_full_name|default:"—" }}</td>
-          <td class="p-3 text-slate-600">{{ u.email|default:"—" }}</td>
-          <td class="p-3 text-slate-600">
+          <td class="p-3 text-on-surface-variant">{{ u.get_full_name|default:"—" }}</td>
+          <td class="p-3 text-on-surface-variant">{{ u.email|default:"—" }}</td>
+          <td class="p-3 text-on-surface-variant">
             {% if u.profile.organization %}
               {{ u.profile.organization.name }}
             {% else %}
-              <span class="text-slate-400">—</span>
+              <span class="text-on-surface-variant">—</span>
             {% endif %}
           </td>
           <td class="p-3">
             {% if u.is_active %}
-              <span class="inline-flex items-center gap-1 text-sm text-green-700">
+              <span class="inline-flex items-center gap-1 text-body-md text-primary">
                 <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
                 Actief
               </span>
             {% else %}
-              <span class="inline-flex items-center gap-1 text-sm text-red-700">
+              <span class="inline-flex items-center gap-1 text-body-md text-error">
                 <span class="inline-block w-2 h-2 rounded-full bg-red-400"></span>
                 Inactief
               </span>
@@ -58,8 +138,8 @@
             <div class="flex items-center gap-1">
               <a href="{% url 'backoffice:user_edit' u.id %}"
                  title="Bewerken"
-                 class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900">
-                <iconify-icon icon="heroicons:pencil-square" width="18" height="18"></iconify-icon>
+                 class="inline-flex items-center justify-center p-1 rounded-lg text-on-surface-variant hover:text-on-surface">
+                <iconify-icon icon="material-symbols:edit-square-outline" width="18" height="18"></iconify-icon>
               </a>
 
               {% if u.pk != request.user.pk %}
@@ -67,30 +147,26 @@
                     onsubmit="return confirm('Gebruiker {% if u.is_active %}deactiveren{% else %}activeren{% endif %}?');">
                 {% csrf_token %}
                 <button type="submit" title="{% if u.is_active %}Deactiveren{% else %}Activeren{% endif %}"
-                        class="inline-flex items-center justify-center p-1 rounded-lg {% if u.is_active %}text-amber-600 hover:text-amber-700{% else %}text-green-600 hover:text-green-700{% endif %}">
-                  <iconify-icon icon="{% if u.is_active %}heroicons:no-symbol{% else %}heroicons:check-circle{% endif %}" width="18" height="18"></iconify-icon>
+                        class="inline-flex items-center justify-center p-1 rounded-lg {% if u.is_active %}text-tertiary hover:brightness-110{% else %}text-primary hover:brightness-110{% endif %}">
+                  <iconify-icon icon="{% if u.is_active %}material-symbols:block{% else %}material-symbols:check-circle-outline{% endif %}" width="18" height="18"></iconify-icon>
                 </button>
               </form>
 
               <button type="button" title="Wachtwoord resetten"
                       onclick="document.getElementById('pw-modal-{{ u.id }}').showModal()"
-                      class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900">
-                <iconify-icon icon="heroicons:key" width="18" height="18"></iconify-icon>
+                      class="inline-flex items-center justify-center p-1 rounded-lg text-on-surface-variant hover:text-on-surface">
+                <iconify-icon icon="material-symbols:key-outline" width="18" height="18"></iconify-icon>
               </button>
 
-              <dialog id="pw-modal-{{ u.id }}" class="rounded-2xl border p-6 max-w-sm backdrop:bg-black/30">
+              <dialog id="pw-modal-{{ u.id }}" class="card-elevated p-6 max-w-sm backdrop:bg-scrim/40">
                 <form action="{% url 'backoffice:user_reset_password' u.id %}" method="post" class="space-y-4">
                   {% csrf_token %}
-                  <h3 class="text-lg font-semibold">Wachtwoord resetten</h3>
-                  <p class="text-sm text-slate-600">Nieuw wachtwoord voor <strong>{{ u.username }}</strong>:</p>
-                  <input type="password" name="new_password" required
-                         class="w-full rounded-lg border px-3 py-2"
-                         placeholder="Nieuw wachtwoord">
-                  <div class="flex gap-3 justify-end">
-                    <button type="button" onclick="this.closest('dialog').close()"
-                            class="px-4 py-2 rounded-lg border">Annuleren</button>
-                    <button type="submit"
-                            class="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">Opslaan</button>
+                  <h3 class="text-title-lg">Wachtwoord resetten</h3>
+                  <p class="text-body-md text-on-surface-variant">Nieuw wachtwoord voor <strong>{{ u.username }}</strong>:</p>
+                  <input type="password" name="new_password" required class="field-input" placeholder="Nieuw wachtwoord">
+                  <div class="flex gap-2 justify-end">
+                    <button type="button" onclick="this.closest('dialog').close()" class="btn-text">Annuleren</button>
+                    <button type="submit" class="btn-filled">Opslaan</button>
                   </div>
                 </form>
               </dialog>
@@ -100,10 +176,18 @@
         </tr>
       {% empty %}
         <tr>
-          <td class="p-3 text-slate-500" colspan="6">Nog geen gebruikers.</td>
+          <td class="p-3 text-on-surface-variant" colspan="6">Nog geen gebruikers.</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
+
+{# FAB: alleen mobiel #}
+<a href="{% url 'backoffice:user_add' %}"
+   class="fab-extended md:hidden"
+   aria-label="Nieuwe gebruiker">
+  <iconify-icon icon="material-symbols:add" width="22" height="22"></iconify-icon>
+  Nieuwe gebruiker
+</a>
 {% endblock %}

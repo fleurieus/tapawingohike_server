@@ -16,39 +16,48 @@ from .constants import (
     DESTINATION_TYPE_CHOICE,
 )
 
+def _haversine_km(lat1, lng1, lat2, lng2):
+    """Straight-line distance in km between two lat/lng points."""
+    import math
+    R = 6371.0  # Earth radius in km
+    phi1, phi2 = math.radians(float(lat1)), math.radians(float(lat2))
+    dphi = math.radians(float(lat2) - float(lat1))
+    dlambda = math.radians(float(lng2) - float(lng1))
+    a = (math.sin(dphi / 2) ** 2
+         + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2)
+    return R * 2 * math.asin(math.sqrt(a))
+
+
 def calculate_walking_distance(destinations):
-    
-    # Initialize Google Maps client
-    gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+    """Total path distance in km.
 
-    total_distance = 0.0
+    Tries the Google Directions API (walking mode); falls back to Haversine
+    straight-line sum if the API call fails (e.g. legacy API disabled).
+    """
+    if not destinations or len(destinations) < 2:
+        return 0.0
 
-    # Split destinations into chunks of 10
-    chunk_size = 10
-    for i in range(0, len(destinations), chunk_size):
-        chunk = destinations[i:i + chunk_size]
-
-        # Create a list of waypoints, excluding the first and last points
-        waypoints = chunk[1:-1]
-
-
-        # Calculate the walking distance for the chunk
-        if waypoints:
-            directions_result = gmaps.directions(
-                chunk[0],  # Starting point
-                chunk[-1],  # Ending point
-                mode="walking",  # Walking mode
-                waypoints=waypoints,
-            )
-            #print(directions_result)
-
-            # Extract distance from the result
-            distance = directions_result[0]["legs"][0]["distance"]["value"]  # in meters
-            total_distance += distance
-
-    # Convert total distance to kilometers or miles, depending on your preference
-    total_distance_km = total_distance / 1000.0
-    return round(total_distance_km,2)
+    try:
+        gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+        total_distance = 0.0
+        chunk_size = 10
+        for i in range(0, len(destinations), chunk_size):
+            chunk = destinations[i:i + chunk_size]
+            waypoints = chunk[1:-1]
+            if waypoints:
+                directions_result = gmaps.directions(
+                    chunk[0],
+                    chunk[-1],
+                    mode="walking",
+                    waypoints=waypoints,
+                )
+                total_distance += directions_result[0]["legs"][0]["distance"]["value"]
+        return round(total_distance / 1000.0, 2)
+    except Exception:
+        total_km = 0.0
+        for a, b in zip(destinations, destinations[1:]):
+            total_km += _haversine_km(a[0], a[1], b[0], b[1])
+        return round(total_km, 2)
 
 # def calculate_distance_between_destinations(destination1, destination2):
 #     # Initialize Google Maps client

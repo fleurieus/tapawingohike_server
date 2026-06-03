@@ -2,25 +2,25 @@
 {% block title %}{% if mode == "add" %}Nieuw event{% else %}Event bewerken{% endif %}{% endblock %}
 {% block content %}
 <div class="max-w-2xl">
-<h1 class="text-2xl font-semibold mb-6">
+<h1 class="text-headline-sm leading-tight mb-6">
   {% if mode == "add" %}Nieuw event{% else %}Event bewerken — {{ event.name }}{% endif %}
 </h1>
 
-<div class="bg-white border rounded-2xl p-5">
+<div class="card-elevated p-5">
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {{ form.non_field_errors }}
     {% for field in form %}
       <div>
-        <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <label class="block text-label-lg text-on-surface mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
-        {% if field.help_text %}<p class="text-xs text-slate-500 mt-1">{{ field.help_text }}</p>{% endif %}
-        {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>{% endif %}
+        {% if field.help_text %}<p class="text-label-md text-on-surface-variant mt-1">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<p class="text-body-sm text-error mt-1">{{ field.errors|striptags }}</p>{% endif %}
       </div>
     {% endfor %}
-    <div class="flex gap-3 pt-2">
-      <a href="{% url 'backoffice:events_list' %}" class="px-4 py-2 rounded-lg border hover:bg-slate-50">Annuleren</a>
-      <button class="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">Opslaan</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-outline-variant">
+      <a href="{% url 'backoffice:events_list' %}" class="btn-text w-full sm:w-auto">Annuleren</a>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 </div>

@@ -8,49 +8,49 @@
       {% if event %}Editions · {{ event.name }}{% else %}Editions{% endif %}
     </h1>
     {% if event and event.start_date or event.end_date %}
-      <p class="text-sm text-slate-600">
+      <p class="text-sm text-on-surface-variant">
         {{ event.start_date }} — {{ event.end_date }}
       </p>
     {% endif %}
   </div>
   {% if event %}
     <a href="{% url 'backoffice:edition_add_for_event' event.id %}"
-       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
-      <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+       class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm hover:brightness-110">
+      <iconify-icon icon="material-symbols:add" width="16" height="16"></iconify-icon>
       Nieuwe editie
     </a>
   {% else %}
     <a href="{% url 'backoffice:edition_add' %}"
-       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
-      <iconify-icon icon="heroicons:plus" width="16" height="16"></iconify-icon>
+       class="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-on-primary text-sm hover:brightness-110">
+      <iconify-icon icon="material-symbols:add" width="16" height="16"></iconify-icon>
       Nieuwe editie
     </a>
   {% endif %}
 </div>
 
-<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
   {% for e in editions %}
-    <div class="bg-white border rounded-2xl p-4 flex flex-col">
+    <div class="bg-surface-container-low border rounded-2xl p-4 flex flex-col">
       <div>
-        <div class="text-sm text-slate-500">{{ e.event.name }}</div>
+        <div class="text-sm text-on-surface-variant">{{ e.event.name }}</div>
         <div class="text-lg font-semibold">{{ e.name }}</div>
-        <div class="text-sm text-slate-600">
+        <div class="text-sm text-on-surface-variant">
           {{ e.date_start|date:"d-m-Y" }}
           {% if e.date_end %} — {{ e.date_end|date:"d-m-Y" }}{% endif %}
         </div>
       </div>
 
       <div class="mt-3 grid grid-cols-3 gap-3 text-center">
-        <div class="rounded-lg bg-green-50 p-2">
-          <div class="text-xs text-slate-500">Teams</div>
+        <div class="rounded-lg bg-primary-container/30 p-2">
+          <div class="text-xs text-on-surface-variant">Teams</div>
           <div class="text-base font-semibold tabular-nums">{{ e.team_count }}</div>
         </div>
-        <div class="rounded-lg bg-green-50 p-2">
-          <div class="text-xs text-slate-500">Routes</div>
+        <div class="rounded-lg bg-primary-container/30 p-2">
+          <div class="text-xs text-on-surface-variant">Routes</div>
           <div class="text-base font-semibold tabular-nums">{{ e.route_count }}</div>
         </div>
-        <div class="rounded-lg bg-green-50 p-2">
-          <div class="text-xs text-slate-500">Routeparts</div>
+        <div class="rounded-lg bg-primary-container/30 p-2">
+          <div class="text-xs text-on-surface-variant">Routeparts</div>
           <div class="text-base font-semibold tabular-nums">{{ e.routeparts_count }}</div>
         </div>
       </div>
@@ -59,21 +59,21 @@
       <div class="mt-3 flex items-center justify-between text-sm">
         <div class="flex items-center gap-2">
           {% if e.registration_mode == "none" %}
-            <span class="inline-block w-2 h-2 rounded-full bg-slate-300"></span>
-            <span class="text-slate-500">Registratie uit</span>
+            <span class="inline-block w-2 h-2 rounded-full bg-outline-variant"></span>
+            <span class="text-on-surface-variant">Registratie uit</span>
           {% elif e.registration_mode == "quick" %}
             <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-            <span class="text-green-700">Snelle registratie aan</span>
+            <span class="text-primary">Snelle registratie aan</span>
             <a href="{% url 'register' e.slug %}" target="_blank" title="Registratieformulier openen"
-               class="text-green-600 hover:text-green-800">
-              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+               class="text-primary hover:brightness-110">
+              <iconify-icon icon="material-symbols:open-in-new" width="16" height="16"></iconify-icon>
             </a>
           {% else %}
-            <span class="inline-block w-2 h-2 rounded-full bg-blue-500"></span>
-            <span class="text-blue-700">Uitgebreide registratie aan</span>
+            <span class="inline-block w-2 h-2 rounded-full bg-tertiary"></span>
+            <span class="text-tertiary">Uitgebreide registratie aan</span>
             <a href="{% url 'register' e.slug %}" target="_blank" title="Registratieformulier openen"
-               class="text-blue-600 hover:text-blue-800">
-              <iconify-icon icon="heroicons:arrow-top-right-on-square" width="16" height="16"></iconify-icon>
+               class="text-tertiary hover:brightness-110">
+              <iconify-icon icon="material-symbols:open-in-new" width="16" height="16"></iconify-icon>
             </a>
           {% endif %}
         </div>
@@ -81,30 +81,47 @@
 
       {# Open button — primary action #}
       <a href="{% url 'backoffice:edition_dashboard' e.id %}"
-         class="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600">
-        <iconify-icon icon="heroicons:arrow-right" width="16" height="16"></iconify-icon>
+         class="mt-3 w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-on-primary text-sm hover:brightness-110">
+        <iconify-icon icon="material-symbols:arrow-forward" width="16" height="16"></iconify-icon>
         Open editie
       </a>
 
       {# Edit / delete #}
       <div class="mt-2 pt-2 border-t flex items-center gap-2">
         <a href="{% url 'backoffice:edition_edit' e.id %}"
-           class="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 hover:underline">
-          <iconify-icon icon="heroicons:pencil" width="12" height="12"></iconify-icon>
+           class="inline-flex items-center gap-1 text-xs text-on-surface-variant hover:text-on-surface hover:underline">
+          <iconify-icon icon="material-symbols:edit-outline" width="12" height="12"></iconify-icon>
           Bewerken
         </a>
-        <span class="text-slate-200">|</span>
+        <span class="text-outline-variant">|</span>
         <a href="{% url 'backoffice:edition_delete' e.id %}"
-           class="inline-flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:underline">
-          <iconify-icon icon="heroicons:trash" width="12" height="12"></iconify-icon>
+           class="inline-flex items-center gap-1 text-xs text-error hover:text-error hover:underline">
+          <iconify-icon icon="material-symbols:delete-outline" width="12" height="12"></iconify-icon>
           Verwijderen
         </a>
       </div>
 
     </div>
   {% empty %}
-    <div class="text-slate-500">Nog geen editions.</div>
+    <div class="text-on-surface-variant">Nog geen editions.</div>
   {% endfor %}
 </div>
 </div>
+
+{# FAB: alleen mobiel #}
+{% if event %}
+<a href="{% url 'backoffice:edition_add_for_event' event.id %}"
+   class="fab-extended md:hidden"
+   aria-label="Nieuwe editie">
+  <iconify-icon icon="material-symbols:add" width="22" height="22"></iconify-icon>
+  Nieuwe editie
+</a>
+{% else %}
+<a href="{% url 'backoffice:edition_add' %}"
+   class="fab-extended md:hidden"
+   aria-label="Nieuwe editie">
+  <iconify-icon icon="material-symbols:add" width="22" height="22"></iconify-icon>
+  Nieuwe editie
+</a>
+{% endif %}
 {% endblock %}

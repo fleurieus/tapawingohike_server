@@ -5,7 +5,7 @@
       {% if form.instance.pk %}Route bewerken{% else %}Nieuwe route{% endif %}
     </h2>
     <button class="icon-btn" title="Sluiten" onclick="(window.closeSidepanel && closeSidepanel())">
-      <iconify-icon icon="heroicons-outline:x-mark"></iconify-icon>
+      <iconify-icon icon="material-symbols:close"></iconify-icon>
     </button>
   </header>
 
@@ -22,7 +22,7 @@
       <label class="block text-sm font-medium">Naam</label>
       {{ form.name }}
       {% if form.name.errors %}
-        <p class="text-sm text-red-600">{{ form.name.errors.0 }}</p>
+        <p class="text-sm text-error">{{ form.name.errors.0 }}</p>
       {% endif %}
     </div>
 
@@ -30,22 +30,22 @@
       <label class="block text-sm font-medium">Edition</label>
       {{ form.edition }}
       {% if form.edition.errors %}
-        <p class="text-sm text-red-600">{{ form.edition.errors.0 }}</p>
+        <p class="text-sm text-error">{{ form.edition.errors.0 }}</p>
       {% endif %}
     </div>
 
     <div class="space-y-1">
-      <label class="block text-sm font-medium">Datum <span class="font-normal text-slate-400">(optioneel)</span></label>
+      <label class="block text-sm font-medium">Datum <span class="font-normal text-on-surface-variant">(optioneel)</span></label>
       {{ form.date }}
       {% if form.date.errors %}
-        <p class="text-sm text-red-600">{{ form.date.errors.0 }}</p>
+        <p class="text-sm text-error">{{ form.date.errors.0 }}</p>
       {% endif %}
-      <p class="text-xs text-slate-500">Wordt gebruikt om locatielogs te filteren op de live map.</p>
+      <p class="text-xs text-on-surface-variant">Wordt gebruikt om locatielogs te filteren op de live map.</p>
     </div>
 
-    <div class="flex items-center justify-end gap-2 pt-4 border-t">
-      <button type="button" class="btn-secondary" onclick="closeSidepanel()">Annuleren</button>
-      <button type="submit" class="btn-primary">Opslaan</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-outline-variant">
+      <button type="button" class="btn-text w-full sm:w-auto" onclick="closeSidepanel()">Annuleren</button>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 </section>

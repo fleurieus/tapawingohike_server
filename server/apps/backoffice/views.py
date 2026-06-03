@@ -16,7 +16,7 @@ import json
 import googlemaps
 from collections import defaultdict
 from server.apps.asgi_socket.consumers import push_to_team, push_to_edition, push_to_backoffice
-from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm, UserManagementForm, EventForm, EditionForm
+from .forms import RouteForm, RoutePartForm, BundleForm, DestinationForm, EditionRegistrationForm, UserManagementForm, EventForm, EditionForm, INPUT_CLASSES
 from django.contrib.auth.models import User
 from server.apps.dashboard.models import (
     Event, Edition, Route, Bundle, RoutePart, RoutePartImage, TeamRoutePart, Destination, Team, File, LocationLog,
@@ -366,12 +366,17 @@ class TeamForm(forms.ModelForm):
         model = Team
         exclude = ["edition"]  # laat alle overige velden toe, edition zetten we in de view
         widgets = {
-            # optioneel wat nette widgets
-            "name": forms.TextInput(attrs={"class": "w-full rounded-lg border px-3 py-2"}),
-            "notes": forms.Textarea(attrs={"class": "w-full rounded-lg border px-3 py-2", "rows": 3}),
+            "name": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "code": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "contact_name": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "contact_email": forms.EmailInput(attrs={"class": INPUT_CLASSES}),
+            "contact_phone": forms.TextInput(attrs={"class": INPUT_CLASSES}),
+            "contact_address": forms.Textarea(attrs={"class": INPUT_CLASSES, "rows": 3}),
+            "member_names": forms.Textarea(attrs={"class": INPUT_CLASSES, "rows": 3}),
+            "remarks": forms.Textarea(attrs={"class": INPUT_CLASSES, "rows": 3}),
             "location_update_interval": forms.Select(
                 choices=LOCATION_INTERVAL_CHOICES,
-                attrs={"class": "w-full rounded-lg border px-3 py-2"},
+                attrs={"class": INPUT_CLASSES},
             ),
         }
 
@@ -1535,39 +1540,53 @@ def route_map_state(request, route_id: int):
 
 
 
+def _haversine_km(lat1, lng1, lat2, lng2):
+    """Straight-line distance in km between two lat/lng points."""
+    import math
+    R = 6371.0  # Earth radius in km
+    phi1, phi2 = math.radians(float(lat1)), math.radians(float(lat2))
+    dphi = math.radians(float(lat2) - float(lat1))
+    dlambda = math.radians(float(lng2) - float(lng1))
+    a = (math.sin(dphi / 2) ** 2
+         + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2)
+    return R * 2 * math.asin(math.sqrt(a))
+
+
 def calculate_walking_distance(destinations):
-    
-    # Initialize Google Maps client
-    gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+    """Total path distance in km.
 
-    total_distance = 0.0
+    Tries the Google Directions API (walking mode) for accuracy; falls back to
+    straight-line Haversine sum if the API is unavailable or denied (Google has
+    disabled legacy Directions API on many projects).
+    """
+    if not destinations or len(destinations) < 2:
+        return 0.0
 
-    # Split destinations into chunks of 10
-    chunk_size = 10
-    for i in range(0, len(destinations), chunk_size):
-        chunk = destinations[i:i + chunk_size]
-
-        # Create a list of waypoints, excluding the first and last points
-        waypoints = chunk[1:-1]
-
-
-        # Calculate the walking distance for the chunk
-        if waypoints:
-            directions_result = gmaps.directions(
-                chunk[0],  # Starting point
-                chunk[-1],  # Ending point
-                mode="walking",  # Walking mode
-                waypoints=waypoints,
-            )
-            #print(directions_result)
-
-            # Extract distance from the result
-            distance = directions_result[0]["legs"][0]["distance"]["value"]  # in meters
-            total_distance += distance
-
-    # Convert total distance to kilometers or miles, depending on your preference
-    total_distance_km = total_distance / 1000.0
-    return round(total_distance_km,2)
+    # Try the Google Directions API (more accurate, follows actual paths)
+    try:
+        gmaps = googlemaps.Client(key=settings.GOOGLE_MAPS_API_KEY)
+        total_distance = 0.0
+        chunk_size = 10
+        for i in range(0, len(destinations), chunk_size):
+            chunk = destinations[i:i + chunk_size]
+            waypoints = chunk[1:-1]
+            if waypoints:
+                directions_result = gmaps.directions(
+                    chunk[0],
+                    chunk[-1],
+                    mode="walking",
+                    waypoints=waypoints,
+                )
+                total_distance += directions_result[0]["legs"][0]["distance"]["value"]
+        return round(total_distance / 1000.0, 2)
+    except Exception:
+        # Fallback: sum straight-line distances between successive points.
+        # Onderschat de werkelijke loopafstand (geen wegen/paden), maar voorkomt
+        # dat de pagina crasht zolang de Google API ontoegankelijk is.
+        total_km = 0.0
+        for a, b in zip(destinations, destinations[1:]):
+            total_km += _haversine_km(a[0], a[1], b[0], b[1])
+        return round(total_km, 2)
 
 
 @staff_member_required

@@ -12,6 +12,30 @@
 
   // ---------- helpers ----------
   function num(x){ if(x==null)return NaN; const v=parseFloat(String(x).trim().replace(",", ".")); return Number.isFinite(v)?v:NaN; }
+
+  // Touch-detect — gmpDraggable: false op touch zodat DOM click op marker werkt.
+  const IS_TOUCH = (typeof window !== "undefined") && (
+    ("ontouchstart" in window) ||
+    (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+    (navigator.maxTouchPoints > 0)
+  );
+
+  // ── Advanced vs Classic marker event helpers ──────────────
+  function onMarker(marker, useAdvanced, eventName, handler) {
+    if (useAdvanced) {
+      marker.addEventListener("gmp-" + eventName, handler);
+    } else {
+      marker.addListener(eventName, handler);
+    }
+  }
+  function evLatLng(ev) {
+    const ll = ev?.latLng || ev?.detail?.latLng;
+    if (!ll) return null;
+    const lat = typeof ll.lat === "function" ? ll.lat() : ll.lat;
+    const lng = typeof ll.lng === "function" ? ll.lng() : ll.lng;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return { lat, lng };
+  }
   function getMapId(){ return document.getElementById("map")?.dataset?.mapId || ""; }
   function getItems(){ const el=document.getElementById("teamrouteparts-dests"); try{ return JSON.parse(el.textContent); }catch{ return []; } }
   function getCsrfToken(){ const m=document.cookie.match(/(?:^|;\s*)csrftoken=([^;]+)/); return m?decodeURIComponent(m[1]):""; }
@@ -238,7 +262,6 @@
         if ("radius" in payload) it.radius = out.radius;
         if ("confirm_by_user" in payload) it.confirm_by_user = out.confirm_by_user;
         if ("hide_for_user" in payload) it.hide_for_user = out.hide_for_user;
-        if ("skip_location_check" in payload) it.skip_location_check = out.skip_location_check;
         ensureCircle(it, {lat:num(it.lat), lng:num(it.lng)});
       }
     });
@@ -295,12 +318,6 @@
                  class="h-4 w-4 rounded border-slate-300">
           <span>Hide for user</span>
         </label>
-
-        <label class="inline-flex items-center gap-2" title="Sla de GPS-radiuscheck over: de app behandelt dit punt direct als bereikt na het vorige routedeel. Combineer met 'Confirm by user' voor een tik-om-door scherm, of laat dat uit om automatisch door te gaan.">
-          <input id="f-skip" type="checkbox" ${it.skip_location_check ? "checked":""}
-                 class="h-4 w-4 rounded border-slate-300">
-          <span>Skip location check</span>
-        </label>
       </div>
 
         <div class="flex justify-between items-center gap-2">
@@ -318,9 +335,8 @@
       const radius = parseInt(wrap.querySelector("#f-radius").value || "0", 10);
       const confirm_by_user = wrap.querySelector("#f-confirm").checked;
       const hide_for_user   = wrap.querySelector("#f-hide").checked;
-      const skip_location_check = wrap.querySelector("#f-skip").checked;
       try{
-        await bulkUpdate(peerIds, { radius, confirm_by_user, hide_for_user, skip_location_check });
+        await bulkUpdate(peerIds, { radius, confirm_by_user, hide_for_user });
         infoWindow && infoWindow.close();
         window.clearActivePart && window.clearActivePart();
       }catch(err){ console.error(err); alert("Opslaan mislukt: "+err); }
@@ -354,10 +370,13 @@
     const col  = colorForRoutePart(it.rp_order, it.base_rp_id);
 
     let markerInstance;
+    let wrap = null;  // advanced marker content — nodig voor click-binding op touch
 
     if(useAdvanced && google.maps.marker && google.maps.marker.AdvancedMarkerElement){
-      const wrap = document.createElement("div");
+      wrap = document.createElement("div");
       wrap.style.position = "relative"; wrap.style.width = "48px"; wrap.style.height = "64px";
+      wrap.style.touchAction = "manipulation";
+      wrap.style.cursor = "pointer";
       const img = document.createElement("img");
       img.src = pinUrl(text, col); img.width = 48; img.height = 64; img.alt = text; img.style.display="block";
       wrap.appendChild(img);
@@ -377,13 +396,15 @@
       }
 
       markerInstance = new google.maps.marker.AdvancedMarkerElement({
-        map, position: pos, content: wrap, title: `${text} · ${it.team_name}`, gmpDraggable: true
+        map, position: pos, content: wrap, title: `${text} · ${it.team_name}`,
+        gmpDraggable: !IS_TOUCH, gmpClickable: true
       });
 
-      markerInstance.addListener("drag", (ev)=>{
-        const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
+      onMarker(markerInstance, true, "drag", (ev) => {
+        const p = evLatLng(ev);
+        if (!p) return;
         // move all peers (visual) while dragging
-        peersFor(it).forEach(peer=>{
+        peersFor(it).forEach(peer => {
           const pm = markers.get(peer.id);
           if (pm && pm !== markerInstance) setMarkerPosition(pm, p, useAdvanced);
           const c = circles.get(peer.id);
@@ -396,19 +417,20 @@
         if (latEl && lngEl) { latEl.value = p.lat.toFixed(6); lngEl.value = p.lng.toFixed(6); }
       });
 
-        markerInstance.addListener("dragend", async (ev)=>{
-          const p = { lat: ev.latLng.lat(), lng: ev.latLng.lng() };
-          const ids = peersFor(it).map(p=>p.id);
-          try {
-            await bulkMove(ids, p);           // server opslaan
-          } catch(err){
-            console.error(err); alert("Opslaan mislukt: "+err);
-          }
-          // Altijd lokaal hard syncen + evt. re-renderen
-          applyMovedPositions(ids, p);
-          forceRerender(ids);
-          refreshOverlapBadges();
-        })
+      onMarker(markerInstance, true, "dragend", async (ev) => {
+        const p = evLatLng(ev);
+        if (!p) return;
+        const ids = peersFor(it).map(pp => pp.id);
+        try {
+          await bulkMove(ids, p);           // server opslaan
+        } catch(err) {
+          console.error(err); alert("Opslaan mislukt: " + err);
+        }
+        // Altijd lokaal hard syncen + evt. re-renderen
+        applyMovedPositions(ids, p);
+        forceRerender(ids);
+        refreshOverlapBadges();
+      });
 
     } else {
       const count = overlapCountFor(it);
@@ -449,15 +471,30 @@
       });
     }
 
-    markerInstance.addListener("click", ()=>{
-      if (window.setActivePart) window.setActivePart(it.base_rp_id); // highlight per base RoutePart als je wilt
-      if(!infoWindow){
+    // click → popup. Advanced: directe DOM click op wrap (mobile-safe).
+    const onClick = () => {
+      if (window.setActivePart) window.setActivePart(it.base_rp_id);
+      if (!infoWindow) {
         infoWindow = new google.maps.InfoWindow();
-        infoWindow.addListener("closeclick", ()=>{ window.clearActivePart && window.clearActivePart(); });
+        infoWindow.addListener("closeclick", () => { window.clearActivePart && window.clearActivePart(); });
       }
       infoWindow.setContent(buildPopupContent(it));
       infoWindow.open({ map, anchor: markerInstance });
-    });
+    };
+    if (wrap) {
+      let dragged = false;
+      if (!IS_TOUCH) {
+        onMarker(markerInstance, true, "dragstart", () => { dragged = true; });
+        onMarker(markerInstance, true, "dragend",   () => { setTimeout(() => { dragged = false; }, 50); });
+      }
+      wrap.addEventListener("click", (e) => {
+        if (dragged) return;
+        e.stopPropagation();
+        onClick();
+      });
+    } else {
+      markerInstance.addListener("click", onClick);
+    }
 
     markers.set(it.id, markerInstance);
     bounds.extend(pos);
@@ -485,8 +522,10 @@
     const mapId = getMapId();
     const useAdvanced = !!mapId;
 
+    const isDark = document.documentElement.classList.contains("dark");
     map = new google.maps.Map(document.getElementById("map"), {
       center: { lat: 52.1, lng: 5.1 }, zoom: 7, mapTypeControl: false,
+      colorScheme: isDark ? "DARK" : "LIGHT",
       ...(useAdvanced ? { mapId } : {})
     });
 

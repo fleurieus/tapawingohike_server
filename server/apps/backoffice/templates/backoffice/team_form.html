@@ -1,24 +1,25 @@
 {% extends "_base.html" %}
 {% block title %}Team · {{ edition.name }}{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-semibold mb-4">
+<h1 class="text-headline-sm leading-tight mb-4">
   {% if mode == "add" %}Nieuw team{% else %}Team bewerken{% endif %} · {{ edition.name }}
 </h1>
 
-<div class="bg-white border rounded-2xl p-5 max-w-2xl">
+<div class="card-elevated p-5 max-w-2xl">
   <form method="post" class="space-y-4">
     {% csrf_token %}
     {{ form.non_field_errors }}
     {% for field in form %}
       <div>
-        <label class="block text-sm font-medium mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
+        <label class="block text-label-lg text-on-surface mb-1" for="{{ field.id_for_label }}">{{ field.label }}</label>
         {{ field }}
-        {% if field.errors %}<p class="text-sm text-red-600 mt-1">{{ field.errors|striptags }}</p>{% endif %}
+        {% if field.help_text %}<p class="text-label-md text-on-surface-variant mt-1">{{ field.help_text }}</p>{% endif %}
+        {% if field.errors %}<p class="text-body-sm text-error mt-1">{{ field.errors|striptags }}</p>{% endif %}
       </div>
     {% endfor %}
-    <div class="flex gap-3">
-      <a href="{% url 'backoffice:team_list' edition.id %}" class="px-4 py-2 rounded-lg border">Annuleren</a>
-      <button class="px-4 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">Opslaan</button>
+    <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-4 border-t border-outline-variant">
+      <a href="{% url 'backoffice:team_list' edition.id %}" class="btn-text w-full sm:w-auto">Annuleren</a>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 </div>

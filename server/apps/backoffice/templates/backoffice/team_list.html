@@ -2,53 +2,177 @@
 {% block title %}Teams · {{ edition.name }}{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-  <div>
-    <h1 class="text-2xl font-semibold leading-tight">Teams · {{ edition.name }}</h1>
-    <p class="text-sm text-slate-600">Event: {{ edition.event.name }}</p>
+<div class="flex items-start justify-between gap-3 mb-4">
+  <div class="min-w-0">
+    <h1 class="text-headline-sm leading-tight truncate">Teams · {{ edition.name }}</h1>
+    <p class="text-body-sm text-on-surface-variant truncate">Event: {{ edition.event.name }}</p>
   </div>
-  <div class="flex items-center gap-3">
+  <div class="flex items-center gap-2 shrink-0">
     {% if edition.messaging_enabled %}
     <a href="{% url 'backoffice:messages' edition.id %}"
-       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-slate-700 hover:bg-slate-50">
-      <iconify-icon icon="heroicons:chat-bubble-left-right" width="18" height="18"></iconify-icon>
-      Berichten
+       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-container">
+      <iconify-icon icon="material-symbols:chat-outline" width="18" height="18"></iconify-icon>
+      <span class="hidden sm:inline">Berichten</span>
     </a>
     {% endif %}
+    {# Desktop: button in header. Mobile: FAB onderaan #}
     <a href="{% url 'backoffice:team_add' edition.id %}"
-       class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-green-700 text-white hover:bg-green-600">
-      <iconify-icon icon="heroicons:plus" width="18" height="18"></iconify-icon>
+       class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-on-primary hover:brightness-110">
+      <iconify-icon icon="material-symbols:add" width="18" height="18"></iconify-icon>
       Nieuw team
     </a>
   </div>
 </div>
 
 {# ── Filters ── #}
-<div class="flex items-center gap-3 mb-4">
-  <form method="get" class="flex items-center gap-3 flex-1">
-    <div class="relative flex-1 max-w-xs">
-      <iconify-icon icon="heroicons:magnifying-glass" width="16" height="16"
-                     class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></iconify-icon>
-      <input type="text" name="q" value="{{ search }}" placeholder="Zoek team..."
-             class="w-full rounded-lg border pl-9 pr-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400">
-    </div>
-    <select name="status" onchange="this.form.submit()"
-            class="rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:border-green-400">
-      <option value="">Alle statussen</option>
-      <option value="online" {% if status_filter == "online" %}selected{% endif %}>Online</option>
-      <option value="active" {% if status_filter == "active" %}selected{% endif %}>Actief</option>
-      <option value="registered" {% if status_filter == "registered" %}selected{% endif %}>Aangemeld</option>
-    </select>
-    <button type="submit" class="px-3 py-2 rounded-lg border text-sm hover:bg-slate-50">Zoek</button>
-    {% if search or status_filter %}
-      <a href="{% url 'backoffice:team_list' edition.id %}" class="text-sm text-slate-500 hover:underline">Reset</a>
+<div class="mb-4 space-y-2">
+  {# Search — Enter submit, X om te wissen, status-filter blijft via hidden field #}
+  <form method="get" class="relative max-w-md">
+    <iconify-icon icon="material-symbols:search" width="20" height="20"
+                   class="absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none"></iconify-icon>
+    <input type="text" name="q" value="{{ search }}" placeholder="Zoek team..."
+           class="w-full rounded-full border border-outline pl-10 pr-10 py-2.5 text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary">
+    <input type="hidden" name="status" value="{{ status_filter }}">
+    {% if search %}
+      <a href="?{% if status_filter %}status={{ status_filter|urlencode }}{% endif %}"
+         class="absolute right-2 top-1/2 -translate-y-1/2 icon-btn-md3 !w-7 !h-7" aria-label="Wis zoekterm">
+        <iconify-icon icon="material-symbols:close" width="18" height="18"></iconify-icon>
+      </a>
     {% endif %}
   </form>
+
+  {# Status chips #}
+  <div class="flex flex-wrap gap-2">
+    <a href="?{% if search %}q={{ search|urlencode }}{% endif %}"
+       class="chip {% if not status_filter %}is-selected{% endif %}">Alle</a>
+    <a href="?status=online{% if search %}&q={{ search|urlencode }}{% endif %}"
+       class="chip {% if status_filter == 'online' %}is-selected{% endif %}">
+      <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+      Online
+    </a>
+    <a href="?status=active{% if search %}&q={{ search|urlencode }}{% endif %}"
+       class="chip {% if status_filter == 'active' %}is-selected{% endif %}">Actief</a>
+    <a href="?status=registered{% if search %}&q={{ search|urlencode }}{% endif %}"
+       class="chip {% if status_filter == 'registered' %}is-selected{% endif %}">Aangemeld</a>
+  </div>
 </div>
 
-<div class="bg-white border rounded-2xl overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-slate-50 border-b">
+{# Mobile: card-lijst — krappe inset #}
+<div class="md:hidden -mx-2 sm:-mx-4 space-y-2 pb-24">
+  {% for t in teams %}
+    <div class="card-elevated p-3">
+      <div class="flex items-start gap-3">
+        {# Online status dot #}
+        <span class="mt-1 shrink-0">
+          {% if t.online %}
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-green-500" title="Online"></span>
+          {% elif t.is_activated %}
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-outline-variant" title="Offline"></span>
+          {% else %}
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-400" title="Niet geactiveerd"></span>
+          {% endif %}
+        </span>
+
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-title-md truncate">{{ t.name }}</div>
+            {% if t.is_activated %}
+              <span class="text-label-sm text-primary shrink-0">Actief</span>
+            {% else %}
+              <span class="text-label-sm text-tertiary shrink-0">Aangemeld</span>
+            {% endif %}
+          </div>
+
+          {# Team code #}
+          {% if t.code %}
+            <div class="mt-1.5 flex items-center gap-1.5 text-body-sm text-on-surface-variant">
+              <code class="bg-surface-variant px-1.5 py-0.5 rounded text-label-md tabular-nums">{{ t.code }}</code>
+              <button type="button"
+                      onclick="navigator.clipboard.writeText('{{ t.code }}');this.querySelector('iconify-icon').setAttribute('icon','material-symbols:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','material-symbols:content-copy-outline'),1000)"
+                      class="icon-btn-md3 !w-7 !h-7" title="Kopiëren">
+                <iconify-icon icon="material-symbols:content-copy-outline" width="14" height="14"></iconify-icon>
+              </button>
+            </div>
+          {% endif %}
+
+          {# Progress #}
+          {% if t.trp_total > 0 %}
+            <div class="mt-2 flex items-center gap-2">
+              <div class="flex-1 h-1.5 bg-surface-variant rounded-full overflow-hidden">
+                <div class="h-full bg-green-500 rounded-full" style="width:{% widthratio t.trp_completed t.trp_total 100 %}%"></div>
+              </div>
+              <span class="text-label-sm text-on-surface-variant tabular-nums shrink-0">{{ t.trp_completed }}/{{ t.trp_total }}</span>
+            </div>
+          {% endif %}
+
+          {# Last seen #}
+          {% if t.last_seen %}
+            <div class="mt-1 text-label-sm text-on-surface-variant">
+              <iconify-icon icon="material-symbols:schedule-outline" width="12" height="12" class="align-text-bottom"></iconify-icon>
+              {{ t.last_seen|timesince }} geleden
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Acties #}
+      <div class="mt-3 pt-3 border-t border-outline-variant flex items-center justify-end gap-1">
+        {% if not t.is_activated %}
+          <form action="{% url 'backoffice:team_activate' edition.id t.id %}" method="post" class="inline"
+                onsubmit="return confirm('Team activeren? Code wordt gegenereerd, routes gedistribueerd en code gemaild.');">
+            {% csrf_token %}
+            <button type="submit" class="btn-text" title="Activeren">
+              <iconify-icon icon="material-symbols:check-circle-outline" width="18" height="18"></iconify-icon>
+              Activeren
+            </button>
+          </form>
+        {% endif %}
+
+        {# TRP per route #}
+        {% if sidebar_routes %}
+          <div class="relative inline-block">
+            <button type="button" title="TeamRouteParts bekijken" class="trp-menu-btn icon-btn-md3" aria-label="TeamRouteParts">
+              <iconify-icon icon="material-symbols:map-outline" width="20" height="20"></iconify-icon>
+            </button>
+            <div class="trp-menu hidden absolute right-0 top-full mt-1 z-20 bg-surface-container-low border border-outline-variant rounded-lg shadow-elev-2 py-1 min-w-[200px]">
+              {% for r in sidebar_routes %}
+                <div class="px-3 py-1.5 text-label-sm text-on-surface-variant uppercase tracking-wide{% if not forloop.first %} border-t border-outline-variant{% endif %}">{{ r.name }}</div>
+                <a href="{% url 'backoffice:teamrouteparts_builder' r.id %}?team={{ t.id }}"
+                   class="flex items-center gap-2 px-3 py-2 text-body-md hover:bg-surface-container">
+                  <iconify-icon icon="material-symbols:map-outline" width="16" height="16"></iconify-icon>
+                  Kaartweergave
+                </a>
+                <a href="{% url 'backoffice:teamrouteparts_table' r.id %}?team={{ t.id }}"
+                   class="flex items-center gap-2 px-3 py-2 text-body-md hover:bg-surface-container">
+                  <iconify-icon icon="material-symbols:table-rows-outline" width="16" height="16"></iconify-icon>
+                  Tabelweergave
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <a href="{% url 'backoffice:team_edit' edition.id t.id %}" title="Bewerken" class="icon-btn-md3" aria-label="Bewerken">
+          <iconify-icon icon="material-symbols:edit-square-outline" width="20" height="20"></iconify-icon>
+        </a>
+        <form action="{% url 'backoffice:team_delete' edition.id t.id %}" method="post" class="inline"
+              onsubmit="return confirm('Team verwijderen?');">
+          {% csrf_token %}
+          <button type="submit" class="icon-btn-md3 danger" title="Verwijderen" aria-label="Verwijderen">
+            <iconify-icon icon="material-symbols:delete-outline" width="20" height="20"></iconify-icon>
+          </button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <div class="card-outlined p-6 text-center text-on-surface-variant">Nog geen teams.</div>
+  {% endfor %}
+</div>
+
+{# Desktop: tabel #}
+<div class="hidden md:block bg-surface-container-low border border-outline-variant rounded-lg overflow-hidden">
+  <table class="w-full text-body-md">
+    <thead class="bg-surface-container border-b border-outline-variant">
       <tr>
         <th class="text-left p-3 w-8"></th>
         <th class="text-left p-3">Naam</th>
@@ -61,13 +185,13 @@
     </thead>
     <tbody>
       {% for t in teams %}
-        <tr class="border-b last:border-0">
+        <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container/40">
           {# Online indicator #}
           <td class="p-3">
             {% if t.online %}
               <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="Online"></span>
             {% elif t.is_activated %}
-              <span class="inline-block w-2 h-2 rounded-full bg-slate-300" title="Offline"></span>
+              <span class="inline-block w-2 h-2 rounded-full bg-outline-variant" title="Offline"></span>
             {% else %}
               <span class="inline-block w-2 h-2 rounded-full bg-amber-400" title="Niet geactiveerd"></span>
             {% endif %}
@@ -76,13 +200,13 @@
           <td class="p-3 font-medium">{{ t.name }}</td>
 
           {# Code with copy button #}
-          <td class="p-3 text-slate-600">
+          <td class="p-3 text-on-surface-variant">
             {% if t.code %}
               <span class="inline-flex items-center gap-1">
-                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-xs tabular-nums">{{ t.code }}</code>
-                <button type="button" onclick="navigator.clipboard.writeText('{{ t.code }}');this.querySelector('iconify-icon').setAttribute('icon','heroicons:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','heroicons:clipboard-document'),1000)"
-                        class="text-slate-400 hover:text-slate-600" title="Kopiëren">
-                  <iconify-icon icon="heroicons:clipboard-document" width="14" height="14"></iconify-icon>
+                <code class="bg-surface-variant px-1.5 py-0.5 rounded text-label-md tabular-nums">{{ t.code }}</code>
+                <button type="button" onclick="navigator.clipboard.writeText('{{ t.code }}');this.querySelector('iconify-icon').setAttribute('icon','material-symbols:check');setTimeout(()=>this.querySelector('iconify-icon').setAttribute('icon','material-symbols:content-copy-outline'),1000)"
+                        class="text-on-surface-variant hover:text-on-surface" title="Kopiëren">
+                  <iconify-icon icon="material-symbols:content-copy-outline" width="14" height="14"></iconify-icon>
                 </button>
               </span>
             {% else %}
@@ -92,9 +216,9 @@
 
           <td class="p-3">
             {% if t.is_activated %}
-              <span class="inline-flex items-center gap-1 text-sm text-green-700">Actief</span>
+              <span class="inline-flex items-center gap-1 text-body-md text-primary">Actief</span>
             {% else %}
-              <span class="inline-flex items-center gap-1 text-sm text-amber-700">Aangemeld</span>
+              <span class="inline-flex items-center gap-1 text-body-md text-tertiary">Aangemeld</span>
             {% endif %}
           </td>
 
@@ -102,19 +226,18 @@
           <td class="p-3">
             {% if t.trp_total > 0 %}
               <div class="flex items-center gap-2">
-                <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  {% widthratio t.trp_completed t.trp_total 100 as pct %}
+                <div class="w-20 h-1.5 bg-surface-variant rounded-full overflow-hidden">
                   <div class="h-full bg-green-500 rounded-full" style="width:{% widthratio t.trp_completed t.trp_total 100 %}%"></div>
                 </div>
-                <span class="text-xs text-slate-500 tabular-nums">{{ t.trp_completed }}/{{ t.trp_total }}</span>
+                <span class="text-label-sm text-on-surface-variant tabular-nums">{{ t.trp_completed }}/{{ t.trp_total }}</span>
               </div>
             {% else %}
-              <span class="text-xs text-slate-300">—</span>
+              <span class="text-label-sm text-outline-variant">—</span>
             {% endif %}
           </td>
 
           {# Last seen #}
-          <td class="p-3 text-slate-500 text-xs">
+          <td class="p-3 text-on-surface-variant text-label-sm">
             {% if t.last_seen %}
               {{ t.last_seen|timesince }} geleden
             {% else %}
@@ -129,8 +252,8 @@
                       onsubmit="return confirm('Team activeren? Code wordt gegenereerd, routes gedistribueerd en code gemaild.');">
                   {% csrf_token %}
                   <button type="submit" title="Activeren"
-                          class="inline-flex items-center justify-center p-1 rounded-lg text-green-600 hover:text-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
-                    <iconify-icon icon="heroicons:check-circle" width="18" height="18"></iconify-icon>
+                          class="inline-flex items-center justify-center p-1 rounded-lg text-primary hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-primary">
+                    <iconify-icon icon="material-symbols:check-circle-outline" width="18" height="18"></iconify-icon>
                   </button>
                 </form>
               {% endif %}
@@ -139,20 +262,20 @@
               {% if sidebar_routes %}
               <div class="relative inline-block">
                 <button type="button" title="TeamRouteParts bekijken"
-                        class="trp-menu-btn inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                  <iconify-icon icon="heroicons:map" width="18" height="18"></iconify-icon>
+                        class="trp-menu-btn inline-flex items-center justify-center p-1 rounded-lg text-on-surface-variant hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-outline-variant">
+                  <iconify-icon icon="material-symbols:map-outline" width="18" height="18"></iconify-icon>
                 </button>
-                <div class="trp-menu hidden absolute right-0 top-full mt-1 z-30 bg-white border rounded-lg shadow-lg py-1 min-w-[200px]">
+                <div class="trp-menu hidden absolute right-0 top-full mt-1 z-30 bg-surface-container-low border border-outline-variant rounded-lg shadow-elev-2 py-1 min-w-[200px]">
                   {% for r in sidebar_routes %}
-                    <div class="px-3 py-1.5 text-xs font-medium text-slate-400 uppercase tracking-wide{% if not forloop.first %} border-t{% endif %}">{{ r.name }}</div>
+                    <div class="px-3 py-1.5 text-label-sm text-on-surface-variant uppercase tracking-wide{% if not forloop.first %} border-t border-outline-variant{% endif %}">{{ r.name }}</div>
                     <a href="{% url 'backoffice:teamrouteparts_builder' r.id %}?team={{ t.id }}"
-                       class="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
-                      <iconify-icon icon="heroicons:map" width="14" height="14"></iconify-icon>
+                       class="flex items-center gap-2 px-3 py-1.5 text-body-md text-on-surface hover:bg-surface-container">
+                      <iconify-icon icon="material-symbols:map-outline" width="14" height="14"></iconify-icon>
                       Kaartweergave
                     </a>
                     <a href="{% url 'backoffice:teamrouteparts_table' r.id %}?team={{ t.id }}"
-                       class="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50">
-                      <iconify-icon icon="heroicons:table-cells" width="14" height="14"></iconify-icon>
+                       class="flex items-center gap-2 px-3 py-1.5 text-body-md text-on-surface hover:bg-surface-container">
+                      <iconify-icon icon="material-symbols:table-rows-outline" width="14" height="14"></iconify-icon>
                       Tabelweergave
                     </a>
                   {% endfor %}
@@ -161,16 +284,16 @@
               {% endif %}
 
               <a href="{% url 'backoffice:team_edit' edition.id t.id %}" title="Bewerken"
-                 class="inline-flex items-center justify-center p-1 rounded-lg text-slate-500 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-300">
-                <iconify-icon icon="heroicons:pencil-square" width="18" height="18"></iconify-icon>
+                 class="inline-flex items-center justify-center p-1 rounded-lg text-on-surface-variant hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-outline-variant">
+                <iconify-icon icon="material-symbols:edit-square-outline" width="18" height="18"></iconify-icon>
               </a>
 
               <form action="{% url 'backoffice:team_delete' edition.id t.id %}" method="post" class="inline"
                     onsubmit="return confirm('Team verwijderen?');">
                 {% csrf_token %}
                 <button type="submit" title="Verwijderen"
-                        class="inline-flex items-center justify-center p-1 rounded-lg text-red-600 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-300">
-                  <iconify-icon icon="heroicons:trash" width="18" height="18"></iconify-icon>
+                        class="inline-flex items-center justify-center p-1 rounded-lg text-error hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-error">
+                  <iconify-icon icon="material-symbols:delete-outline" width="18" height="18"></iconify-icon>
                 </button>
               </form>
             </div>
@@ -178,15 +301,23 @@
         </tr>
       {% empty %}
         <tr>
-          <td class="p-3 text-slate-500" colspan="7">Nog geen teams.</td>
+          <td class="p-3 text-on-surface-variant" colspan="7">Nog geen teams.</td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
 </div>
 
+{# ── FAB: alleen mobiel ── #}
+<a href="{% url 'backoffice:team_add' edition.id %}"
+   class="fab-extended md:hidden"
+   aria-label="Nieuw team">
+  <iconify-icon icon="material-symbols:add" width="22" height="22"></iconify-icon>
+  Nieuw team
+</a>
+
 <script>
-// Toggle dropdown menus for TeamRouteParts links
+// Toggle dropdown menus for TeamRouteParts links (mobile + desktop)
 (function() {
   let openMenu = null;
   document.querySelectorAll('.trp-menu-btn').forEach(btn => {

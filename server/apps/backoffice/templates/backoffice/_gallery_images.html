@@ -2,16 +2,16 @@
 <div id="gallery-images-{{ routepart.id }}" class="space-y-2">
   {% if gallery_images %}
     {% for gi in gallery_images %}
-      <div class="flex items-center gap-2 border border-slate-200 rounded p-1 bg-slate-50">
+      <div class="flex items-center gap-2 border border-outline-variant rounded p-1 bg-surface-container">
         <img src="{{ gi.image.file.url }}" alt="" class="w-16 h-16 object-cover rounded">
-        <span class="flex-1 text-xs text-slate-600 truncate">{{ gi.image.file.name }}</span>
+        <span class="flex-1 text-xs text-on-surface-variant truncate">{{ gi.image.file.name }}</span>
 
         <button type="button" class="icon-btn" title="Omhoog"
                 hx-post="{% url 'backoffice:gallery_image_move' routepart.route_id routepart.id gi.id 'up' %}"
                 hx-target="#gallery-images-{{ routepart.id }}"
                 hx-swap="outerHTML"
                 {% if forloop.first %}disabled{% endif %}>
-          <iconify-icon icon="heroicons-outline:arrow-up" width="18" height="18"></iconify-icon>
+          <iconify-icon icon="material-symbols:arrow-upward" width="18" height="18"></iconify-icon>
         </button>
 
         <button type="button" class="icon-btn" title="Omlaag"
@@ -19,7 +19,7 @@
                 hx-target="#gallery-images-{{ routepart.id }}"
                 hx-swap="outerHTML"
                 {% if forloop.last %}disabled{% endif %}>
-          <iconify-icon icon="heroicons-outline:arrow-down" width="18" height="18"></iconify-icon>
+          <iconify-icon icon="material-symbols:arrow-downward" width="18" height="18"></iconify-icon>
         </button>
 
         <button type="button" class="icon-btn" title="Verwijderen"
@@ -27,11 +27,11 @@
                 hx-target="#gallery-images-{{ routepart.id }}"
                 hx-swap="outerHTML"
                 hx-confirm="Deze foto uit de galerij verwijderen?">
-          <iconify-icon icon="heroicons-outline:trash" width="18" height="18"></iconify-icon>
+          <iconify-icon icon="material-symbols:delete-outline" width="18" height="18"></iconify-icon>
         </button>
       </div>
     {% endfor %}
   {% else %}
-    <p class="text-xs text-slate-500 italic">Nog geen foto's. Upload er hieronder een paar.</p>
+    <p class="text-xs text-on-surface-variant italic">Nog geen foto's. Upload er hieronder een paar.</p>
   {% endif %}
 </div>

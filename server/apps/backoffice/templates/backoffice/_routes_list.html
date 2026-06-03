@@ -1,12 +1,63 @@
 {# templates/backoffice/_routes_list.html #}
-<div class="bg-white border rounded-2xl overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-slate-50 border-b">
+
+{# Mobile: card-lijst #}
+<div class="md:hidden -mx-2 sm:-mx-4 space-y-2 pb-24">
+  {% for r in routes %}
+    <div class="card-elevated route-item overflow-hidden">
+      {# Bovenste deel = primaire tik-actie → routeparts editor #}
+      <a href="{% url 'backoffice:routeparts_builder' r.id %}"
+         class="block p-3 hover:bg-surface-container/40 transition-colors">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <div class="text-title-md text-primary truncate">{{ r.name }}</div>
+            <div class="text-body-sm text-on-surface-variant truncate">
+              {{ r.edition.name }}{% if r.date %} · {{ r.date|date:"d M Y" }}{% endif %}
+            </div>
+            <div class="mt-1 text-label-md text-on-surface-variant">
+              {{ r.parts_count }} routepart{{ r.parts_count|pluralize:",s" }} · tik om te bewerken
+            </div>
+          </div>
+          <iconify-icon icon="material-symbols:arrow-forward" width="22" height="22" class="text-on-surface-variant shrink-0 mt-1"></iconify-icon>
+        </div>
+      </a>
+      <div class="px-3 pb-3 pt-2 border-t border-outline-variant flex items-center justify-end gap-1">
+        <a href="{% url 'backoffice:teamrouteparts_builder' r.id %}" title="TeamRouteParts" class="icon-btn-md3">
+          <iconify-icon icon="material-symbols:groups-outline" width="20" height="20"></iconify-icon>
+        </a>
+        <a href="{% url 'backoffice:route_map' r.id %}" title="Live Map" class="icon-btn-md3">
+          <iconify-icon icon="material-symbols:map-outline" width="20" height="20"></iconify-icon>
+        </a>
+        <a href="{% url 'backoffice:route_stats' r.id %}" title="Statistieken" class="icon-btn-md3">
+          <iconify-icon icon="material-symbols:bar-chart-outline" width="20" height="20"></iconify-icon>
+        </a>
+        <button class="icon-btn-md3" title="Naam/datum bewerken"
+                hx-get="{% url 'backoffice:route_edit' r.id %}"
+                hx-target="#sidepanel" hx-swap="innerHTML">
+          <iconify-icon icon="material-symbols:settings-outline" width="20" height="20"></iconify-icon>
+        </button>
+        <button class="icon-btn-md3 danger" title="Verwijderen"
+                hx-delete="{% url 'backoffice:route_delete' r.id %}"
+                hx-target="closest .route-item"
+                hx-swap="outerHTML"
+                hx-confirm="Route '{{ r.name }}' verwijderen?">
+          <iconify-icon icon="material-symbols:delete-outline" width="20" height="20"></iconify-icon>
+        </button>
+      </div>
+    </div>
+  {% empty %}
+    <div class="card-outlined p-6 text-center text-on-surface-variant">Geen routes.</div>
+  {% endfor %}
+</div>
+
+{# Desktop: tabel #}
+<div class="hidden md:block bg-surface-container-low border border-outline-variant rounded-lg overflow-hidden">
+  <table class="w-full text-body-md">
+    <thead class="bg-surface-container border-b border-outline-variant">
       <tr>
         <th class="text-left p-3">Naam</th>
         <th class="text-left p-3">Edition</th>
         <th class="text-left p-3">Datum</th>
-        <th class="text-left p-3"># Routeparts</th>
+        <th class="text-left p-3"># Delen</th>
         <th class="text-left p-3">TeamRouteParts</th>
         <th class="text-left p-3">Follow</th>
         <th class="text-left p-3">Acties</th>
@@ -14,56 +65,62 @@
     </thead>
     <tbody>
       {% for r in routes %}
-        <tr class="border-b last:border-0 hover:bg-slate-50">
-          <td class="p-3 font-medium">{{ r.name }}</td>
-          <td class="p-3 text-slate-600">{{ r.edition.name }}</td>
-          <td class="p-3 text-slate-600">{% if r.date %}{{ r.date|date:"d M Y" }}{% else %}<span class="text-slate-300">—</span>{% endif %}</td>
-          <td class="p-3 tabular-nums"><a title="Naar RouteParts" href="{% url 'backoffice:routeparts_builder' r.id %}">{{ r.parts_count }} <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon></a></td>
-          <td class="p-3">
-            <a
-              class="icon-btn mr-4"
-              title="Naar TeamRouteParts"
-              href="{% url 'backoffice:teamrouteparts_builder' r.id %}">
-              <iconify-icon icon="heroicons-outline:users" width="18" height="18"></iconify-icon> <span class="text-xs">(incl distributie)</span>
-            </a>             
-          </td>
-          <td class="p-3">   
-            <a
-              class="icon-btn mr-4"
-              title="Naar Live Map"
-              href="{% url 'backoffice:route_map' r.id %}">
-              <iconify-icon icon="heroicons-outline:map" width="18" height="18"></iconify-icon> Map
+        <tr class="border-b border-outline-variant last:border-0 hover:bg-surface-container/40">
+          <td class="p-3 font-medium">
+            <a href="{% url 'backoffice:routeparts_builder' r.id %}"
+               class="text-primary hover:underline inline-flex items-center gap-1"
+               title="Routeparts bewerken">
+              {{ r.name }}
+              <iconify-icon icon="material-symbols:arrow-forward" width="16" height="16"></iconify-icon>
             </a>
-            <a
-              class="icon-btn mr-4"
-              title="Naar statistieken"
-              href="{% url 'backoffice:route_stats' r.id %}">
-              <iconify-icon icon="heroicons-outline:chart-bar" width="18" height="18"></iconify-icon> Stats
-            </a>            
           </td>
-          <td class="p-3">             
-            <button
-              class="icon-btn"
-              title="Bewerk Route"
-              hx-get="{% url 'backoffice:route_edit' r.id %}"
-              hx-target="#sidepanel" hx-swap="innerHTML">
-              <iconify-icon icon="heroicons-outline:pencil" width="18" height="18"></iconify-icon>
+          <td class="p-3 text-on-surface-variant">{{ r.edition.name }}</td>
+          <td class="p-3 text-on-surface-variant">{% if r.date %}{{ r.date|date:"d M Y" }}{% else %}<span class="text-outline-variant">—</span>{% endif %}</td>
+          <td class="p-3 tabular-nums text-on-surface-variant">
+            {{ r.parts_count }}
+          </td>
+          <td class="p-3">
+            <a class="inline-flex items-center gap-1 text-on-surface-variant hover:text-on-surface mr-4"
+               title="Naar TeamRouteParts"
+               href="{% url 'backoffice:teamrouteparts_builder' r.id %}">
+              <iconify-icon icon="material-symbols:groups-outline" width="18" height="18"></iconify-icon>
+              <span class="text-label-sm">(incl distributie)</span>
+            </a>
+          </td>
+          <td class="p-3">
+            <a class="inline-flex items-center gap-1 text-on-surface-variant hover:text-on-surface mr-4"
+               title="Naar Live Map"
+               href="{% url 'backoffice:route_map' r.id %}">
+              <iconify-icon icon="material-symbols:map-outline" width="18" height="18"></iconify-icon>
+              <span class="text-label-md">Map</span>
+            </a>
+            <a class="inline-flex items-center gap-1 text-on-surface-variant hover:text-on-surface"
+               title="Naar statistieken"
+               href="{% url 'backoffice:route_stats' r.id %}">
+              <iconify-icon icon="material-symbols:bar-chart-outline" width="18" height="18"></iconify-icon>
+              <span class="text-label-md">Stats</span>
+            </a>
+          </td>
+          <td class="p-3">
+            <button class="inline-flex items-center justify-center p-1 rounded-lg text-on-surface-variant hover:text-on-surface focus:outline-none focus:ring-2 focus:ring-outline-variant"
+                    title="Naam/datum bewerken"
+                    hx-get="{% url 'backoffice:route_edit' r.id %}"
+                    hx-target="#sidepanel" hx-swap="innerHTML">
+              <iconify-icon icon="material-symbols:settings-outline" width="18" height="18"></iconify-icon>
             </button>
-
-            <button
-              class="icon-btn text-red-700 "
-              title="Verwijder Route"
-              hx-delete="{% url 'backoffice:route_delete' r.id %}"
-              hx-target="closest tr"
-              hx-swap="outerHTML"
-              hx-confirm="Route ‘{{ r.name }}’ verwijderen?">
-              <iconify-icon icon="heroicons-outline:trash" width="18" height="18"></iconify-icon>
+            <button class="inline-flex items-center justify-center p-1 rounded-lg text-error hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-error"
+                    title="Verwijder Route"
+                    hx-delete="{% url 'backoffice:route_delete' r.id %}"
+                    hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    hx-confirm="Route '{{ r.name }}' verwijderen?">
+              <iconify-icon icon="material-symbols:delete-outline" width="18" height="18"></iconify-icon>
             </button>
           </td>
         </tr>
       {% empty %}
         <tr>
-          <td class="p-3 text-slate-500" colspan="7">Geen routes.</td>
+          <td class="p-3 text-on-surface-variant" colspan="7">Geen routes.</td>
         </tr>
       {% endfor %}
     </tbody>

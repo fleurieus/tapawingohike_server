@@ -1,118 +1,137 @@
 {% extends "_base.html" %}
 {% block title %}Berichten · {{ edition.name }}{% endblock %}
+
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-  <div>
-    <h1 class="text-2xl font-semibold leading-tight">Berichten · {{ edition.name }}</h1>
-    <p class="text-sm text-slate-600">Event: {{ edition.event.name }}</p>
+{# Title row — verborgen op mobiel; topbar + chat-header tonen al genoeg context #}
+<div class="hidden md:flex items-start justify-between gap-3 mb-4">
+  <div class="min-w-0">
+    <h1 class="text-headline-sm leading-tight truncate">Berichten · {{ edition.name }}</h1>
+    <p class="text-body-sm text-on-surface-variant truncate">Event: {{ edition.event.name }}</p>
   </div>
 </div>
 
-<div class="flex gap-4" style="height: calc(100vh - 10rem);">
-  {# ── Sidebar: team list ── #}
-  <div class="w-56 flex-shrink-0 bg-white border rounded-2xl overflow-y-auto">
-    <a href="{% url 'backoffice:messages' edition.id %}"
-       class="block px-4 py-3 text-sm font-medium border-b hover:bg-slate-50 {% if not selected_team %}bg-slate-100 text-slate-900{% else %}text-slate-600{% endif %}">
-      <iconify-icon icon="heroicons:megaphone" width="16" height="16" class="mr-1"></iconify-icon>
+{# Single-view router: 'chat' wanneer team geselecteerd of ?focus=chat (broadcast op mobiel) #}
+<div class="messages-container flex flex-col md:flex-row md:gap-4 h-[calc(100vh-7rem)] md:h-[calc(100vh-9rem)]"
+     data-msg-view="{% if selected_team or request.GET.focus == 'chat' %}chat{% else %}threads{% endif %}">
+
+  {# ── Thread-list (desktop: zijbalk; mobiel: full-width entry view) ── #}
+  <div class="msg-threads w-full md:w-64 md:flex-shrink-0 bg-surface-container-low border border-outline-variant rounded-lg overflow-y-auto -mx-2 sm:-mx-4 md:mx-0">
+    <a href="{% url 'backoffice:messages' edition.id %}?focus=chat"
+       class="block px-4 py-3 text-body-md font-medium border-b border-outline-variant hover:bg-surface-container {% if not selected_team %}bg-surface-variant text-on-surface{% else %}text-on-surface-variant{% endif %}">
+      <iconify-icon icon="material-symbols:campaign-outline" width="18" height="18" class="mr-1 align-text-bottom"></iconify-icon>
       Broadcast
     </a>
     {% for t in teams %}
       <a href="{% url 'backoffice:messages_team' edition.id t.id %}"
          data-team-id="{{ t.id }}"
-         class="team-link flex items-center justify-between px-4 py-3 text-sm border-b hover:bg-slate-50 {% if selected_team.id == t.id %}bg-slate-100 font-medium text-slate-900{% else %}text-slate-600{% endif %}">
-        <span class="flex items-center gap-2">
+         class="team-link flex items-center justify-between gap-2 px-4 py-3 text-body-md border-b border-outline-variant hover:bg-surface-container {% if selected_team.id == t.id %}bg-surface-variant font-medium text-on-surface{% else %}text-on-surface-variant{% endif %}">
+        <span class="flex items-center gap-2 min-w-0">
           {% if t.online %}
-            <span class="inline-block w-2 h-2 rounded-full bg-green-500" title="Online"></span>
+            <span class="inline-block w-2 h-2 rounded-full bg-green-500 shrink-0" title="Online"></span>
           {% else %}
-            <span class="inline-block w-2 h-2 rounded-full bg-slate-300" title="Offline"></span>
+            <span class="inline-block w-2 h-2 rounded-full bg-outline-variant shrink-0" title="Offline"></span>
           {% endif %}
-          {{ t.name }}
+          <span class="truncate">{{ t.name }}</span>
         </span>
-        <span class="unread-badge {% if t.unread_count == 0 %}hidden{% endif %} inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-500 text-white text-xs font-bold">{{ t.unread_count }}</span>
+        <span class="unread-badge {% if t.unread_count == 0 %}hidden{% endif %} inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-error text-on-error text-label-sm font-bold shrink-0">{{ t.unread_count }}</span>
       </a>
     {% endfor %}
   </div>
 
-  {# ── Main: thread + input ── #}
-  <div class="flex-1 bg-white border rounded-2xl flex flex-col overflow-hidden">
-    <div class="px-4 py-3 border-b bg-slate-50 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-slate-700">
-        {% if selected_team %}
-          {{ selected_team.name }}
-        {% else %}
-          Broadcast (alle teams)
-        {% endif %}
-      </h2>
+  {# ── Chat pane (desktop: rechterkolom; mobiel: full-width met back-knop) ── #}
+  <div class="msg-chat flex-1 bg-surface-container-low border border-outline-variant md:rounded-lg flex flex-col overflow-hidden -mx-2 sm:-mx-4 md:mx-0 min-h-0">
+    {# Chat header met back-knop op mobiel #}
+    <div class="px-3 py-2 sm:px-4 sm:py-3 border-b border-outline-variant bg-surface-container flex items-center justify-between gap-2 shrink-0">
+      <div class="flex items-center gap-2 min-w-0 flex-1">
+        <a href="{% url 'backoffice:messages' edition.id %}"
+           class="md:hidden icon-btn-md3 !w-9 !h-9 -ml-1 shrink-0" aria-label="Terug naar berichten">
+          <iconify-icon icon="material-symbols:arrow-back" width="22" height="22"></iconify-icon>
+        </a>
+        <h2 class="text-title-md truncate">
+          {% if selected_team %}
+            {{ selected_team.name }}
+          {% else %}
+            Broadcast <span class="text-on-surface-variant font-normal">(alle teams)</span>
+          {% endif %}
+        </h2>
+      </div>
       <form method="post"
             action="{% if selected_team %}{% url 'backoffice:messages_clear_team' edition.id selected_team.id %}{% else %}{% url 'backoffice:messages_clear' edition.id %}{% endif %}"
-            onsubmit="return confirm('Alle berichten in deze thread verwijderen?');">
+            onsubmit="return confirm('Alle berichten in deze thread verwijderen?');"
+            class="shrink-0">
         {% csrf_token %}
         <button type="submit"
-                class="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50">
-          <iconify-icon icon="heroicons:trash" width="14" height="14"></iconify-icon>
-          Chat legen
+                class="inline-flex items-center gap-1 text-label-md text-error hover:brightness-110 px-2 py-1 rounded hover:bg-error-container/30">
+          <iconify-icon icon="material-symbols:delete-outline" width="16" height="16"></iconify-icon>
+          <span class="hidden sm:inline">Chat legen</span>
         </button>
       </form>
     </div>
 
-    {# Thread messages #}
-    <div id="thread" class="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+    {# Thread messages — flex-1, scrollable #}
+    <div id="thread" class="flex-1 overflow-y-auto px-3 sm:px-4 py-3 space-y-3">
       {% include "backoffice/_messages_thread.html" %}
     </div>
 
-    {# Input bar #}
-    <div class="border-t px-4 py-3">
+    {# Input bar — sticky bottom #}
+    <div class="border-t border-outline-variant px-3 sm:px-4 py-3 bg-surface-container-low shrink-0">
       <form method="post" enctype="multipart/form-data" class="flex gap-2 items-end">
         {% csrf_token %}
-        <label class="cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border hover:bg-slate-50 text-slate-500 hover:text-slate-700 flex-shrink-0"
-               title="Afbeelding toevoegen">
-          <iconify-icon icon="heroicons:photo" width="20" height="20"></iconify-icon>
-          <input type="file" name="image" accept="image/jpeg,image/png" class="hidden"
-                 onchange="updateImagePreview(this)">
-        </label>
-        <div class="flex-1">
+        <button type="button"
+                onclick="document.getElementById('msg-image-input').click()"
+                class="cursor-pointer flex items-center justify-center w-10 h-10 rounded-lg border border-outline-variant hover:bg-surface-container text-on-surface-variant hover:text-on-surface shrink-0"
+                title="Afbeelding toevoegen" aria-label="Afbeelding toevoegen">
+          <iconify-icon icon="material-symbols:add-photo-alternate-outline" width="20" height="20" style="pointer-events:none"></iconify-icon>
+        </button>
+        <input type="file" id="msg-image-input" name="image" accept="image/jpeg,image/png" class="sr-only"
+               onchange="updateImagePreview(this)">
+        <div class="flex-1 min-w-0">
           <div id="image-preview" class="mb-2 relative inline-block" style="display:none">
             <img id="image-preview-img" class="max-h-20 rounded-lg" alt="Preview">
             <button type="button" onclick="clearImagePreview()"
-                    class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center hover:bg-red-600">&times;</button>
+                    class="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-error text-on-error text-xs flex items-center justify-center hover:brightness-110">&times;</button>
           </div>
           <input type="text" name="text" placeholder="Typ een bericht…"
-                 class="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-300"
+                 class="w-full rounded-lg border border-outline px-3 py-2 text-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                  autocomplete="off">
         </div>
-        <button class="px-4 py-2 rounded-lg bg-green-700 text-white text-sm hover:bg-green-600 flex-shrink-0">
-          Versturen
+        <button type="submit" class="px-4 py-2 rounded-lg bg-primary text-on-primary text-label-lg hover:brightness-110 shrink-0">
+          <span class="hidden sm:inline">Versturen</span>
+          <iconify-icon icon="material-symbols:send" width="20" height="20" class="sm:hidden"></iconify-icon>
         </button>
       </form>
     </div>
   </div>
 </div>
 
-{# ── Lightbox overlay ── #}
-<div id="lightbox" class="fixed inset-0 z-50 bg-black/80 items-center justify-center cursor-pointer" style="display:none" onclick="closeLightbox()">
-  <button onclick="closeLightbox()" class="absolute top-4 right-4 text-white text-3xl leading-none hover:text-slate-300">&times;</button>
-  <img id="lightbox-img" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-2xl" onclick="event.stopPropagation()">
+{# Lightbox overlay #}
+<div id="lightbox" class="fixed inset-0 z-50 bg-scrim/80 items-center justify-center cursor-pointer" style="display:none" onclick="closeLightbox()">
+  <button onclick="closeLightbox()" class="absolute top-4 right-4 text-on-error text-3xl leading-none hover:opacity-80">&times;</button>
+  <img id="lightbox-img" class="max-w-[90vw] max-h-[90vh] rounded-lg shadow-elev-4" onclick="event.stopPropagation()">
 </div>
 
+{# Mobile single-view: verberg het niet-actieve panel #}
+<style>
+  @media (max-width: 767.98px) {
+    .messages-container[data-msg-view="threads"] .msg-chat { display: none; }
+    .messages-container[data-msg-view="chat"] .msg-threads { display: none; }
+  }
+</style>
+
 <script>
-// ── Lightbox ──
 function openLightbox(url) {
   const lb = document.getElementById('lightbox');
   const img = document.getElementById('lightbox-img');
   img.src = url;
   lb.style.display = 'flex';
 }
-
 function closeLightbox() {
-  const lb = document.getElementById('lightbox');
-  lb.style.display = 'none';
+  document.getElementById('lightbox').style.display = 'none';
 }
-
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeLightbox();
 });
 
-// ── Image preview helpers ──
 function updateImagePreview(input) {
   const preview = document.getElementById('image-preview');
   const previewImg = document.getElementById('image-preview-img');
@@ -125,15 +144,11 @@ function updateImagePreview(input) {
     reader.readAsDataURL(input.files[0]);
   }
 }
-
 function clearImagePreview() {
-  const preview = document.getElementById('image-preview');
-  const fileInput = document.querySelector('input[name="image"]');
-  preview.style.display = 'none';
-  fileInput.value = '';
+  document.getElementById('image-preview').style.display = 'none';
+  document.querySelector('input[name="image"]').value = '';
 }
 
-// ── WebSocket for real-time message updates ──
 (function() {
   const editionId = {{ edition.id }};
   const selectedTeamId = {{ selected_team.id|default:"null" }};
@@ -144,7 +159,6 @@ function clearImagePreview() {
   const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const wsUrl = wsProtocol + '//' + location.host + '/ws/backoffice/' + editionId + '/';
 
-  // ── Unread tracking & activity-based mark-as-read ──
   let hasUnread = false;
   let activityTimer = null;
 
@@ -156,21 +170,16 @@ function clearImagePreview() {
 
   function markAsRead() {
     if (!hasUnread || !markReadUrl) return;
-    fetch(markReadUrl, {
-      method: 'POST',
-      headers: { 'X-CSRFToken': csrfToken },
-    }).then(function(resp) {
-      if (!resp.ok) return;
-      hasUnread = false;
-      // Reset the badge for the active team in the sidebar
-      if (selectedTeamId !== null) {
-        const activeLink = document.querySelector('.team-link[data-team-id="' + selectedTeamId + '"]');
-        if (activeLink) {
-          const badge = activeLink.querySelector('.unread-badge');
+    fetch(markReadUrl, { method: 'POST', headers: { 'X-CSRFToken': csrfToken } })
+      .then(function(resp) {
+        if (!resp.ok) return;
+        hasUnread = false;
+        if (selectedTeamId !== null) {
+          const link = document.querySelector('.team-link[data-team-id="' + selectedTeamId + '"]');
+          const badge = link?.querySelector('.unread-badge');
           if (badge) { badge.textContent = '0'; badge.classList.add('hidden'); }
         }
-      }
-    });
+      });
   }
 
   if (selectedTeamId !== null) {
@@ -181,66 +190,52 @@ function clearImagePreview() {
       inputField.addEventListener('focus', onUserActivity);
       inputField.addEventListener('input', onUserActivity);
     }
-    // Mark initial unreads on first activity
     {% if selected_team.unread_count %}hasUnread = true;{% endif %}
   }
 
-  // ── WebSocket ──
+  // Scroll naar onder bij page-load
+  const thread = document.getElementById('thread');
+  if (thread) thread.scrollTop = thread.scrollHeight;
+
   let ws;
   function connectWs() {
     ws = new WebSocket(wsUrl);
-
     ws.onmessage = function(event) {
       const data = JSON.parse(event.data);
       if (data.type !== 'message') return;
-
       const msg = data.data;
       const isOrg = msg.isOrganisation;
 
-      // Append bubble to thread if it belongs to the active thread
       const thread = document.getElementById('thread');
       if (thread) {
         let belongs = false;
-        if (selectedTeamId === null && isOrg && !msg.recipientTeamId) {
-          belongs = true;
-        } else if (selectedTeamId !== null) {
-          belongs = true;
-        }
+        if (selectedTeamId === null && isOrg && !msg.recipientTeamId) belongs = true;
+        else if (selectedTeamId !== null) belongs = true;
 
         if (belongs) {
           const bubble = createBubble(msg);
           thread.appendChild(bubble);
-          const empty = thread.querySelector('.text-slate-400.text-center');
+          const empty = thread.querySelector('.empty-thread');
           if (empty) empty.remove();
           thread.scrollTop = thread.scrollHeight;
         }
       }
 
-      // Increment unread badge for team messages
       if (!isOrg) {
         const senderTeamId = msg.senderTeamId;
         document.querySelectorAll('.team-link').forEach(function(link) {
-          const linkTeamId = parseInt(link.dataset.teamId);
-          if (linkTeamId === senderTeamId) {
+          if (parseInt(link.dataset.teamId) === senderTeamId) {
             const badge = link.querySelector('.unread-badge');
             if (badge) {
-              const current = parseInt(badge.textContent) || 0;
-              badge.textContent = current + 1;
+              badge.textContent = (parseInt(badge.textContent) || 0) + 1;
               badge.classList.remove('hidden');
             }
           }
         });
-
-        // If this message is in the active thread, flag for activity-based read
-        if (selectedTeamId === senderTeamId) {
-          hasUnread = true;
-        }
+        if (selectedTeamId === senderTeamId) hasUnread = true;
       }
     };
-
-    ws.onclose = function() {
-      setTimeout(connectWs, 3000);
-    };
+    ws.onclose = function() { setTimeout(connectWs, 3000); };
   }
 
   function createBubble(msg) {
@@ -252,25 +247,25 @@ function clearImagePreview() {
     const timeStr = time.getHours().toString().padStart(2, '0') + ':' + time.getMinutes().toString().padStart(2, '0');
 
     const colorClasses = isOrg
-      ? 'bg-green-50 border-green-200'
-      : 'bg-blue-50 border-blue-200';
-    const labelClass = isOrg ? 'text-green-700' : 'text-blue-700';
+      ? 'bg-primary-container/30 border-primary-container'
+      : 'bg-tertiary-container/30 border-tertiary/40';
+    const labelClass = isOrg ? 'text-primary' : 'text-tertiary';
 
     let content = '';
     if (msg.imageUrl) {
       content += '<img src="' + escapeHtml(msg.imageUrl) + '" alt="Afbeelding"' +
-        ' class="max-w-xs max-h-48 rounded-lg cursor-pointer hover:opacity-90 mt-1"' +
+        ' class="max-w-full max-h-48 rounded-lg cursor-pointer hover:opacity-90 mt-1"' +
         ' onclick="openLightbox(\'' + escapeHtml(msg.imageUrl) + '\')">';
     }
     if (msg.text) {
-      content += '<p class="text-sm text-slate-800">' + escapeHtml(msg.text) + '</p>';
+      content += '<p class="text-body-md text-on-surface break-words">' + escapeHtml(msg.text) + '</p>';
     }
 
     div.innerHTML =
-      '<div class="max-w-md ' + colorClasses + ' border rounded-xl px-4 py-2">' +
-        '<div class="flex items-center gap-2 mb-1">' +
-          '<span class="text-xs font-semibold ' + labelClass + '">' + escapeHtml(msg.from) + '</span>' +
-          '<span class="text-xs text-slate-400">' + timeStr + '</span>' +
+      '<div class="max-w-[85%] sm:max-w-md ' + colorClasses + ' border rounded-xl px-3 py-2">' +
+        '<div class="flex items-center gap-2 mb-1 flex-wrap">' +
+          '<span class="text-label-md font-semibold ' + labelClass + '">' + escapeHtml(msg.from) + '</span>' +
+          '<span class="text-label-sm text-on-surface-variant">' + timeStr + '</span>' +
         '</div>' +
         content +
       '</div>';

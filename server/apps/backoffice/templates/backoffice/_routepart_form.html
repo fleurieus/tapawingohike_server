@@ -1,12 +1,11 @@
-<div class="bg-white rounded shadow-sm p-4 panel-enter">
-  <h2 class="text-lg font-semibold mb-3">
+<div class="card-elevated p-4 panel-enter">
+  <h2 class="text-title-md mb-3">
     {% if form.instance.pk %}
-      Bewerk RoutePart: <span class="text-slate-600">{{ form.instance.name|default:"(zonder naam)" }}</span>
+      Bewerk RoutePart: <span class="text-on-surface-variant">{{ form.instance.name|default:"(zonder naam)" }}</span>
     {% else %}
       Nieuwe RoutePart
     {% endif %}
   </h2>
-
 
   <form
     hx-post="{% if pk %}{% url 'backoffice:routepart_edit' route.id pk %}{% else %}{% url 'backoffice:routepart_new' route.id %}{% endif %}"
@@ -18,21 +17,21 @@
 
     {% csrf_token %}
 
-    <div class="grid grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       <!-- Naam: full width -->
-      <div class="col-span-2">
-        {{ form.name.label_tag }} 
+      <div class="sm:col-span-2">
+        {{ form.name.label_tag }}
         {{ form.name }}
       </div>
 
       <!-- Route type: full width -->
-      <div class="col-span-2">
-        {{ form.route_type.label_tag }} 
+      <div class="sm:col-span-2">
+        {{ form.route_type.label_tag }}
         {{ form.route_type }}
       </div>
 
       <!-- Checkboxes onder route_type, full width en onder elkaar -->
-      <div class="col-span-2">
+      <div class="sm:col-span-2">
         <div class="flex flex-col gap-2 mt-1">
           <label class="inline-flex items-center gap-2">
             {{ form.routepart_zoom }} <span>Zoom enabled</span>
@@ -47,10 +46,10 @@
       </div>
 
       <!-- Bundel -->
-      <div class="col-span-2">
+      <div class="sm:col-span-2">
         {{ form.bundle.label_tag }}
         {{ form.bundle }}
-        <p class="text-xs text-slate-500 mt-1">Koppel aan een bundel om routedelen als set naar de app te sturen</p>
+        <p class="text-label-md text-on-surface-variant mt-1">Koppel aan een bundel om routedelen als set naar de app te sturen</p>
       </div>
 
       <!-- Media velden naast elkaar (verborgen voor type=gallery) -->
@@ -72,10 +71,10 @@
       </div>
 
       <!-- Gallery: alleen zichtbaar voor type=gallery (zie JS onderaan) -->
-      <div class="col-span-2 gallery-section border-t border-slate-200 pt-3" hidden>
-        <h3 class="text-sm font-semibold mb-2">Galerij-foto's</h3>
+      <div class="sm:col-span-2 gallery-section border-t border-outline-variant pt-3" hidden>
+        <h3 class="text-title-sm mb-2">Galerij-foto's</h3>
 
-        <p class="text-xs text-slate-500 mb-2">
+        <p class="text-label-md text-on-surface-variant mb-2">
           Tussen-gallery (foto's meteen tonen zonder GPS-check)? Zet dat per
           <em>destination</em> via <strong>"Skip location check"</strong> in het
           destination-formulier — eventueel samen met "Confirm by User" voor een
@@ -89,30 +88,30 @@
 
         {% if form.instance.pk %}
           <div class="mb-2">
-            <p class="text-xs text-slate-600 mb-1">Huidige foto's (sleep niet — gebruik de pijltjes):</p>
+            <p class="text-label-md text-on-surface-variant mb-1">Huidige foto's (sleep niet — gebruik de pijltjes):</p>
             {% include "backoffice/_gallery_images.html" with routepart=form.instance gallery_images=form.instance.gallery_images.all %}
           </div>
         {% else %}
-          <p class="text-xs text-slate-500 mb-2 italic">Sla eerst op om foto's te uploaden.</p>
+          <p class="text-label-md text-on-surface-variant mb-2 italic">Sla eerst op om foto's te uploaden.</p>
         {% endif %}
 
         <div>
-          <label class="block text-sm">Nieuwe foto's uploaden</label>
+          <label class="block text-label-lg text-on-surface">Nieuwe foto's uploaden</label>
           <input type="file" name="gallery_uploads" accept="image/*" multiple
-                 class="border rounded px-2 py-1 w-full">
-          <p class="text-xs text-slate-500 mt-1">Selecteer meerdere foto's tegelijk (Ctrl/Cmd + klik).</p>
+                 class="border border-outline rounded-lg px-3 py-2 w-full">
+          <p class="text-label-md text-on-surface-variant mt-1">Selecteer meerdere foto's tegelijk (Ctrl/Cmd + klik).</p>
         </div>
       </div>
     </div>
 
-    <div class="text-xs text-slate-500">
+    <div class="text-label-md text-on-surface-variant">
       Let op: “Final” mag geen Destinations hebben (model-validatie via <code>FinalDestinationValidationMixin</code>).
     </div>
 
-    <div class="pt-3 flex justify-end gap-2">
-      <button type="button" class="px-3 py-1 rounded bg-slate-200"
+    <div class="pt-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+      <button type="button" class="btn-text w-full sm:w-auto"
               onclick="document.getElementById('sidepanel').innerHTML=''">Sluiten</button>
-      <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 

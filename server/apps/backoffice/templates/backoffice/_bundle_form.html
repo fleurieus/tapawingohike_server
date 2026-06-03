@@ -1,7 +1,7 @@
-<div class="bg-white rounded shadow-sm p-4 panel-enter">
-  <h2 class="text-lg font-semibold mb-3">
+<div class="card-elevated p-4 panel-enter">
+  <h2 class="text-title-md mb-3">
     {% if form.instance.pk %}
-      Bewerk Bundel: <span class="text-slate-600">{{ form.instance.name|default:"(zonder naam)" }}</span>
+      Bewerk Bundel: <span class="text-on-surface-variant">{{ form.instance.name|default:"(zonder naam)" }}</span>
     {% else %}
       Nieuwe Bundel
     {% endif %}
@@ -27,14 +27,14 @@
       <div>
         {{ form.linear_upcoming_mode.label_tag }}
         {{ form.linear_upcoming_mode }}
-        <p class="text-xs text-slate-500 mt-1">Alleen van toepassing bij "Lineair" modus</p>
+        <p class="text-label-md text-on-surface-variant mt-1">Alleen van toepassing bij "Lineair" modus</p>
       </div>
     </div>
 
-    <div class="pt-3 flex justify-end gap-2">
-      <button type="button" class="px-3 py-1 rounded bg-slate-200"
+    <div class="pt-3 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+      <button type="button" class="btn-text w-full sm:w-auto"
               onclick="document.getElementById('sidepanel').innerHTML=''">Sluiten</button>
-      <button class="px-3 py-1 rounded bg-emerald-600 text-white">Opslaan</button>
+      <button type="submit" class="btn-filled w-full sm:w-auto">Opslaan</button>
     </div>
   </form>
 </div>
